@@ -1,7 +1,7 @@
 // src/routes/sr.routes.js
 import { Router } from 'express';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
-import { createSR, listSR } from '../services/sr.service.js';
+import { createSR, listSR } from '../controllers/sr.controller.js';
 
 const router = Router();
 
