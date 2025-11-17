@@ -71,7 +71,7 @@ export const createWOFromSR = async (req, res, next) => {
 
 export const assignWO = async (req, res, next) => {
   try {
-    const woId = Number(req.params.id);
+    const woId = Number(req.params.woId);
     const { technicianId } = req.body;
 
     if (!technicianId) {
@@ -118,9 +118,21 @@ export const assignWO = async (req, res, next) => {
 
 export const respondWO = async (req, res, next) => {
   try {
-    const woId = Number(req.params.id);
+    const woId = Number(req.params.woId);
     const { action } = req.body;
     const techId = req.user.id;
+
+    // Validate action
+    if (!action) {
+      return res.status(400).json({ message: 'Action is required' });
+    }
+
+    const validActions = ['ACCEPT', 'DECLINE'];
+    if (!validActions.includes(action)) {
+      return res.status(400).json({ 
+        message: `Invalid action. Must be one of: ${validActions.join(', ')}` 
+      });
+    }
 
     const wo = await prisma.workOrder.findUnique({
       where: { id: woId },
@@ -182,7 +194,7 @@ export const respondWO = async (req, res, next) => {
 
 export const startWO = async (req, res, next) => {
   try {
-    const woId = Number(req.params.id);
+    const woId = Number(req.params.woId);
     const techId = req.user.id;
     const { lat, lng } = req.body;
 
@@ -236,7 +248,7 @@ export const startWO = async (req, res, next) => {
 
 export const completeWO = async (req, res, next) => {
   try {
-    const woId = Number(req.params.id);
+    const woId = Number(req.params.woId);
     const techId = req.user.id;
     const { completionNotes, materialsUsed } = req.body;
 

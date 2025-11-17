@@ -5,14 +5,14 @@ import { createSR, listSR } from '../controllers/sr.controller.js';
 
 const router = Router();
 
-// Customer / Guest create SR (no auth)
+// Customer / Guest create SR (no auth required for guests)
 router.post('/', createSR);
 
-// Dispatcher / Admin / Call Center list SRs
+// List SRs - Customers see their own, Dispatcher/Admin/Call Center see all
 router.get(
   '/',
   authMiddleware,
-  requireRole('DISPATCHER', 'ADMIN', 'CALL_CENTER'),
+  requireRole('CUSTOMER', 'DISPATCHER', 'ADMIN', 'CALL_CENTER'),
   listSR
 );
 

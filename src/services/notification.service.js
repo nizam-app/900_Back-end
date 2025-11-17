@@ -25,79 +25,61 @@ export const createNotification = async (userId, type, title, message, data = nu
 };
 
 // ✅ Get user notifications
-export const getNotifications = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    const { unreadOnly } = req.query;
+export const findUserNotifications = async (userId, filters) => {
+  const { unreadOnly } = filters;
 
-    const where = { userId };
-    if (unreadOnly === 'true') {
-      where.isRead = false;
-    }
-
-    const notifications = await prisma.notification.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
-
-    return res.json(notifications);
-  } catch (err) {
-    next(err);
+  const where = { userId };
+  if (unreadOnly === 'true') {
+    where.isRead = false;
   }
+
+  const notifications = await prisma.notification.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  });
+
+  return notifications;
 };
 
 // ✅ Mark notification as read
-export const markAsRead = async (req, res, next) => {
-  try {
-    const notificationId = Number(req.params.id);
-    const userId = req.user.id;
+export const markNotificationRead = async (notificationId, userId) => {
+  const notification = await prisma.notification.findFirst({
+    where: {
+      id: notificationId,
+      userId,
+    },
+  });
 
-    const notification = await prisma.notification.findFirst({
-      where: {
-        id: notificationId,
-        userId,
-      },
-    });
-
-    if (!notification) {
-      return res.status(404).json({ message: 'Notification not found' });
-    }
-
-    const updated = await prisma.notification.update({
-      where: { id: notificationId },
-      data: {
-        isRead: true,
-        readAt: new Date(),
-      },
-    });
-
-    return res.json(updated);
-  } catch (err) {
-    next(err);
+  if (!notification) {
+    throw new Error('Notification not found');
   }
+
+  const updated = await prisma.notification.update({
+    where: { id: notificationId },
+    data: {
+      isRead: true,
+      readAt: new Date(),
+    },
+  });
+
+  return updated;
 };
 
 // ✅ Mark all notifications as read
-export const markAllAsRead = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
+export const markAllNotificationsRead = async (userId) => {
+  await prisma.notification.updateMany({
+    where: {
+      userId,
+      isRead: false,
+    },
+    data: {
+      isRead: true,
+      readAt: new Date(),
+    },
+  });
 
-    await prisma.notification.updateMany({
-      where: {
-        userId,
-        isRead: false,
-      },
-      data: {
-        isRead: true,
-        readAt: new Date(),
-      },
-    });
-
-    return res.json({ message: 'All notifications marked as read' });
-  } catch (err) {
-    next(err);
-  }
+  return { message: 'All notifications marked as read' };
 };
 
 // ✅ Send notification for WO assignment
