@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # Refactored Service Files - Pure Business Logic
 
 This document contains all refactored service files that separate business logic from HTTP handling.
@@ -5,12 +7,14 @@ This document contains all refactored service files that separate business logic
 ## Pattern
 
 **Services (Business Logic):**
+
 - Accept data parameters (not req/res/next)
 - Return data objects or throw errors
 - No HTTP status codes
 - Reusable across different contexts
 
 **Controllers (HTTP Handling):**
+
 - Extract data from req.body/req.params/req.query
 - Validate required fields
 - Call service functions in try/catch
@@ -40,6 +44,7 @@ The following files need complete refactoring using the established pattern:
 ## Controllers Remaining
 
 After services are refactored, update these controllers:
+
 - auth.controller.js
 - otp.controller.js
 - sr.controller.js

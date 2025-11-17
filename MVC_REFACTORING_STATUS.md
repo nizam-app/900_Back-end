@@ -1,8 +1,11 @@
+<!-- @format -->
+
 # Complete MVC Refactoring Guide
 
 ## ✅ Completed Files
 
 ### admin.service.js
+
 - getDashboard → getDashboardStats()
 - listUsers → findUsers(filters)
 - createUser → createUserWithProfile(userData, adminId)
@@ -13,14 +16,17 @@
 - getTechnicianLocations → getActiveTechnicianLocations()
 
 ### admin.controller.js
+
 - Updated to call all new admin service functions
 - Pattern: Extract data → validate → call service → handle response
 
 ### auth.service.js
+
 - register → registerUser(userData)
 - login → loginUser(credentials)
 
 ### otp.service.js
+
 - sendOTP(phone, type)
 - verifyOTP(phone, code, type)
 
@@ -31,10 +37,12 @@ Due to the extensive scope (8 more service files + 10 controllers), here's what 
 ### Service Files to Refactor
 
 1. **sr.service.js**
+
    - createSR → createServiceRequest(srData)
    - listSR → findServiceRequests(filters)
 
 2. **wo.service.js**
+
    - createWOFromSR → createWorkOrderFromSR(srId, woData)
    - assignWO → assignWorkOrder(woId, technicianId)
    - respondWO → respondToWorkOrder(woId, techId, action)
@@ -42,10 +50,12 @@ Due to the extensive scope (8 more service files + 10 controllers), here's what 
    - completeWO → completeWorkOrder(woId, techId, completionData, files)
 
 3. **payment.service.js**
+
    - createPayment → uploadPaymentProof(paymentData, file, technicianId)
    - verifyPayment → processPaymentVerification(paymentId, action, reason, verifierId)
 
 4. **commission.service.js**
+
    - getMyCommissions → findTechnicianCommissions(technicianId, filters)
    - requestPayout → createPayoutRequest(technicianId, amount, reason)
    - reviewPayoutRequest → processPayoutRequest(requestId, action, reason, reviewerId)
@@ -53,6 +63,7 @@ Due to the extensive scope (8 more service files + 10 controllers), here's what 
    - getTechnicianDashboard → getTechnicianStats(technicianId)
 
 5. **category.service.js** (9 functions)
+
    - listCategories → findAllCategories()
    - createCategory → createNewCategory(categoryData, adminId)
    - updateCategory → updateCategoryById(categoryId, updates, adminId)
@@ -65,12 +76,14 @@ Due to the extensive scope (8 more service files + 10 controllers), here's what 
    - deleteService → deleteServiceById(serviceId, adminId)
 
 6. **notification.service.js**
+
    - getNotifications → findUserNotifications(userId, filters)
    - markAsRead → markNotificationRead(notificationId, userId)
    - markAllAsRead → markAllNotificationsRead(userId)
    - (Helper functions already pure: createNotification, notifyWO*, notifyPayment*, etc.)
 
 7. **location.service.js**
+
    - updateLocation → updateTechnicianLocation(technicianId, locationData)
    - getNearbyTechnicians → findNearbyTechnicians(latitude, longitude, radius)
 
