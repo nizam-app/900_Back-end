@@ -2,278 +2,217 @@
 import { prisma } from '../prisma.js';
 
 // ✅ List all categories with subservices and services
-export const listCategories = async (req, res, next) => {
-  try {
-    const categories = await prisma.category.findMany({
-      include: {
-        subservices: {
-          include: {
-            services: true,
-          },
+export const findAllCategories = async () => {
+  const categories = await prisma.category.findMany({
+    include: {
+      subservices: {
+        include: {
+          services: true,
         },
       },
-      orderBy: { name: 'asc' },
-    });
+    },
+    orderBy: { name: 'asc' },
+  });
 
-    return res.json(categories);
-  } catch (err) {
-    next(err);
-  }
+  return categories;
 };
 
 // ✅ Create category (Admin only)
-export const createCategory = async (req, res, next) => {
-  try {
-    const { name, description } = req.body;
+export const createNewCategory = async (categoryData, adminId) => {
+  const { name, description } = categoryData;
 
-    if (!name) {
-      return res.status(400).json({ message: 'Name is required' });
-    }
+  const category = await prisma.category.create({
+    data: {
+      name,
+      description: description || null,
+    },
+  });
 
-    const category = await prisma.category.create({
-      data: {
-        name,
-        description: description || null,
-      },
-    });
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: 'CATEGORY_CREATED',
+      entityType: 'CATEGORY',
+      entityId: category.id,
+    },
+  });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'CATEGORY_CREATED',
-        entityType: 'CATEGORY',
-        entityId: category.id,
-      },
-    });
-
-    return res.status(201).json(category);
-  } catch (err) {
-    next(err);
-  }
+  return category;
 };
 
 // ✅ Update category (Admin only)
-export const updateCategory = async (req, res, next) => {
-  try {
-    const categoryId = Number(req.params.id);
-    const { name, description } = req.body;
+export const updateCategoryById = async (categoryId, updates, adminId) => {
+  const { name, description } = updates;
 
-    const category = await prisma.category.update({
-      where: { id: categoryId },
-      data: {
-        name,
-        description,
-      },
-    });
+  const category = await prisma.category.update({
+    where: { id: categoryId },
+    data: {
+      name,
+      description,
+    },
+  });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'CATEGORY_UPDATED',
-        entityType: 'CATEGORY',
-        entityId: category.id,
-      },
-    });
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: 'CATEGORY_UPDATED',
+      entityType: 'CATEGORY',
+      entityId: category.id,
+    },
+  });
 
-    return res.json(category);
-  } catch (err) {
-    next(err);
-  }
+  return category;
 };
 
 // ✅ Delete category (Admin only)
-export const deleteCategory = async (req, res, next) => {
-  try {
-    const categoryId = Number(req.params.id);
+export const deleteCategoryById = async (categoryId, adminId) => {
+  await prisma.category.delete({
+    where: { id: categoryId },
+  });
 
-    await prisma.category.delete({
-      where: { id: categoryId },
-    });
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: 'CATEGORY_DELETED',
+      entityType: 'CATEGORY',
+      entityId: categoryId,
+    },
+  });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'CATEGORY_DELETED',
-        entityType: 'CATEGORY',
-        entityId: categoryId,
-      },
-    });
-
-    return res.json({ message: 'Category deleted successfully' });
-  } catch (err) {
-    next(err);
-  }
+  return { message: 'Category deleted successfully' };
 };
 
 // ✅ Create subservice (Admin only)
-export const createSubservice = async (req, res, next) => {
-  try {
-    const { categoryId, name, description } = req.body;
+export const createNewSubservice = async (subserviceData, adminId) => {
+  const { categoryId, name, description } = subserviceData;
 
-    if (!categoryId || !name) {
-      return res.status(400).json({ message: 'categoryId and name are required' });
-    }
+  const subservice = await prisma.subservice.create({
+    data: {
+      categoryId: Number(categoryId),
+      name,
+      description: description || null,
+    },
+  });
 
-    const subservice = await prisma.subservice.create({
-      data: {
-        categoryId: Number(categoryId),
-        name,
-        description: description || null,
-      },
-    });
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: 'SUBSERVICE_CREATED',
+      entityType: 'SUBSERVICE',
+      entityId: subservice.id,
+    },
+  });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'SUBSERVICE_CREATED',
-        entityType: 'SUBSERVICE',
-        entityId: subservice.id,
-      },
-    });
-
-    return res.status(201).json(subservice);
-  } catch (err) {
-    next(err);
-  }
+  return subservice;
 };
 
 // ✅ Update subservice (Admin only)
-export const updateSubservice = async (req, res, next) => {
-  try {
-    const subserviceId = Number(req.params.id);
-    const { name, description } = req.body;
+export const updateSubserviceById = async (subserviceId, updates, adminId) => {
+  const { name, description } = updates;
 
-    const subservice = await prisma.subservice.update({
-      where: { id: subserviceId },
-      data: {
-        name,
-        description,
-      },
-    });
+  const subservice = await prisma.subservice.update({
+    where: { id: subserviceId },
+    data: {
+      name,
+      description,
+    },
+  });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'SUBSERVICE_UPDATED',
-        entityType: 'SUBSERVICE',
-        entityId: subservice.id,
-      },
-    });
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: 'SUBSERVICE_UPDATED',
+      entityType: 'SUBSERVICE',
+      entityId: subservice.id,
+    },
+  });
 
-    return res.json(subservice);
-  } catch (err) {
-    next(err);
-  }
+  return subservice;
 };
 
 // ✅ Delete subservice (Admin only)
-export const deleteSubservice = async (req, res, next) => {
-  try {
-    const subserviceId = Number(req.params.id);
+export const deleteSubserviceById = async (subserviceId, adminId) => {
+  await prisma.subservice.delete({
+    where: { id: subserviceId },
+  });
 
-    await prisma.subservice.delete({
-      where: { id: subserviceId },
-    });
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: 'SUBSERVICE_DELETED',
+      entityType: 'SUBSERVICE',
+      entityId: subserviceId,
+    },
+  });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'SUBSERVICE_DELETED',
-        entityType: 'SUBSERVICE',
-        entityId: subserviceId,
-      },
-    });
-
-    return res.json({ message: 'Subservice deleted successfully' });
-  } catch (err) {
-    next(err);
-  }
+  return { message: 'Subservice deleted successfully' };
 };
 
 // ✅ Create service (Admin only)
-export const createService = async (req, res, next) => {
-  try {
-    const { categoryId, subserviceId, name, description, baseRate } = req.body;
+export const createNewService = async (serviceData, adminId) => {
+  const { categoryId, subserviceId, name, description, baseRate } = serviceData;
 
-    if (!categoryId || !subserviceId || !name) {
-      return res.status(400).json({ message: 'categoryId, subserviceId, and name are required' });
-    }
+  const service = await prisma.service.create({
+    data: {
+      categoryId: Number(categoryId),
+      subserviceId: Number(subserviceId),
+      name,
+      description: description || null,
+      baseRate: baseRate ? Number(baseRate) : null,
+    },
+  });
 
-    const service = await prisma.service.create({
-      data: {
-        categoryId: Number(categoryId),
-        subserviceId: Number(subserviceId),
-        name,
-        description: description || null,
-        baseRate: baseRate ? Number(baseRate) : null,
-      },
-    });
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: 'SERVICE_CREATED',
+      entityType: 'SERVICE',
+      entityId: service.id,
+    },
+  });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'SERVICE_CREATED',
-        entityType: 'SERVICE',
-        entityId: service.id,
-      },
-    });
-
-    return res.status(201).json(service);
-  } catch (err) {
-    next(err);
-  }
+  return service;
 };
 
 // ✅ Update service (Admin only)
-export const updateService = async (req, res, next) => {
-  try {
-    const serviceId = Number(req.params.id);
-    const { name, description, baseRate } = req.body;
+export const updateServiceById = async (serviceId, updates, adminId) => {
+  const { name, description, baseRate } = updates;
 
-    const service = await prisma.service.update({
-      where: { id: serviceId },
-      data: {
-        name,
-        description,
-        baseRate: baseRate ? Number(baseRate) : undefined,
-      },
-    });
+  const service = await prisma.service.update({
+    where: { id: serviceId },
+    data: {
+      name,
+      description,
+      baseRate: baseRate ? Number(baseRate) : undefined,
+    },
+  });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'SERVICE_UPDATED',
-        entityType: 'SERVICE',
-        entityId: service.id,
-      },
-    });
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: 'SERVICE_UPDATED',
+      entityType: 'SERVICE',
+      entityId: service.id,
+    },
+  });
 
-    return res.json(service);
-  } catch (err) {
-    next(err);
-  }
+  return service;
 };
 
 // ✅ Delete service (Admin only)
-export const deleteService = async (req, res, next) => {
-  try {
-    const serviceId = Number(req.params.id);
+export const deleteServiceById = async (serviceId, adminId) => {
+  await prisma.service.delete({
+    where: { id: serviceId },
+  });
 
-    await prisma.service.delete({
-      where: { id: serviceId },
-    });
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: 'SERVICE_DELETED',
+      entityType: 'SERVICE',
+      entityId: serviceId,
+    },
+  });
 
-    await prisma.auditLog.create({
-      data: {
-        userId: req.user.id,
-        action: 'SERVICE_DELETED',
-        entityType: 'SERVICE',
-        entityId: serviceId,
-      },
-    });
-
-    return res.json({ message: 'Service deleted successfully' });
-  } catch (err) {
-    next(err);
-  }
+  return { message: 'Service deleted successfully' };
 };

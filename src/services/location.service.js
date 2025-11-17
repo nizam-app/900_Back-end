@@ -2,87 +2,68 @@
 import { prisma } from '../prisma.js';
 
 // ✅ Update technician location
-export const updateLocation = async (req, res, next) => {
-  try {
-    const technicianId = req.user.id;
-    const { latitude, longitude, status } = req.body;
+export const updateTechnicianLocation = async (technicianId, locationData) => {
+  const { latitude, longitude, status } = locationData;
 
-    if (!latitude || !longitude) {
-      return res.status(400).json({ message: 'Latitude and longitude are required' });
-    }
+  const user = await prisma.user.update({
+    where: { id: technicianId },
+    data: {
+      lastLatitude: Number(latitude),
+      lastLongitude: Number(longitude),
+      locationStatus: status || 'ONLINE',
+      locationUpdatedAt: new Date(),
+    },
+  });
 
-    const user = await prisma.user.update({
-      where: { id: technicianId },
-      data: {
-        lastLatitude: Number(latitude),
-        lastLongitude: Number(longitude),
-        locationStatus: status || 'ONLINE',
-        locationUpdatedAt: new Date(),
-      },
-    });
-
-    return res.json({
-      message: 'Location updated successfully',
-      location: {
-        latitude: user.lastLatitude,
-        longitude: user.lastLongitude,
-        status: user.locationStatus,
-      },
-    });
-  } catch (err) {
-    next(err);
-  }
+  return {
+    message: 'Location updated successfully',
+    location: {
+      latitude: user.lastLatitude,
+      longitude: user.lastLongitude,
+      status: user.locationStatus,
+    },
+  };
 };
 
 // ✅ Get nearby technicians
-export const getNearbyTechnicians = async (req, res, next) => {
-  try {
-    const { latitude, longitude, radius } = req.query;
+export const findNearbyTechnicians = async (latitude, longitude, radius) => {
+  // Simple query - in production, use PostGIS or similar for proper geo queries
+  const technicians = await prisma.user.findMany({
+    where: {
+      role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
+      isBlocked: false,
+      lastLatitude: { not: null },
+      lastLongitude: { not: null },
+    },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      role: true,
+      lastLatitude: true,
+      lastLongitude: true,
+      locationStatus: true,
+      locationUpdatedAt: true,
+      technicianProfile: true,
+    },
+  });
 
-    if (!latitude || !longitude) {
-      return res.status(400).json({ message: 'Latitude and longitude are required' });
-    }
-
-    // Simple query - in production, use PostGIS or similar for proper geo queries
-    const technicians = await prisma.user.findMany({
-      where: {
-        role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
-        isBlocked: false,
-        lastLatitude: { not: null },
-        lastLongitude: { not: null },
-      },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        role: true,
-        lastLatitude: true,
-        lastLongitude: true,
-        locationStatus: true,
-        locationUpdatedAt: true,
-        technicianProfile: true,
-      },
+  // Filter by radius if provided (simple distance calculation)
+  let filtered = technicians;
+  if (radius) {
+    const rad = Number(radius);
+    filtered = technicians.filter((tech) => {
+      const distance = calculateDistance(
+        Number(latitude),
+        Number(longitude),
+        tech.lastLatitude,
+        tech.lastLongitude
+      );
+      return distance <= rad;
     });
-
-    // Filter by radius if provided (simple distance calculation)
-    let filtered = technicians;
-    if (radius) {
-      const rad = Number(radius);
-      filtered = technicians.filter((tech) => {
-        const distance = calculateDistance(
-          Number(latitude),
-          Number(longitude),
-          tech.lastLatitude,
-          tech.lastLongitude
-        );
-        return distance <= rad;
-      });
-    }
-
-    return res.json(filtered);
-  } catch (err) {
-    next(err);
   }
+
+  return filtered;
 };
 
 // Simple distance calculation (Haversine formula)

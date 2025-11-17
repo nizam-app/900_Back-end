@@ -152,316 +152,287 @@ export const runWeeklyPayout = async () => {
 };
 
 // ✅ Get technician commissions/bonuses
-export const getMyCommissions = async (req, res, next) => {
-  try {
-    const technicianId = req.user.id;
-    const { status } = req.query;
+export const findTechnicianCommissions = async (technicianId, filters) => {
+  const { status } = filters;
 
-    const where = { technicianId };
-    if (status) {
-      where.status = status;
-    }
-
-    const commissions = await prisma.commission.findMany({
-      where,
-      include: {
-        workOrder: {
-          select: {
-            woNumber: true,
-            address: true,
-            completedAt: true,
-          },
-        },
-        payout: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const total = commissions.reduce((sum, c) => sum + c.amount, 0);
-    const earned = commissions.filter((c) => c.status === 'EARNED').reduce((sum, c) => sum + c.amount, 0);
-    const paid = commissions.filter((c) => c.status === 'PAID').reduce((sum, c) => sum + c.amount, 0);
-
-    return res.json({
-      commissions,
-      summary: {
-        total,
-        earned,
-        paid,
-      },
-    });
-  } catch (err) {
-    next(err);
+  const where = { technicianId };
+  if (status) {
+    where.status = status;
   }
+
+  const commissions = await prisma.commission.findMany({
+    where,
+    include: {
+      workOrder: {
+        select: {
+          woNumber: true,
+          address: true,
+          completedAt: true,
+        },
+      },
+      payout: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const total = commissions.reduce((sum, c) => sum + c.amount, 0);
+  const earned = commissions.filter((c) => c.status === 'EARNED').reduce((sum, c) => sum + c.amount, 0);
+  const paid = commissions.filter((c) => c.status === 'PAID').reduce((sum, c) => sum + c.amount, 0);
+
+  return {
+    commissions,
+    summary: {
+      total,
+      earned,
+      paid,
+    },
+  };
 };
 
 // ✅ Request on-demand payout
-export const requestPayout = async (req, res, next) => {
-  try {
-    const technicianId = req.user.id;
-    const { amount, reason } = req.body;
-
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ message: 'Valid amount is required' });
-    }
-
-    // Check wallet balance for freelancers
-    const user = await prisma.user.findUnique({
-      where: { id: technicianId },
-      include: {
-        wallet: true,
-        technicianProfile: true,
-      },
-    });
-
-    if (user.technicianProfile?.type === 'FREELANCER') {
-      if (!user.wallet || user.wallet.balance < amount) {
-        return res.status(400).json({ message: 'Insufficient wallet balance' });
-      }
-    }
-
-    const payoutRequest = await prisma.payoutRequest.create({
-      data: {
-        technicianId,
-        amount: Number(amount),
-        status: 'PENDING',
-        reason: reason || null,
-      },
-    });
-
-    await prisma.auditLog.create({
-      data: {
-        userId: technicianId,
-        action: 'PAYOUT_REQUESTED',
-        entityType: 'PAYOUT_REQUEST',
-        entityId: payoutRequest.id,
-        metadataJson: JSON.stringify({ amount }),
-      },
-    });
-
-    return res.status(201).json(payoutRequest);
-  } catch (err) {
-    next(err);
+export const createPayoutRequest = async (technicianId, amount, reason) => {
+  if (!amount || amount <= 0) {
+    throw new Error('Valid amount is required');
   }
+
+  // Check wallet balance for freelancers
+  const user = await prisma.user.findUnique({
+    where: { id: technicianId },
+    include: {
+      wallet: true,
+      technicianProfile: true,
+    },
+  });
+
+  if (user.technicianProfile?.type === 'FREELANCER') {
+    if (!user.wallet || user.wallet.balance < amount) {
+      throw new Error('Insufficient wallet balance');
+    }
+  }
+
+  const payoutRequest = await prisma.payoutRequest.create({
+    data: {
+      technicianId,
+      amount: Number(amount),
+      status: 'PENDING',
+      reason: reason || null,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: technicianId,
+      action: 'PAYOUT_REQUESTED',
+      entityType: 'PAYOUT_REQUEST',
+      entityId: payoutRequest.id,
+      metadataJson: JSON.stringify({ amount }),
+    },
+  });
+
+  return payoutRequest;
 };
 
 // ✅ Admin: Review payout request
-export const reviewPayoutRequest = async (req, res, next) => {
-  try {
-    const requestId = Number(req.params.id);
-    const { action, reason } = req.body; // APPROVE | REJECT
-    const reviewerId = req.user.id;
-
-    const payoutRequest = await prisma.payoutRequest.findUnique({
-      where: { id: requestId },
-      include: {
-        technician: {
-          include: {
-            wallet: true,
-            technicianProfile: true,
-          },
+export const processPayoutRequest = async (requestId, action, reason, reviewerId) => {
+  const payoutRequest = await prisma.payoutRequest.findUnique({
+    where: { id: requestId },
+    include: {
+      technician: {
+        include: {
+          wallet: true,
+          technicianProfile: true,
         },
+      },
+    },
+  });
+
+  if (!payoutRequest) {
+    throw new Error('Payout request not found');
+  }
+
+  if (payoutRequest.status !== 'PENDING') {
+    throw new Error('Payout request already processed');
+  }
+
+  if (action === 'APPROVE') {
+    // Get earned commissions
+    const earnedCommissions = await prisma.commission.findMany({
+      where: {
+        technicianId: payoutRequest.technicianId,
+        status: 'EARNED',
       },
     });
 
-    if (!payoutRequest) {
-      return res.status(404).json({ message: 'Payout request not found' });
+    const earnedTotal = earnedCommissions.reduce((sum, c) => sum + c.amount, 0);
+
+    if (earnedTotal < payoutRequest.amount) {
+      throw new Error('Insufficient earned commissions');
     }
 
-    if (payoutRequest.status !== 'PENDING') {
-      return res.status(400).json({ message: 'Payout request already processed' });
-    }
+    // Create payout
+    const payout = await prisma.payout.create({
+      data: {
+        technicianId: payoutRequest.technicianId,
+        totalAmount: payoutRequest.amount,
+        type: 'ON_DEMAND',
+        status: 'PAID',
+        requestedAt: payoutRequest.createdAt,
+        processedAt: new Date(),
+        createdById: reviewerId,
+      },
+    });
 
-    if (action === 'APPROVE') {
-      // Get earned commissions
-      const earnedCommissions = await prisma.commission.findMany({
-        where: {
-          technicianId: payoutRequest.technicianId,
-          status: 'EARNED',
-        },
-      });
+    // Mark commissions as paid (up to the requested amount)
+    let remaining = payoutRequest.amount;
+    for (const commission of earnedCommissions) {
+      if (remaining <= 0) break;
 
-      const earnedTotal = earnedCommissions.reduce((sum, c) => sum + c.amount, 0);
-
-      if (earnedTotal < payoutRequest.amount) {
-        return res.status(400).json({ message: 'Insufficient earned commissions' });
-      }
-
-      // Create payout
-      const payout = await prisma.payout.create({
+      await prisma.commission.update({
+        where: { id: commission.id },
         data: {
-          technicianId: payoutRequest.technicianId,
-          totalAmount: payoutRequest.amount,
-          type: 'ON_DEMAND',
           status: 'PAID',
-          requestedAt: payoutRequest.createdAt,
-          processedAt: new Date(),
-          createdById: reviewerId,
+          payoutId: payout.id,
         },
       });
 
-      // Mark commissions as paid (up to the requested amount)
-      let remaining = payoutRequest.amount;
-      for (const commission of earnedCommissions) {
-        if (remaining <= 0) break;
-
-        await prisma.commission.update({
-          where: { id: commission.id },
-          data: {
-            status: 'PAID',
-            payoutId: payout.id,
-          },
-        });
-
-        remaining -= commission.amount;
-      }
-
-      // Update wallet for freelancers
-      if (payoutRequest.technician.wallet) {
-        await prisma.wallet.update({
-          where: { id: payoutRequest.technician.wallet.id },
-          data: {
-            balance: { decrement: payoutRequest.amount },
-          },
-        });
-
-        await prisma.walletTransaction.create({
-          data: {
-            walletId: payoutRequest.technician.wallet.id,
-            technicianId: payoutRequest.technicianId,
-            type: 'DEBIT',
-            sourceType: 'PAYOUT',
-            sourceId: payout.id,
-            amount: payoutRequest.amount,
-            description: 'On-demand payout',
-          },
-        });
-      }
-
-      // Update request
-      await prisma.payoutRequest.update({
-        where: { id: requestId },
-        data: {
-          status: 'APPROVED',
-          reviewedById: reviewerId,
-          reviewedAt: new Date(),
-        },
-      });
-
-      // Notify technician
-      await notifyCommissionPaid(payoutRequest.technicianId, payout);
-
-      return res.json({ message: 'Payout approved and processed', payout });
-    } else if (action === 'REJECT') {
-      await prisma.payoutRequest.update({
-        where: { id: requestId },
-        data: {
-          status: 'REJECTED',
-          reason: reason || 'No reason provided',
-          reviewedById: reviewerId,
-          reviewedAt: new Date(),
-        },
-      });
-
-      return res.json({ message: 'Payout request rejected' });
-    } else {
-      return res.status(400).json({ message: 'Invalid action, use APPROVE or REJECT' });
+      remaining -= commission.amount;
     }
-  } catch (err) {
-    next(err);
+
+    // Update wallet for freelancers
+    if (payoutRequest.technician.wallet) {
+      await prisma.wallet.update({
+        where: { id: payoutRequest.technician.wallet.id },
+        data: {
+          balance: { decrement: payoutRequest.amount },
+        },
+      });
+
+      await prisma.walletTransaction.create({
+        data: {
+          walletId: payoutRequest.technician.wallet.id,
+          technicianId: payoutRequest.technicianId,
+          type: 'DEBIT',
+          sourceType: 'PAYOUT',
+          sourceId: payout.id,
+          amount: payoutRequest.amount,
+          description: 'On-demand payout',
+        },
+      });
+    }
+
+    // Update request
+    await prisma.payoutRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'APPROVED',
+        reviewedById: reviewerId,
+        reviewedAt: new Date(),
+      },
+    });
+
+    // Notify technician
+    await notifyCommissionPaid(payoutRequest.technicianId, payout);
+
+    return { message: 'Payout approved and processed', payout };
+  } else if (action === 'REJECT') {
+    await prisma.payoutRequest.update({
+      where: { id: requestId },
+      data: {
+        status: 'REJECTED',
+        reason: reason || 'No reason provided',
+        reviewedById: reviewerId,
+        reviewedAt: new Date(),
+      },
+    });
+
+    return { message: 'Payout request rejected' };
+  } else {
+    throw new Error('Invalid action, use APPROVE or REJECT');
   }
 };
 
 // ✅ Get all payout requests (Admin)
-export const getAllPayoutRequests = async (req, res, next) => {
-  try {
-    const { status } = req.query;
+export const findAllPayoutRequests = async (filters) => {
+  const { status } = filters;
 
-    const where = {};
-    if (status) {
-      where.status = status;
-    }
+  const where = {};
+  if (status) {
+    where.status = status;
+  }
 
-    const requests = await prisma.payoutRequest.findMany({
-      where,
-      include: {
-        technician: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            role: true,
-          },
-        },
-        reviewedBy: {
-          select: {
-            id: true,
-            name: true,
-          },
+  const requests = await prisma.payoutRequest.findMany({
+    where,
+    include: {
+      technician: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          role: true,
         },
       },
-      orderBy: { createdAt: 'desc' },
-    });
+      reviewedBy: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 
-    return res.json(requests);
-  } catch (err) {
-    next(err);
-  }
+  return requests;
 };
 
 // ✅ Get technician dashboard stats
-export const getTechnicianDashboard = async (req, res, next) => {
-  try {
-    const technicianId = req.user.id;
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+export const getTechnicianStats = async (technicianId) => {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [openWOs, inProgressWOs, completedWOsCount, monthlyCommissions, wallet] = await Promise.all([
-      prisma.workOrder.findMany({
-        where: {
-          technicianId,
-          status: { in: ['ASSIGNED', 'ACCEPTED'] },
-        },
-        include: {
-          category: true,
-          subservice: true,
-        },
-      }),
-      prisma.workOrder.findMany({
-        where: {
-          technicianId,
-          status: 'IN_PROGRESS',
-        },
-        include: {
-          category: true,
-          subservice: true,
-        },
-      }),
-      prisma.workOrder.count({
-        where: {
-          technicianId,
-          status: 'PAID_VERIFIED',
-        },
-      }),
-      prisma.commission.aggregate({
-        where: {
-          technicianId,
-          createdAt: { gte: startOfMonth },
-        },
-        _sum: { amount: true },
-      }),
-      prisma.wallet.findUnique({
-        where: { technicianId },
-      }),
-    ]);
+  const [openWOs, inProgressWOs, completedWOsCount, monthlyCommissions, wallet] = await Promise.all([
+    prisma.workOrder.findMany({
+      where: {
+        technicianId,
+        status: { in: ['ASSIGNED', 'ACCEPTED'] },
+      },
+      include: {
+        category: true,
+        subservice: true,
+      },
+    }),
+    prisma.workOrder.findMany({
+      where: {
+        technicianId,
+        status: 'IN_PROGRESS',
+      },
+      include: {
+        category: true,
+        subservice: true,
+      },
+    }),
+    prisma.workOrder.count({
+      where: {
+        technicianId,
+        status: 'PAID_VERIFIED',
+      },
+    }),
+    prisma.commission.aggregate({
+      where: {
+        technicianId,
+        createdAt: { gte: startOfMonth },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.wallet.findUnique({
+      where: { technicianId },
+    }),
+  ]);
 
-    return res.json({
-      openWOs,
-      inProgressWOs,
-      completedWOsCount,
-      monthlyCommission: monthlyCommissions._sum.amount || 0,
-      walletBalance: wallet?.balance || 0,
-    });
-  } catch (err) {
-    next(err);
-  }
+  return {
+    openWOs,
+    inProgressWOs,
+    completedWOsCount,
+    monthlyCommission: monthlyCommissions._sum.amount || 0,
+    walletBalance: wallet?.balance || 0,
+  };
 };
