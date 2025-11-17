@@ -1,0 +1,11 @@
+<!-- @format -->
+
+# Uploads Directory
+
+This directory stores uploaded files such as:
+
+- Payment proof screenshots
+- Job completion photos
+- Receipt images
+
+**Note:** Files in this directory are ignored by git (except this .gitkeep file).
