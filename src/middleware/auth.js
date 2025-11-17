@@ -22,3 +22,7 @@ export const requireRole = (...roles) => (req, res, next) => {
   }
   next();
 };
+
+// Aliases for consistency
+export const authenticate = authMiddleware;
+export const authorize = (roles) => requireRole(...roles);
