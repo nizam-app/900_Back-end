@@ -1,8 +1,9 @@
 // src/routes/payment.routes.js
 import { Router } from 'express';
 import multer from 'multer';
+import path from 'path';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
-import { createPayment, verifyPayment } from '../services/payment.service.js';
+import { uploadPaymentProof, verifyPayment } from '../controllers/payment.controller.js';
 
 const router = Router();
 
@@ -15,7 +16,7 @@ router.post(
   authMiddleware,
   requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
   upload.single('proof'),
-  createPayment
+  uploadPaymentProof
 );
 
 // Dispatcher/Admin verifies payment

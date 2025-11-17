@@ -1,6 +1,6 @@
 // src/routes/category.routes.js
-import express from 'express';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { Router } from 'express';
+import { authMiddleware, requireRole } from '../middleware/auth.js';
 import {
   listCategories,
   createCategory,
@@ -12,24 +12,24 @@ import {
   createService,
   updateService,
   deleteService,
-} from '../services/category.service.js';
+} from '../controllers/category.controller.js';
 
-const router = express.Router();
+const router = Router();
 
 // Public routes
 router.get('/', listCategories);
 
 // Admin only routes
-router.post('/', authenticate, authorize(['ADMIN']), createCategory);
-router.patch('/:id', authenticate, authorize(['ADMIN']), updateCategory);
-router.delete('/:id', authenticate, authorize(['ADMIN']), deleteCategory);
+router.post('/', authMiddleware, requireRole('ADMIN'), createCategory);
+router.patch('/:id', authMiddleware, requireRole('ADMIN'), updateCategory);
+router.delete('/:id', authMiddleware, requireRole('ADMIN'), deleteCategory);
 
-router.post('/subservices', authenticate, authorize(['ADMIN']), createSubservice);
-router.patch('/subservices/:id', authenticate, authorize(['ADMIN']), updateSubservice);
-router.delete('/subservices/:id', authenticate, authorize(['ADMIN']), deleteSubservice);
+router.post('/subservices', authMiddleware, requireRole('ADMIN'), createSubservice);
+router.patch('/subservices/:id', authMiddleware, requireRole('ADMIN'), updateSubservice);
+router.delete('/subservices/:id', authMiddleware, requireRole('ADMIN'), deleteSubservice);
 
-router.post('/services', authenticate, authorize(['ADMIN']), createService);
-router.patch('/services/:id', authenticate, authorize(['ADMIN']), updateService);
-router.delete('/services/:id', authenticate, authorize(['ADMIN']), deleteService);
+router.post('/services', authMiddleware, requireRole('ADMIN'), createService);
+router.patch('/services/:id', authMiddleware, requireRole('ADMIN'), updateService);
+router.delete('/services/:id', authMiddleware, requireRole('ADMIN'), deleteService);
 
 export default router;

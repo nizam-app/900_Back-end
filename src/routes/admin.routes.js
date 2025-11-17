@@ -1,6 +1,6 @@
-// src/routes/admin.routes.js  talha
-import express from 'express';
-import { authenticate, authorize } from '../middleware/auth.js';
+// src/routes/admin.routes.js
+import { Router } from 'express';
+import { authMiddleware, requireRole } from '../middleware/auth.js';
 import {
   getDashboard,
   listUsers,
@@ -10,18 +10,18 @@ import {
   updateTechnicianProfile,
   getAuditLogs,
   getTechnicianLocations,
-} from '../services/admin.service.js';
+} from '../controllers/admin.controller.js';
 
-const router = express.Router();
+const router = Router();
 
 // Admin only routes
-router.get('/dashboard', authenticate, authorize(['ADMIN', 'DISPATCHER']), getDashboard);
-router.get('/users', authenticate, authorize(['ADMIN', 'DISPATCHER']), listUsers);
-router.post('/users', authenticate, authorize(['ADMIN']), createUser);
-router.patch('/users/:id', authenticate, authorize(['ADMIN']), updateUser);
-router.patch('/users/:id/block', authenticate, authorize(['ADMIN', 'DISPATCHER']), blockTechnician);
-router.patch('/users/:id/profile', authenticate, authorize(['ADMIN']), updateTechnicianProfile);
-router.get('/audit-logs', authenticate, authorize(['ADMIN']), getAuditLogs);
-router.get('/technician-locations', authenticate, authorize(['ADMIN', 'DISPATCHER']), getTechnicianLocations);
+router.get('/dashboard', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getDashboard);
+router.get('/users', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), listUsers);
+router.post('/users', authMiddleware, requireRole('ADMIN'), createUser);
+router.patch('/users/:id', authMiddleware, requireRole('ADMIN'), updateUser);
+router.patch('/users/:id/block', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), blockTechnician);
+router.patch('/users/:id/profile', authMiddleware, requireRole('ADMIN'), updateTechnicianProfile);
+router.get('/audit-logs', authMiddleware, requireRole('ADMIN'), getAuditLogs);
+router.get('/technician-locations', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getTechnicianLocations);
 
 export default router;
