@@ -246,7 +246,7 @@ export const completeWO = async (req, res, next) => {
   try {
     const woId = Number(req.params.id);
     const techId = req.user.id;
-    const { notes } = req.body;
+    const { completionNotes, materialsUsed } = req.body;
 
     const wo = await prisma.workOrder.findUnique({
       where: { id: woId },
@@ -264,12 +264,27 @@ export const completeWO = async (req, res, next) => {
       return res.status(400).json({ message: 'WO is not in IN_PROGRESS status' });
     }
 
+    // Process uploaded photos
+    const photoUrls = req.files ? req.files.map(file => `/uploads/wo-completion/${file.filename}`) : [];
+
+    // Parse materialsUsed if it's a JSON string
+    let parsedMaterials = null;
+    if (materialsUsed) {
+      try {
+        parsedMaterials = typeof materialsUsed === 'string' ? JSON.parse(materialsUsed) : materialsUsed;
+      } catch (err) {
+        return res.status(400).json({ message: 'Invalid materialsUsed format. Expected JSON array.' });
+      }
+    }
+
     const updated = await prisma.workOrder.update({
       where: { id: woId },
       data: {
         status: 'COMPLETED_PENDING_PAYMENT',
         completedAt: new Date(),
-        notes: notes || wo.notes,
+        completionNotes: completionNotes || null,
+        completionPhotos: photoUrls.length > 0 ? JSON.stringify(photoUrls) : null,
+        materialsUsed: parsedMaterials ? JSON.stringify(parsedMaterials) : null,
       },
     });
 
