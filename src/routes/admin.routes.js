@@ -1,4 +1,4 @@
-// src/routes/admin.routes.js
+// src/routes/admin.routes.js  talha
 import express from 'express';
 import { authenticate, authorize } from '../middleware/auth.js';
 import {
