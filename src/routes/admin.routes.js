@@ -1,6 +1,6 @@
 // src/routes/admin.routes.js
-import express from 'express';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { Router } from 'express';
+import { authMiddleware, requireRole } from '../middleware/auth.js';
 import {
   getDashboard,
   listUsers,
@@ -10,7 +10,7 @@ import {
   updateTechnicianProfile,
   getAuditLogs,
   getTechnicianLocations,
-} from '../services/admin.service.js';
+} from '../controllers/admin.controller.js';
 
 const router = express.Router();
 

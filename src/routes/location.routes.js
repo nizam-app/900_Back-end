@@ -1,14 +1,14 @@
 // src/routes/location.routes.js
-import express from 'express';
-import { authenticate, authorize } from '../middleware/auth.js';
-import { updateLocation, getNearbyTechnicians } from '../services/location.service.js';
+import { Router } from 'express';
+import { authMiddleware, requireRole } from '../middleware/auth.js';
+import { updateLocation, getNearbyTechnicians } from '../controllers/location.controller.js';
 
-const router = express.Router();
+const router = Router();
 
 // Technician updates their location
-router.post('/update', authenticate, authorize(['TECH_INTERNAL', 'TECH_FREELANCER']), updateLocation);
+router.post('/update', authMiddleware, requireRole('TECH_INTERNAL', 'TECH_FREELANCER'), updateLocation);
 
 // Dispatcher/Admin gets nearby technicians
-router.get('/nearby', authenticate, authorize(['ADMIN', 'DISPATCHER']), getNearbyTechnicians);
+router.get('/nearby', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getNearbyTechnicians);
 
 export default router;

@@ -9,7 +9,7 @@ import {
   respondWO,
   startWO,
   completeWO,
-} from '../services/wo.service.js';
+} from '../controllers/wo.controller.js';
 
 const router = Router();
 

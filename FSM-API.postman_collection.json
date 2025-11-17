@@ -497,20 +497,37 @@
 				{
 					"name": "Complete Job",
 					"request": {
-						"method": "POST",
+						"method": "PATCH",
 						"header": [
 							{
 								"key": "Authorization",
 								"value": "Bearer {{techToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"notes\": \"AC fixed, cleaned filters, refilled gas\",\n  \"completionPhotos\": [\"photo1.jpg\", \"photo2.jpg\"],\n  \"materialsUsed\": [\"Filter\", \"Gas\"]\n}"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "completionNotes",
+									"value": "AC fixed, cleaned filters, refilled gas",
+									"type": "text"
+								},
+								{
+									"key": "materialsUsed",
+									"value": "[{\"item\":\"Air Filter\",\"qty\":1,\"cost\":50},{\"item\":\"Refrigerant Gas\",\"qty\":2,\"cost\":200}]",
+									"type": "text"
+								},
+								{
+									"key": "photos",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "photos",
+									"type": "file",
+									"src": []
+								}
+							]
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/wos/{{woId}}/complete",
@@ -1555,6 +1572,11 @@
 		{
 			"key": "baseUrl",
 			"value": "http://localhost:4000",
+			"type": "string"
+		},
+		{
+			"key": "imageUploadServiceUrl",
+			"value": "https://img.mtscorporate.com",
 			"type": "string"
 		}
 	]
