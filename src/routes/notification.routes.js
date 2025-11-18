@@ -13,4 +13,4 @@ router.get('/', authMiddleware, getNotifications);
 router.patch('/:id/read', authMiddleware, markAsRead);
 router.patch('/read-all', authMiddleware, markAllAsRead);
 
-export default router;
+export default router; 

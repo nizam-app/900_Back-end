@@ -34,7 +34,7 @@ export const sendOTP = async (req, res, next) => {
 export const verifyOTP = async (req, res, next) => {
   try {
     const { phone, code, type } = req.body;
-
+ 
     if (!phone || !code || !type) {
       return res.status(400).json({ message: 'Phone, code, and type are required' });
     }

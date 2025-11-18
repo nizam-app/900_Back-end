@@ -28,5 +28,5 @@ router.post(
   requireRole('ADMIN'),
   runWeeklyPayout
 );
-
+ 
 export default router;

@@ -19,7 +19,7 @@ export const getNotifications = async (req, res, next) => {
     });
 
     return res.json(notifications);
-  } catch (err) {
+  } catch (err) { 
     next(err);
   }
 };

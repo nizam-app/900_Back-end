@@ -232,6 +232,19 @@ async function main() {
   });
   console.log('✅ Created sample customer:', customer.phone);
 
+  // Create sample notification
+  await prisma.notification.create({
+    data: {
+      userId: techInternal.id,
+      type: 'WO_ASSIGNED',
+      title: 'New Work Order Assigned',
+      message: 'You have been assigned work order WO-2025001',
+      dataJson: JSON.stringify({ woId: 1, woNumber: 'WO-2025001' }),
+      isRead: false,
+    },
+  });
+  console.log('✅ Created sample notification');
+
   console.log('\n🎉 Seeding completed successfully!');
   console.log('\n📝 Test Credentials:');
   console.log('Admin: 1111111111 / admin123');

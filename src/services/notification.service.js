@@ -21,7 +21,7 @@ export const createNotification = async (userId, type, title, message, data = nu
   } catch (err) {
     console.error('Error creating notification:', err);
     throw err;
-  }
+  } 
 };
 
 // ✅ Get user notifications
