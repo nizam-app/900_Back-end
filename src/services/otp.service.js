@@ -17,7 +17,7 @@ export const sendOTP = async (req, res, next) => {
 
     // Generate OTP code
     const code = generateOTPCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
     // Check if user exists
     const user = await prisma.user.findUnique({

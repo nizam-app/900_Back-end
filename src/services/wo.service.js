@@ -4,6 +4,7 @@ import {
   notifyWOAssignment,
   notifyWOAccepted,
   notifyWOCompleted,
+  
 } from './notification.service.js';
 
 const generateWONumber = () => 'WO-' + Date.now();
@@ -17,7 +18,7 @@ export const createWOFromSR = async (req, res, next) => {
 
     const sr = await prisma.serviceRequest.findUnique({
       where: { id: srId },
-    });
+    }); 
 
     if (!sr) {
       return res.status(404).json({ message: 'Service Request not found' });
@@ -288,6 +289,14 @@ export const completeWO = async (req, res, next) => {
       },
     });
 
+    // const modiftyingFiedns = {
+    //   completeWO:
+    //      completionNotes || photoUrls.length > 0 || parsedMaterials,
+    //      completedAt: new Date(),
+    //      completionPhones: pohoneUrs.length > 1,
+    //      materialsUsed: parsedMaterials,
+    // }
+
     await prisma.auditLog.create({
       data: {
         userId: techId,
@@ -307,3 +316,12 @@ export const completeWO = async (req, res, next) => {
     next(err);
   }
 };
+
+
+
+
+
+
+
+
+

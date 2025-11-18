@@ -435,7 +435,7 @@ export const getTechnicianDashboard = async (req, res, next) => {
           category: true,
           subservice: true,
         },
-      }),
+      }), 
       prisma.workOrder.count({
         where: {
           technicianId,

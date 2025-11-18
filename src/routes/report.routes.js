@@ -19,3 +19,4 @@ router.get('/technician-performance', authMiddleware, requireRole('ADMIN', 'DISP
 router.get('/financial', authMiddleware, requireRole('ADMIN'), getFinancialReport);
 
 export default router;
+ 
