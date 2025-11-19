@@ -16,6 +16,8 @@ import notificationRoutes from './routes/notification.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import locationRoutes from './routes/location.routes.js';
+import chatRoutes from './routes/chat.routes.js';
+import deviceRoutes from './routes/device.routes.js';
 
 const app = express();
 
@@ -43,6 +45,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/location', locationRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/device', deviceRoutes);
 
 app.get('/', (req, res) => {
   res.json({ status: 'FSM backend running' });

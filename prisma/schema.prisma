@@ -9,125 +9,128 @@ generator client {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  name          String?
-  phone         String   @unique
-  email         String?  @unique
-  passwordHash  String
-  role          Role
-  isBlocked     Boolean  @default(false)
-  blockedReason String?
-  blockedAt     DateTime?
-  blockedById   Int?
-  lastLatitude  Float?
-  lastLongitude Float?
-  locationStatus String? // ONLINE, BUSY, OFFLINE
+  id                Int       @id @default(autoincrement())
+  name              String?
+  phone             String    @unique
+  email             String?   @unique
+  passwordHash      String
+  role              Role
+  isBlocked         Boolean   @default(false)
+  blockedReason     String?
+  blockedAt         DateTime?
+  blockedById       Int?
+  lastLatitude      Float?
+  lastLongitude     Float?
+  locationStatus    String? // ONLINE, BUSY, OFFLINE
   locationUpdatedAt DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  fcmToken          String? // Firebase Cloud Messaging token for push notifications
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  technicianProfile TechnicianProfile?
-  serviceRequests   ServiceRequest[] @relation("CustomerSR")
-  createdSRs        ServiceRequest[] @relation("CreatedBySR")
-  workOrders        WorkOrder[]      @relation("CustomerWO")
-  technicianWOs     WorkOrder[]      @relation("TechWO")
-  dispatchWOs       WorkOrder[]      @relation("DispatcherWO")
-  paymentsVerified  Payment[]        @relation("PaymentVerifier")
-  payments          Payment[]        @relation("TechnicianPayment")
-  wallet            Wallet?
-  notifications     Notification[]
-  auditLogs         AuditLog[]
-  checkins          TechnicianCheckin[]
-  commissions       Commission[]
-  walletTransactions WalletTransaction[]
-  payoutRequests    PayoutRequest[]
-  reviewedPayoutRequests PayoutRequest[] @relation("PayoutReviewer")
-  payouts           Payout[]
-  createdPayouts    Payout[]         @relation("PayoutCreator")
-  otpRecords        OTP[]
-  blockedUsers      User[]           @relation("BlockedByUser")
-  blockedBy         User?            @relation("BlockedByUser", fields: [blockedById], references: [id])
+  technicianProfile      TechnicianProfile?
+  serviceRequests        ServiceRequest[]    @relation("CustomerSR")
+  createdSRs             ServiceRequest[]    @relation("CreatedBySR")
+  workOrders             WorkOrder[]         @relation("CustomerWO")
+  technicianWOs          WorkOrder[]         @relation("TechWO")
+  dispatchWOs            WorkOrder[]         @relation("DispatcherWO")
+  paymentsVerified       Payment[]           @relation("PaymentVerifier")
+  payments               Payment[]           @relation("TechnicianPayment")
+  wallet                 Wallet?
+  notifications          Notification[]
+  auditLogs              AuditLog[]
+  checkins               TechnicianCheckin[]
+  commissions            Commission[]
+  walletTransactions     WalletTransaction[]
+  payoutRequests         PayoutRequest[]
+  reviewedPayoutRequests PayoutRequest[]     @relation("PayoutReviewer")
+  payouts                Payout[]
+  createdPayouts         Payout[]            @relation("PayoutCreator")
+  otpRecords             OTP[]
+  sentMessages           ChatMessage[]       @relation("SentMessages")
+  receivedMessages       ChatMessage[]       @relation("ReceivedMessages")
+  blockedUsers           User[]              @relation("BlockedByUser")
+  blockedBy              User?               @relation("BlockedByUser", fields: [blockedById], references: [id])
 }
 
 model TechnicianProfile {
-  id              Int      @id @default(autoincrement())
-  userId          Int      @unique
-  type            TechType
-  commissionRate  Float    // e.g. 0.2
-  bonusRate       Float    // e.g. 0.05
-  status          String   // ACTIVE, INACTIVE
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  type           TechType
+  commissionRate Float // e.g. 0.2
+  bonusRate      Float // e.g. 0.05
+  status         String // ACTIVE, INACTIVE
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 }
 
 model Category {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  subservices Subservice[]
-  services    Service[]
+  subservices     Subservice[]
+  services        Service[]
   serviceRequests ServiceRequest[]
   workOrders      WorkOrder[]
 }
 
 model Subservice {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   categoryId  Int
   name        String
   description String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  category       Category      @relation(fields: [categoryId], references: [id])
-  services       Service[]
+  category        Category         @relation(fields: [categoryId], references: [id])
+  services        Service[]
   serviceRequests ServiceRequest[]
   workOrders      WorkOrder[]
 }
 
 model Service {
-  id          Int       @id @default(autoincrement())
-  categoryId  Int
+  id           Int      @id @default(autoincrement())
+  categoryId   Int
   subserviceId Int
-  name        String
-  description String?
-  baseRate    Float?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  name         String
+  description  String?
+  baseRate     Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  category   Category   @relation(fields: [categoryId], references: [id])
-  subservice Subservice @relation(fields: [subserviceId], references: [id])
+  category        Category         @relation(fields: [categoryId], references: [id])
+  subservice      Subservice       @relation(fields: [subserviceId], references: [id])
   serviceRequests ServiceRequest[]
   workOrders      WorkOrder[]
 }
 
 model ServiceRequest {
-  id           Int       @id @default(autoincrement())
-  srNumber     String    @unique
+  id           Int      @id @default(autoincrement())
+  srNumber     String   @unique
   customerId   Int
   createdById  Int?
   categoryId   Int
   subserviceId Int
   serviceId    Int?
   description  String?
-  priority     String    // LOW, MEDIUM, HIGH
+  priority     String // LOW, MEDIUM, HIGH
   address      String
-  paymentType  String    // CASH, MOBILE_MONEY
-  status       String    // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
-  source       String    // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
-  isGuest      Boolean   @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  paymentType  String // CASH, MOBILE_MONEY
+  status       String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
+  source       String // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
+  isGuest      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  customer  User      @relation("CustomerSR", fields: [customerId], references: [id])
-  createdBy User?     @relation("CreatedBySR", fields: [createdById], references: [id])
-  category  Category  @relation(fields: [categoryId], references: [id])
+  customer   User       @relation("CustomerSR", fields: [customerId], references: [id])
+  createdBy  User?      @relation("CreatedBySR", fields: [createdById], references: [id])
+  category   Category   @relation(fields: [categoryId], references: [id])
   subservice Subservice @relation(fields: [subserviceId], references: [id])
-  service   Service?  @relation(fields: [serviceId], references: [id])
+  service    Service?   @relation(fields: [serviceId], references: [id])
 
   workOrders WorkOrder[]
 }
@@ -155,54 +158,55 @@ model WorkOrder {
   cancelReason     String?
   notes            String?
   completionNotes  String?
-  completionPhotos String?  // JSON array of photo URLs
-  materialsUsed    String?  // JSON array of materials
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  completionPhotos String? // JSON array of photo URLs
+  materialsUsed    String? // JSON array of materials
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   serviceRequest ServiceRequest @relation(fields: [srId], references: [id])
-  customer       User          @relation("CustomerWO", fields: [customerId], references: [id])
-  technician     User?         @relation("TechWO", fields: [technicianId], references: [id])
-  dispatcher     User?         @relation("DispatcherWO", fields: [dispatcherId], references: [id])
-  category       Category      @relation(fields: [categoryId], references: [id])
-  subservice     Subservice    @relation(fields: [subserviceId], references: [id])
-  service        Service?      @relation(fields: [serviceId], references: [id])
+  customer       User           @relation("CustomerWO", fields: [customerId], references: [id])
+  technician     User?          @relation("TechWO", fields: [technicianId], references: [id])
+  dispatcher     User?          @relation("DispatcherWO", fields: [dispatcherId], references: [id])
+  category       Category       @relation(fields: [categoryId], references: [id])
+  subservice     Subservice     @relation(fields: [subserviceId], references: [id])
+  service        Service?       @relation(fields: [serviceId], references: [id])
 
   checkins     TechnicianCheckin[]
   payments     Payment[]
   commissions  Commission[]
+  chatMessages ChatMessage[]
 }
 
 model TechnicianCheckin {
-  id            Int      @id @default(autoincrement())
-  woId          Int
-  technicianId  Int
-  latitude      Float
-  longitude     Float
-  createdAt     DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  woId         Int
+  technicianId Int
+  latitude     Float
+  longitude    Float
+  createdAt    DateTime @default(now())
 
   workOrder  WorkOrder @relation(fields: [woId], references: [id])
   technician User      @relation(fields: [technicianId], references: [id])
 }
 
 model Payment {
-  id             Int      @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   woId           Int
   technicianId   Int?
   amount         Float
-  method         String   // CASH, MOBILE_MONEY
+  method         String // CASH, MOBILE_MONEY
   transactionRef String?
   proofUrl       String?
-  status         String   // PENDING_VERIFICATION, VERIFIED, REJECTED
+  status         String // PENDING_VERIFICATION, VERIFIED, REJECTED
   verifiedById   Int?
   verifiedAt     DateTime?
   rejectedReason String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  workOrder  WorkOrder @relation(fields: [woId], references: [id])
-  technician User?     @relation("TechnicianPayment", fields: [technicianId], references: [id])
-  verifiedBy User?     @relation("PaymentVerifier", fields: [verifiedById], references: [id])
+  workOrder   WorkOrder    @relation(fields: [woId], references: [id])
+  technician  User?        @relation("TechnicianPayment", fields: [technicianId], references: [id])
+  verifiedBy  User?        @relation("PaymentVerifier", fields: [verifiedById], references: [id])
   commissions Commission[]
 }
 
@@ -213,7 +217,7 @@ model Wallet {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  technician  User               @relation(fields: [technicianId], references: [id])
+  technician   User                @relation(fields: [technicianId], references: [id])
   transactions WalletTransaction[]
 }
 
@@ -221,25 +225,25 @@ model WalletTransaction {
   id           Int      @id @default(autoincrement())
   walletId     Int
   technicianId Int
-  type         String   // CREDIT, DEBIT
-  sourceType   String   // COMMISSION, BONUS, PENALTY, PAYOUT
+  type         String // CREDIT, DEBIT
+  sourceType   String // COMMISSION, BONUS, PENALTY, PAYOUT
   sourceId     Int?
   amount       Float
   description  String?
   createdAt    DateTime @default(now())
 
-  wallet      Wallet @relation(fields: [walletId], references: [id])
-  technician  User   @relation(fields: [technicianId], references: [id])
+  wallet     Wallet @relation(fields: [walletId], references: [id])
+  technician User   @relation(fields: [technicianId], references: [id])
 }
 
 model Commission {
   id           Int      @id @default(autoincrement())
   woId         Int
   technicianId Int
-  type         String   // COMMISSION, BONUS
+  type         String // COMMISSION, BONUS
   rate         Float
   amount       Float
-  status       String   // EARNED, PAID, CANCELLED
+  status       String // EARNED, PAID, CANCELLED
   payoutId     Int?
   paymentId    Int?
   createdAt    DateTime @default(now())
@@ -252,57 +256,57 @@ model Commission {
 }
 
 model PayoutRequest {
-  id             Int      @id @default(autoincrement())
-  technicianId   Int
-  amount         Float
-  status         String   // PENDING, APPROVED, REJECTED
-  reason         String?
-  reviewedById   Int?
-  reviewedAt     DateTime?
-  createdAt      DateTime @default(now())
+  id           Int       @id @default(autoincrement())
+  technicianId Int
+  amount       Float
+  status       String // PENDING, APPROVED, REJECTED
+  reason       String?
+  reviewedById Int?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
 
-  technician User @relation(fields: [technicianId], references: [id])
+  technician User  @relation(fields: [technicianId], references: [id])
   reviewedBy User? @relation("PayoutReviewer", fields: [reviewedById], references: [id])
 }
 
 model Payout {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   technicianId Int
   totalAmount  Float
-  type         String   // WEEKLY, ON_DEMAND
-  status       String   // PROCESSING, PAID, FAILED
+  type         String // WEEKLY, ON_DEMAND
+  status       String // PROCESSING, PAID, FAILED
   requestedAt  DateTime?
   processedAt  DateTime?
   createdById  Int?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
-  technician User    @relation(fields: [technicianId], references: [id])
-  createdBy  User?   @relation("PayoutCreator", fields: [createdById], references: [id])
+  technician  User         @relation(fields: [technicianId], references: [id])
+  createdBy   User?        @relation("PayoutCreator", fields: [createdById], references: [id])
   commissions Commission[]
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   userId    Int
   type      String
   title     String
   message   String
   dataJson  String?
-  isRead    Boolean  @default(false)
+  isRead    Boolean   @default(false)
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id])
 }
 
 model AuditLog {
-  id          Int      @id @default(autoincrement())
-  userId      Int?
-  action      String
-  entityType  String
-  entityId    Int?
+  id           Int      @id @default(autoincrement())
+  userId       Int?
+  action       String
+  entityType   String
+  entityId     Int?
   metadataJson String?
-  createdAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
 }
@@ -322,14 +326,34 @@ enum TechType {
 }
 
 model OTP {
-  id          Int      @id @default(autoincrement())
-  phone       String
-  code        String
-  type        String   // REGISTRATION, LOGIN, PASSWORD_RESET
-  isUsed      Boolean  @default(false)
-  expiresAt   DateTime
-  userId      Int?
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  phone     String
+  code      String
+  type      String // REGISTRATION, LOGIN, PASSWORD_RESET
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  userId    Int?
+  createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
+}
+
+model ChatMessage {
+  id          Int       @id @default(autoincrement())
+  woId        Int // Work Order related to this chat
+  senderId    Int // User who sent the message
+  recipientId Int? // Optional: specific recipient (null for group chat)
+  message     String    @db.Text
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workOrder WorkOrder @relation(fields: [woId], references: [id], onDelete: Cascade)
+  sender    User      @relation("SentMessages", fields: [senderId], references: [id])
+  recipient User?     @relation("ReceivedMessages", fields: [recipientId], references: [id])
+
+  @@index([woId, createdAt])
+  @@index([senderId])
+  @@index([recipientId])
 }
