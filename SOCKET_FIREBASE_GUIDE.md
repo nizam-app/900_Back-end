@@ -1,12 +1,16 @@
+<!-- @format -->
+
 # Socket.IO & Firebase Push Notifications Integration
 
 ## ✅ Installed Packages
+
 - `socket.io` - Real-time bidirectional communication
 - `firebase-admin` - Firebase Cloud Messaging for push notifications
 
 ## 🔧 Configuration
 
 ### 1. Environment Variables (.env)
+
 ```env
 # Firebase Push Notification Configuration
 FIREBASE_PROJECT_ID="your-project-id"
@@ -15,6 +19,7 @@ FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccou
 ```
 
 ### 2. Get Firebase Credentials
+
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Select your project (or create a new one)
 3. Go to **Project Settings** > **Service Accounts**
@@ -28,9 +33,11 @@ FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccou
 ## 📊 Database Changes
 
 ### New Fields in User Model
+
 - `fcmToken` - Firebase Cloud Messaging token for push notifications
 
 ### New ChatMessage Model
+
 ```prisma
 model ChatMessage {
   id          Int       @id @default(autoincrement())
@@ -50,6 +57,7 @@ Migration already applied: `20251119040305_add_chat_and_fcm_token`
 ## 🔌 Socket.IO Features
 
 ### Server Setup
+
 - Socket.IO integrated with HTTP server
 - JWT authentication for WebSocket connections
 - Real-time events for messaging, location, and work order updates
@@ -57,84 +65,87 @@ Migration already applied: `20251119040305_add_chat_and_fcm_token`
 ### Socket.IO Events
 
 #### Client → Server
+
 ```javascript
 // Connect (with authentication)
 socket.connect({
-  auth: { token: 'your-jwt-token' }
+  auth: { token: "your-jwt-token" },
 });
 
 // Join work order room
-socket.emit('join:workorder', woId);
+socket.emit("join:workorder", woId);
 
 // Leave work order room
-socket.emit('leave:workorder', woId);
+socket.emit("leave:workorder", woId);
 
 // Send chat message
-socket.emit('chat:message', {
+socket.emit("chat:message", {
   woId: 123,
-  message: 'Hello!',
-  recipientId: 5 // optional
+  message: "Hello!",
+  recipientId: 5, // optional
 });
 
 // Send typing indicator
-socket.emit('chat:typing', {
+socket.emit("chat:typing", {
   woId: 123,
-  isTyping: true
+  isTyping: true,
 });
 
 // Update location (technicians only)
-socket.emit('location:update', {
+socket.emit("location:update", {
   latitude: 23.8103,
   longitude: 90.4125,
-  status: 'ONLINE'
+  status: "ONLINE",
 });
 
 // Update work order status
-socket.emit('wo:status', {
+socket.emit("wo:status", {
   woId: 123,
-  status: 'IN_PROGRESS'
+  status: "IN_PROGRESS",
 });
 ```
 
 #### Server → Client
+
 ```javascript
 // User came online
-socket.on('user:online', (data) => {
-  console.log('User online:', data.userId);
+socket.on("user:online", (data) => {
+  console.log("User online:", data.userId);
 });
 
 // User went offline
-socket.on('user:offline', (data) => {
-  console.log('User offline:', data.userId);
+socket.on("user:offline", (data) => {
+  console.log("User offline:", data.userId);
 });
 
 // New chat message
-socket.on('chat:message', (message) => {
-  console.log('New message:', message);
+socket.on("chat:message", (message) => {
+  console.log("New message:", message);
 });
 
 // Someone is typing
-socket.on('chat:typing', (data) => {
-  console.log('Typing:', data.userId, data.isTyping);
+socket.on("chat:typing", (data) => {
+  console.log("Typing:", data.userId, data.isTyping);
 });
 
 // Technician location update (dispatchers/admins only)
-socket.on('technician:location', (data) => {
-  console.log('Tech location:', data);
+socket.on("technician:location", (data) => {
+  console.log("Tech location:", data);
 });
 
 // Work order status update
-socket.on('wo:status', (data) => {
-  console.log('WO status:', data);
+socket.on("wo:status", (data) => {
+  console.log("WO status:", data);
 });
 
 // Chat error
-socket.on('chat:error', (error) => {
-  console.error('Chat error:', error);
+socket.on("chat:error", (error) => {
+  console.error("Chat error:", error);
 });
 ```
 
 ### Room Structure
+
 - `user:{userId}` - Personal room for each user
 - `role:{ROLE}` - Room for each role (ADMIN, DISPATCHER, etc.)
 - `wo:{woId}` - Room for each work order
@@ -144,6 +155,7 @@ socket.on('chat:error', (error) => {
 ### Device Management API
 
 #### Register Device
+
 ```http
 POST /api/device/register
 Authorization: Bearer <token>
@@ -159,12 +171,14 @@ Content-Type: application/json
 ```
 
 #### Unregister Device
+
 ```http
 POST /api/device/unregister
 Authorization: Bearer <token>
 ```
 
 #### Test Notification
+
 ```http
 POST /api/device/test-notification
 Authorization: Bearer <token>
@@ -184,56 +198,58 @@ import {
   sendMulticastNotification,
   sendTopicNotification,
   sendWOPushNotification,
-  sendPaymentPushNotification
-} from './services/firebase.service.js';
+  sendPaymentPushNotification,
+} from "./services/firebase.service.js";
 
 // Send to single device
 await sendPushNotification(
-  'fcm-token',
-  { title: 'Title', body: 'Message' },
-  { key: 'value' }
+  "fcm-token",
+  { title: "Title", body: "Message" },
+  { key: "value" }
 );
 
 // Send to multiple devices
 await sendMulticastNotification(
-  ['token1', 'token2'],
-  { title: 'Title', body: 'Message' },
-  { key: 'value' }
+  ["token1", "token2"],
+  { title: "Title", body: "Message" },
+  { key: "value" }
 );
 
 // Send to topic
 await sendTopicNotification(
-  'role_dispatcher',
-  { title: 'Title', body: 'Message' },
-  { key: 'value' }
+  "role_dispatcher",
+  { title: "Title", body: "Message" },
+  { key: "value" }
 );
 
 // Send work order notification
 await sendWOPushNotification(
   userId,
-  'WO-12345',
-  'Work Order Assigned',
-  'You have been assigned a new work order'
+  "WO-12345",
+  "Work Order Assigned",
+  "You have been assigned a new work order"
 );
 
 // Send payment notification
 await sendPaymentPushNotification(
   userId,
   500,
-  'Payment Verified',
-  'Your payment of $500 has been verified'
+  "Payment Verified",
+  "Your payment of $500 has been verified"
 );
 ```
 
 ## 💬 Chat API (HTTP Alternative)
 
 ### Get Chat Messages
+
 ```http
 GET /api/chat/wo/:woId?limit=50&offset=0
 Authorization: Bearer <token>
 ```
 
 ### Send Message
+
 ```http
 POST /api/chat/wo/:woId
 Authorization: Bearer <token>
@@ -246,12 +262,14 @@ Content-Type: application/json
 ```
 
 ### Mark Messages as Read
+
 ```http
 PATCH /api/chat/wo/:woId/read
 Authorization: Bearer <token>
 ```
 
 ### Get Unread Count
+
 ```http
 GET /api/chat/unread-count
 Authorization: Bearer <token>
@@ -260,39 +278,41 @@ Authorization: Bearer <token>
 ## 📲 Client Integration Examples
 
 ### React/React Native
+
 ```javascript
-import io from 'socket.io-client';
+import io from "socket.io-client";
 
-const socket = io('http://localhost:4000', {
+const socket = io("http://localhost:4000", {
   auth: {
-    token: 'your-jwt-token'
-  }
+    token: "your-jwt-token",
+  },
 });
 
-socket.on('connect', () => {
-  console.log('Connected!');
-  
+socket.on("connect", () => {
+  console.log("Connected!");
+
   // Join work order room
-  socket.emit('join:workorder', 123);
+  socket.emit("join:workorder", 123);
 });
 
-socket.on('chat:message', (message) => {
+socket.on("chat:message", (message) => {
   // Handle new message
-  console.log('New message:', message);
+  console.log("New message:", message);
 });
 
 // Send message
-socket.emit('chat:message', {
+socket.emit("chat:message", {
   woId: 123,
-  message: 'Hello from React!'
+  message: "Hello from React!",
 });
 ```
 
 ### Flutter/Dart
+
 ```dart
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-final socket = IO.io('http://localhost:4000', 
+final socket = IO.io('http://localhost:4000',
   IO.OptionBuilder()
     .setAuth({'token': 'your-jwt-token'})
     .build()
@@ -317,12 +337,14 @@ socket.emit('chat:message', {
 ## 🔔 Push Notification Topics
 
 Users are automatically subscribed to:
+
 - `role_{role}` - Based on user role (e.g., `role_dispatcher`, `role_tech_internal`)
 - `user_{userId}` - Personal topic for each user
 
 ## 🧪 Testing
 
 ### Test Socket.IO Connection
+
 ```bash
 # Install socket.io-client globally
 npm install -g socket.io-client
@@ -335,6 +357,7 @@ curl -X POST http://localhost:4000/api/device/register \
 ```
 
 ### Test Chat
+
 ```bash
 # Send message via HTTP
 curl -X POST http://localhost:4000/api/chat/wo/1 \
