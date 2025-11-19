@@ -4,15 +4,21 @@ import { notifyPaymentVerified } from '../services/notification.service.js';
 
 export const uploadPaymentProof = async (req, res, next) => {
   try {
-    const { woId, amount, method, transactionRef } = req.body;
+    const { woId, method, transactionRef, amount: manualAmount } = req.body;
     const technicianId = req.user.id;
 
-    if (!woId || !amount || !method) {
-      return res.status(400).json({ message: 'woId, amount, and method are required' });
+    if (!woId || !method) {
+      return res.status(400).json({ message: 'woId and method are required' });
     }
 
+    // Fetch work order with service pricing details
     const wo = await prisma.workOrder.findUnique({
       where: { id: Number(woId) },
+      include: {
+        service: true, // Get service pricing
+        category: true,
+        subservice: true
+      }
     });
 
     if (!wo) {
@@ -23,13 +29,35 @@ export const uploadPaymentProof = async (req, res, next) => {
       return res.status(400).json({ message: 'Work Order is not completed yet' });
     }
 
+    // Auto-fetch amount from service pricing or use manual override
+    let finalAmount;
+    
+    if (manualAmount) {
+      // Manual amount provided (for custom pricing)
+      finalAmount = Number(manualAmount);
+      console.log(`💰 Using manual amount: ₹${finalAmount} for WO ${wo.woNumber}`);
+    } else if (wo.service?.baseRate) {
+      // Auto-fetch from service base rate
+      finalAmount = wo.service.baseRate;
+      console.log(`💰 Auto-fetched amount from service: ₹${finalAmount} for ${wo.service.name}`);
+    } else {
+      return res.status(400).json({ 
+        message: 'No service pricing found. Please provide amount manually.',
+        serviceInfo: {
+          category: wo.category?.name,
+          subservice: wo.subservice?.name,
+          service: wo.service?.name
+        }
+      });
+    }
+
     const proofUrl = req.file ? `/uploads/payments/${req.file.filename}` : null;
 
     const payment = await prisma.payment.create({
       data: {
         woId: Number(woId),
         technicianId,
-        amount: Number(amount),
+        amount: finalAmount,
         method,
         transactionRef,
         proofUrl,
@@ -94,13 +122,33 @@ export const verifyPayment = async (req, res, next) => {
       });
 
       const wo = payment.workOrder;
+      
+      // Validate payment amount exists
+      if (!payment.amount || payment.amount <= 0) {
+        return res.status(400).json({ 
+          message: 'Payment amount is invalid or missing',
+          paymentId: payment.id,
+          amount: payment.amount
+        });
+      }
+
       const techProfile = await prisma.technicianProfile.findUnique({
         where: { userId: wo.technicianId },
       });
 
       if (techProfile) {
-        const commissionAmount = payment.amount * techProfile.commissionRate;
-        const bonusAmount = payment.amount * techProfile.bonusRate;
+        const commissionAmount = Number(payment.amount) * Number(techProfile.commissionRate);
+        const bonusAmount = Number(payment.amount) * Number(techProfile.bonusRate);
+        
+        // Validate calculated amounts
+        if (isNaN(commissionAmount) || isNaN(bonusAmount)) {
+          return res.status(400).json({
+            message: 'Error calculating commission amounts',
+            paymentAmount: payment.amount,
+            commissionRate: techProfile.commissionRate,
+            bonusRate: techProfile.bonusRate
+          });
+        }
 
         await prisma.commission.create({
           data: {
@@ -174,9 +222,23 @@ export const verifyPayment = async (req, res, next) => {
         },
       });
 
-      await notifyPaymentVerified(wo.technicianId, updatedPayment);
+      // Send notification (handle errors gracefully)
+      try {
+        await notifyPaymentVerified(wo.technicianId, wo, updatedPayment);
+      } catch (notificationError) {
+        console.log('Notification failed (non-critical):', notificationError.message);
+      }
 
-      return res.json(updatedPayment);
+      return res.json({
+        success: true,
+        message: 'Payment verified successfully',
+        payment: updatedPayment,
+        commissions: {
+          commissionAmount,
+          bonusAmount,
+          total: commissionAmount + bonusAmount
+        }
+      });
     } else {
       const updatedPayment = await prisma.payment.update({
         where: { id: paymentId },

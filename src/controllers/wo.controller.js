@@ -134,9 +134,13 @@ export const createWOFromSR = async (req, res, next) => {
       },
     });
 
+    // Send notifications
     if (technicianId) {
       await notifyWOAssignment(Number(technicianId), wo);
     }
+
+    // Real-time notification removed - notifications stored in database only
+    console.log(`📋 Work Order created: ${wo.woNumber}`);
 
     return res.status(201).json(wo);
   } catch (err) {
@@ -259,7 +263,24 @@ export const startWO = async (req, res, next) => {
   try {
     const woId = Number(req.params.id);
     const techId = req.user.id;
-    const { lat, lng } = req.body;
+    const { latitude, longitude } = req.body;
+
+    // Validate required fields
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: 'Latitude and longitude are required' });
+    }
+
+    // Validate coordinates
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ message: 'Invalid latitude or longitude values' });
+    }
+
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return res.status(400).json({ message: 'Latitude must be between -90 and 90, longitude between -180 and 180' });
+    }
 
     const wo = await prisma.workOrder.findUnique({
       where: { id: woId },
@@ -277,20 +298,24 @@ export const startWO = async (req, res, next) => {
       return res.status(400).json({ message: 'WO is not in ACCEPTED status' });
     }
 
-    await prisma.workOrder.update({
+    const updatedWO = await prisma.workOrder.update({
       where: { id: woId },
       data: {
         status: 'IN_PROGRESS',
         startedAt: new Date(),
       },
+      include: {
+        customer: true,
+        technician: true
+      }
     });
 
     await prisma.technicianCheckin.create({
       data: {
         woId,
         technicianId: techId,
-        latitude: Number(lat),
-        longitude: Number(lng),
+        latitude: lat,
+        longitude: lng,
       },
     });
 
@@ -303,7 +328,11 @@ export const startWO = async (req, res, next) => {
       },
     });
 
-    return res.json({ message: 'Work started' });
+    // Real-time notification for work started
+    const { notifyWorkStarted } = await import('../services/notification.service.js');
+    await notifyWorkStarted(updatedWO);
+
+    return res.json({ message: 'Work started', wo: updatedWO });
   } catch (err) {
     next(err);
   }

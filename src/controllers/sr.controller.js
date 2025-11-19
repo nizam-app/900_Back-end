@@ -71,8 +71,15 @@ export const createSR = async (req, res, next) => {
         category: true,
         subservice: true,
         service: true,
+        customer: {
+          select: { name: true, phone: true }
+        }
       },
     });
+
+    // Real-time notification for new service request
+    const { notifyNewServiceRequest } = await import('../services/notification.service.js');
+    await notifyNewServiceRequest(sr);
 
     return res.status(201).json(sr);
   } catch (err) {

@@ -51,7 +51,7 @@ export const markAsRead = async (req, res, next) => {
   }
 };
 
-export const markAllAsRead = async (req, res, next) => {
+export const markAllAsRead = async (req, res, next) => { 
   try {
     const userId = req.user.id;
 

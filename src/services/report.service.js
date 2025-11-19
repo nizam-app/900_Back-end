@@ -14,7 +14,7 @@ export const getWorkOrderReport = async (req, res, next) => {
         where.createdAt.gte = new Date(startDate);
       }
       if (endDate) {
-        where.createdAt.lte = new Date(endDate);
+        where.createdAt.lte = new Date(endDate); 
       }
     }
 
