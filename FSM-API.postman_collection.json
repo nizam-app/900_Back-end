@@ -352,9 +352,14 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"woId\", jsonData.woNumber || jsonData.id);",
-									"pm.environment.set(\"woNumber\", jsonData.woNumber);"
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"woId\", jsonData.woNumber || jsonData.id);",
+									"    pm.environment.set(\"woNumber\", jsonData.woNumber);",
+									"    console.log('WO Created - ID:', jsonData.id, 'woNumber:', jsonData.woNumber);",
+									"} else {",
+									"    console.error('Failed to create WO:', pm.response.text());",
+									"}"
 								],
 								"type": "text/javascript"
 							}

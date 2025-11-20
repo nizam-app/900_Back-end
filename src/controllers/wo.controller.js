@@ -10,12 +10,17 @@ const generateWONumber = () => 'WO-' + Date.now();
 
 export const getWOById = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const woIdParam = req.params.woId;
     const userId = req.user.id;
     const userRole = req.user.role;
 
+    // Find WO by either numeric ID or woNumber
+    const whereClause = isNaN(woIdParam) 
+      ? { woNumber: woIdParam } 
+      : { id: Number(woIdParam) };
+
     const workOrder = await prisma.workOrder.findFirst({
-      where: { woNumber: id },
+      where: whereClause,
       include: {
         customer: {
           select: { id: true, name: true, phone: true, email: true }

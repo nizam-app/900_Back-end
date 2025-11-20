@@ -50,7 +50,7 @@ router.get(
 
 // Get work order by ID (woNumber)
 router.get(
-  '/:id',
+  '/:woId',
   authMiddleware,
   getWOById
 );
