@@ -17,16 +17,9 @@ export const sendOTP = async (phone, type) => {
     where: { phone },
   });
 
-  // Create OTP record
-  const otp = await prisma.oTP.create({
-    data: {
-      phone,
-      code,
-      type, // REGISTRATION, LOGIN, PASSWORD_RESET
-      expiresAt,
-      userId: user?.id || null,
-    },
-  });
+    // Generate OTP code
+    const code = generateOTPCode();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
   // TODO: Integrate with SMS provider (Twilio, Africa's Talking, etc.)
   // For now, we'll return the OTP in development mode

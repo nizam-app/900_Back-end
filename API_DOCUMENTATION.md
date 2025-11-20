@@ -155,7 +155,7 @@ Create a new service request. Can be called by guest users (no auth required) or
 ```json
 {
   "name": "John Doe",
-  "phone": "1234567890",
+  "phone": "1234567890", 
   "address": "123 Main St, City",
   "categoryId": 1,
   "subserviceId": 1,

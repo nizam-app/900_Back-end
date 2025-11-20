@@ -300,7 +300,7 @@ export const getFinancialReport = async (req, res, next) => {
       revenue: {
         total: totalRevenueAmount,
         verified: verifiedRevenueAmount,
-        pending: totalRevenueAmount - verifiedRevenueAmount,
+        pending: totalRevenueAmount - verifiedRevenueAmount, 
         count: totalRevenue._count,
       },
       commissions: {

@@ -4,6 +4,7 @@ import multer from 'multer';
 import path from 'path';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import {
+  getAllWorkOrders,
   createWOFromSR,
   assignWO,
   respondWO,
@@ -14,7 +15,7 @@ import {
 const router = Router();
 
 // Configure multer for completion photos
-const storage = multer.diskStorage({
+const storage = multer.diskStorage({ 
   destination: (req, file, cb) => {
     cb(null, 'uploads/wo-completion');
   },
@@ -38,6 +39,13 @@ const upload = multer({
     }
   },
 });
+
+// Get all work orders with filtering and pagination
+router.get(
+  '/',
+  authMiddleware,
+  getAllWorkOrders
+);
 
 router.post(
   '/from-sr/:srId',

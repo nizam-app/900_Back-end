@@ -385,54 +385,59 @@ export const findAllPayoutRequests = async (filters) => {
 };
 
 // ✅ Get technician dashboard stats
-export const getTechnicianStats = async (technicianId) => {
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+export const getTechnicianDashboard = async (req, res, next) => {
+  try {
+    const technicianId = req.user.id;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [openWOs, inProgressWOs, completedWOsCount, monthlyCommissions, wallet] = await Promise.all([
-    prisma.workOrder.findMany({
-      where: {
-        technicianId,
-        status: { in: ['ASSIGNED', 'ACCEPTED'] },
-      },
-      include: {
-        category: true,
-        subservice: true,
-      },
-    }),
-    prisma.workOrder.findMany({
-      where: {
-        technicianId,
-        status: 'IN_PROGRESS',
-      },
-      include: {
-        category: true,
-        subservice: true,
-      },
-    }),
-    prisma.workOrder.count({
-      where: {
-        technicianId,
-        status: 'PAID_VERIFIED',
-      },
-    }),
-    prisma.commission.aggregate({
-      where: {
-        technicianId,
-        createdAt: { gte: startOfMonth },
-      },
-      _sum: { amount: true },
-    }),
-    prisma.wallet.findUnique({
-      where: { technicianId },
-    }),
-  ]);
+    const [openWOs, inProgressWOs, completedWOsCount, monthlyCommissions, wallet] = await Promise.all([
+      prisma.workOrder.findMany({
+        where: {
+          technicianId,
+          status: { in: ['ASSIGNED', 'ACCEPTED'] },
+        },
+        include: {
+          category: true,
+          subservice: true,
+        },
+      }),
+      prisma.workOrder.findMany({
+        where: {
+          technicianId,
+          status: 'IN_PROGRESS',
+        },
+        include: {
+          category: true,
+          subservice: true,
+        },
+      }), 
+      prisma.workOrder.count({
+        where: {
+          technicianId,
+          status: 'PAID_VERIFIED',
+        },
+      }),
+      prisma.commission.aggregate({
+        where: {
+          technicianId,
+          createdAt: { gte: startOfMonth },
+        },
+        _sum: { amount: true },
+      }),
+      prisma.wallet.findUnique({
+        where: { technicianId },
+      }),
+    ]);
 
-  return {
-    openWOs,
-    inProgressWOs,
-    completedWOsCount,
-    monthlyCommission: monthlyCommissions._sum.amount || 0,
-    walletBalance: wallet?.balance || 0,
-  };
+    return res.json({
+      openWOs,
+      inProgressWOs,
+      completedWOsCount,
+      monthlyCommission: monthlyCommissions._sum.amount || 0,
+      walletBalance: wallet?.balance || 0,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
