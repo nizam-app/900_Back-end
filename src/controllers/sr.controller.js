@@ -186,3 +186,61 @@ export const listSR = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getSRById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userRole = req.user.role;
+    const userId = req.user.id;
+
+    const sr = await prisma.serviceRequest.findUnique({
+      where: { 
+        srNumber: id 
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        category: true,
+        subservice: true,
+        service: true,
+        workOrders: {
+          include: {
+            technician: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!sr) {
+      return res.status(404).json({ message: 'Service Request not found' });
+    }
+
+    // Customers can only view their own SRs
+    if (userRole === 'CUSTOMER' && sr.customerId !== userId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    return res.json(sr);
+  } catch (err) {
+    next(err);
+  }
+};

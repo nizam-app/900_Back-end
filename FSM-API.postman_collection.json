@@ -316,6 +316,29 @@
 							]
 						}
 					}
+				},
+				{
+					"name": "Get SR by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{dispatcherToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/sr/{{srId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sr",
+								"{{srId}}"
+							]
+						}
+					}
 				}
 			]
 		},
@@ -350,7 +373,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"technicianId\": 6,\n  \"scheduledAt\": \"2025-11-18T09:00:00Z\",\n  \"notes\": \"Customer prefers morning\"\n}"
+							"raw": "{\n  \"technicianId\": 6,\n  \"scheduledAt\": \"2025-11-21T09:00:00Z\",\n  \"notes\": \"Customer prefers morning\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/wos/from-sr/{{srId}}",
@@ -362,6 +385,57 @@
 								"wos",
 								"from-sr",
 								"{{srId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Work Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{dispatcherToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/wos?status=ASSIGNED",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"wos"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "ASSIGNED"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get WO by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{techToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/wos/{{woId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"wos",
+								"{{woId}}"
 							]
 						}
 					}
@@ -613,6 +687,57 @@
 					}
 				},
 				{
+					"name": "Get All Payments",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/payments?status=PENDING_VERIFICATION",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payments"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "PENDING_VERIFICATION"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Payment by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/payments/{{paymentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"{{paymentId}}"
+							]
+						}
+					}
+				},
+				{
 					"name": "Verify Payment (Approve)",
 					"request": {
 						"method": "PATCH",
@@ -681,6 +806,29 @@
 		{
 			"name": "Commissions & Payouts",
 			"item": [
+				{
+					"name": "Get My Wallet Balance",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{techToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/commissions/wallet",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"commissions",
+								"wallet"
+							]
+						}
+					}
+				},
 				{
 					"name": "Get My Commissions",
 					"request": {
@@ -1564,6 +1712,67 @@
 							]
 						}
 					}
+				},
+				{
+					"name": "Get Technician's Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{dispatcherToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/location/technician/6",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"location",
+								"technician",
+								"6"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get ETA to Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{dispatcherToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/location/eta?technicianId=6&destinationLat=23.8200&destinationLng=90.4200",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"location",
+								"eta"
+							],
+							"query": [
+								{
+									"key": "technicianId",
+									"value": "6"
+								},
+								{
+									"key": "destinationLat",
+									"value": "23.8200"
+								},
+								{
+									"key": "destinationLng",
+									"value": "90.4200"
+								}
+							]
+						}
+					}
 				}
 			]
 		}
@@ -1577,6 +1786,46 @@
 		{
 			"key": "imageUploadServiceUrl",
 			"value": "https://img.mtscorporate.com",
+			"type": "string"
+		},
+		{
+			"key": "srId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "woId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "paymentId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "payoutRequestId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "dispatcherToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "techToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "customerToken",
+			"value": "",
 			"type": "string"
 		}
 	]
