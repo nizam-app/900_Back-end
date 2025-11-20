@@ -74,7 +74,7 @@ export const getNearbyTechnicians = async (req, res, next) => {
         const dLat = ((techLat - lat) * Math.PI) / 180;
         const dLon = ((techLng - lng) * Math.PI) / 180;
         const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) + 
           Math.cos((lat * Math.PI) / 180) *
             Math.cos((techLat * Math.PI) / 180) *
             Math.sin(dLon / 2) *

@@ -24,4 +24,4 @@ router.patch('/users/:id/profile', authMiddleware, requireRole('ADMIN'), updateT
 router.get('/audit-logs', authMiddleware, requireRole('ADMIN'), getAuditLogs);
 router.get('/technician-locations', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getTechnicianLocations);
 
-export default router;
+export default router; 

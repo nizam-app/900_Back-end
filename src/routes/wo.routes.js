@@ -11,6 +11,12 @@ import {
   startWO,
   completeWO,
 } from '../controllers/wo.controller.js';
+import { 
+  getRemainingTime, 
+  getActiveDeadlines, 
+  checkAndCleanupExpiredWorkOrders,
+  TIME_CONFIG 
+} from '../services/timeLimit.service.js';
 
 const router = Router();
 
@@ -81,6 +87,68 @@ router.patch(
   requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
   upload.array('photos', 5), // Max 5 photos
   completeWO
+);
+
+// Time limit management routes
+router.get(
+  '/:woId/time-remaining',
+  authMiddleware,
+  requireRole('TECH_INTERNAL', 'TECH_FREELANCER', 'DISPATCHER', 'ADMIN'),
+  (req, res) => {
+    const woId = Number(req.params.woId);
+    const remaining = getRemainingTime(woId);
+    
+    if (!remaining) {
+      return res.json({ 
+        message: 'No active deadline for this work order',
+        hasDeadline: false
+      });
+    }
+    
+    res.json({
+      woId,
+      hasDeadline: true,
+      ...remaining,
+      timeConfig: TIME_CONFIG
+    });
+  }
+);
+
+// Admin route to view all active deadlines
+router.get(
+  '/admin/active-deadlines',
+  authMiddleware,
+  requireRole('ADMIN', 'DISPATCHER'),
+  (req, res) => {
+    const deadlines = getActiveDeadlines();
+    res.json({
+      totalActive: deadlines.length,
+      deadlines: deadlines.map(d => ({
+        ...d,
+        remainingMinutes: Math.ceil(d.remainingMs / (60 * 1000))
+      })),
+      timeConfig: TIME_CONFIG
+    });
+  }
+);
+
+// Admin route to manually cleanup expired work orders
+router.post(
+  '/admin/cleanup-expired',
+  authMiddleware,
+  requireRole('ADMIN'),
+  async (req, res, next) => {
+    try {
+      const expired = await checkAndCleanupExpiredWorkOrders();
+      res.json({
+        message: `Processed ${expired.length} expired work orders`,
+        expiredWorkOrders: expired,
+        processedAt: new Date()
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 );
 
 export default router;

@@ -5,6 +5,13 @@ import {
   notifyWOAccepted,
   notifyWOCompleted,
 } from '../services/notification.service.js';
+import {
+  setResponseDeadline,
+  clearResponseDeadline,
+  isWorkOrderExpired,
+  getRemainingTime,
+  TIME_CONFIG
+} from '../services/timeLimit.service.js';
 
 const generateWONumber = () => 'WO-' + Date.now();
 
@@ -189,7 +196,19 @@ export const assignWO = async (req, res, next) => {
 
     await notifyWOAssignment(Number(technicianId), wo);
 
-    return res.json(wo);
+    // Set response deadline for technician
+    const deadline = await setResponseDeadline(woId, TIME_CONFIG.RESPONSE_TIME_MINUTES);
+
+    return res.json({
+      ...wo,
+      responseDeadline: deadline,
+      timeLimit: {
+        responseTimeMinutes: TIME_CONFIG.RESPONSE_TIME_MINUTES,
+        warningTimeMinutes: TIME_CONFIG.WARNING_TIME_MINUTES,
+        deadline: deadline,
+        message: `You have ${TIME_CONFIG.RESPONSE_TIME_MINUTES} minutes to accept or decline this work order`
+      }
+    });
   } catch (err) {
     next(err);
   }
@@ -229,6 +248,16 @@ export const respondWO = async (req, res, next) => {
       return res.status(400).json({ message: 'WO is not in ASSIGNED status' });
     }
 
+    // Check if response time has expired
+    if (isWorkOrderExpired(woId)) {
+      return res.status(410).json({ 
+        message: 'Response time expired. This work order has been automatically unassigned.',
+        code: 'RESPONSE_TIMEOUT'
+      });
+    }
+
+    const remainingTime = getRemainingTime(woId);
+
     let updated;
 
     if (action === 'ACCEPT') {
@@ -261,11 +290,23 @@ export const respondWO = async (req, res, next) => {
       },
     });
 
+    // Clear response deadline since technician responded
+    clearResponseDeadline(woId);
+
     if (action === 'ACCEPT' && wo.dispatcherId) {
       await notifyWOAccepted(wo.dispatcherId, updated);
     }
 
-    return res.json(updated);
+    return res.json({
+      ...updated,
+      responseTime: remainingTime ? {
+        respondedWithMinutesRemaining: remainingTime.minutes,
+        respondedInTime: !remainingTime.expired
+      } : null,
+      message: action === 'ACCEPT' ? 
+        'Work order accepted successfully' : 
+        'Work order declined successfully'
+    });
   } catch (err) {
     next(err);
   }
