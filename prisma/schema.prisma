@@ -23,7 +23,6 @@ model User {
   lastLongitude     Float?
   locationStatus    String? // ONLINE, BUSY, OFFLINE
   locationUpdatedAt DateTime?
-  fcmToken          String? // Firebase Cloud Messaging token for push notifications
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -46,8 +45,6 @@ model User {
   payouts                Payout[]
   createdPayouts         Payout[]            @relation("PayoutCreator")
   otpRecords             OTP[]
-  sentMessages           ChatMessage[]       @relation("SentMessages")
-  receivedMessages       ChatMessage[]       @relation("ReceivedMessages")
   blockedUsers           User[]              @relation("BlockedByUser")
   blockedBy              User?               @relation("BlockedByUser", fields: [blockedById], references: [id])
 }
@@ -174,7 +171,6 @@ model WorkOrder {
   checkins     TechnicianCheckin[]
   payments     Payment[]
   commissions  Commission[]
-  chatMessages ChatMessage[]
 }
 
 model TechnicianCheckin {
@@ -336,24 +332,4 @@ model OTP {
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
-}
-
-model ChatMessage {
-  id          Int       @id @default(autoincrement())
-  woId        Int // Work Order related to this chat
-  senderId    Int // User who sent the message
-  recipientId Int? // Optional: specific recipient (null for group chat)
-  message     String    @db.Text
-  isRead      Boolean   @default(false)
-  readAt      DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  workOrder WorkOrder @relation(fields: [woId], references: [id], onDelete: Cascade)
-  sender    User      @relation("SentMessages", fields: [senderId], references: [id])
-  recipient User?     @relation("ReceivedMessages", fields: [recipientId], references: [id])
-
-  @@index([woId, createdAt])
-  @@index([senderId])
-  @@index([recipientId])
 }
