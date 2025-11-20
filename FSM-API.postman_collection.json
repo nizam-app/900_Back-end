@@ -401,7 +401,7 @@
 				{
 					"name": "Accept WO (Technician)",
 					"request": {
-						"method": "POST",
+						"method": "PATCH",
 						"header": [
 							{
 								"key": "Authorization",
@@ -433,7 +433,7 @@
 				{
 					"name": "Decline WO (Technician)",
 					"request": {
-						"method": "POST",
+						"method": "PATCH",
 						"header": [
 							{
 								"key": "Authorization",
@@ -465,7 +465,7 @@
 				{
 					"name": "Start Job (GPS Check-in)",
 					"request": {
-						"method": "POST",
+						"method": "PATCH",
 						"header": [
 							{
 								"key": "Authorization",
