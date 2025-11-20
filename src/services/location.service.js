@@ -13,16 +13,6 @@ export const updateLocation = async (req, res, next) => {
     const technicianId = req.user.id;
     const { latitude, longitude, status } = req.body;
 
-  const user = await prisma.user.update({
-    where: { id: technicianId },
-    data: {
-      lastLatitude: Number(latitude),
-      lastLongitude: Number(longitude),
-      locationStatus: status || 'ONLINE',
-      locationUpdatedAt: new Date(),
-    },
-  });
-
     // Validate coordinates
     const lat = Number(latitude);
     const lng = Number(longitude); 
