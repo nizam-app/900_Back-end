@@ -22,7 +22,7 @@ export const updateLocation = async (req, res, next) => {
 
     return res.json({ message: 'Location updated successfully' });
   } catch (err) {
-    next(err);
+    next(err); 
   }
 };
 

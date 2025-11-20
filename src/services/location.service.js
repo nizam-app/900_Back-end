@@ -19,7 +19,7 @@ export const updateLocation = async (req, res, next) => {
 
     // Validate coordinates
     const lat = Number(latitude);
-    const lng = Number(longitude);
+    const lng = Number(longitude); 
     
     if (!validateCoordinates(lat, lng)) {
       return res.status(400).json({ message: 'Invalid coordinates provided' });

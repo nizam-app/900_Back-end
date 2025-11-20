@@ -12,25 +12,14 @@ router.post('/update', authMiddleware, requireRole('TECH_INTERNAL', 'TECH_FREELA
 router.get('/nearby', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getNearbyTechnicians);
 
 // Get location history for a technician
-router.get('/history/:technicianId', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), async (req, res) => {
+router.get('/history/:technicianId', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), async (req, res, next) => {
   try {
-    const { technicianId } = req.params;
-    const { startDate, endDate, limit = 100 } = req.query;
-
-    const result = await getLocationHistory(
-      technicianId, 
-      startDate, 
-      endDate, 
-      parseInt(limit)
-    );
-
-    res.json(result);
+    // Move technicianId from params to query for service compatibility
+    req.query.technicianId = req.params.technicianId;
+    
+    // Call the service function
+    await getLocationHistory(req, res, next);
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
-    });
+    next(error);
   }
-});
-
-export default router;
+});export default router;
