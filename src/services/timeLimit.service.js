@@ -2,7 +2,7 @@
 import { prisma } from '../prisma.js';
 
 // Configuration - Can be moved to environment variables
-const RESPONSE_TIME_MINUTES = 40; // 30 minutes to respond
+const RESPONSE_TIME_MINUTES = 100; // 30 minutes to respond
 const WARNING_TIME_MINUTES = 5;   // Warning 5 minutes before expiry
 
 // In-memory storage for work order deadlines
@@ -46,7 +46,7 @@ export const clearResponseDeadline = (woId) => {
   }
   
   if (pendingTimeouts.has(`expiry_${woId}`)) {
-    clearTimeout(pendingTimeouts.get(`expiry_${woId}`));
+    clearTimeout(pendingTimeouts.get(`expiry_${woId}`)); 
     pendingTimeouts.delete(`expiry_${woId}`);
   }
   
