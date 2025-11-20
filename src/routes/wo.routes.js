@@ -55,28 +55,28 @@ router.post(
 );
 
 router.patch(
-  '/:id/assign',
+  '/:woId/assign',
   authMiddleware,
   requireRole('DISPATCHER', 'ADMIN'),
   assignWO
 );
 
 router.patch(
-  '/:id/respond',
+  '/:woId/respond',
   authMiddleware,
   requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
   respondWO
 );
 
 router.patch(
-  '/:id/start',
+  '/:woId/start',
   authMiddleware,
   requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
   startWO
 );
 
 router.patch(
-  '/:id/complete',
+  '/:woId/complete',
   authMiddleware,
   requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
   upload.array('photos', 5), // Max 5 photos

@@ -2,4 +2,7 @@ node_modules
 # Keep environment variables out of version control
 .env
 
+# Firebase service account credentials
+*firebase*.json
+
 /generated/prisma

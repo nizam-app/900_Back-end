@@ -1,10 +1,9 @@
-// src/services/sr.service.js
+// REFACTORED: src/services/sr.service.js - Pure Business Logic
 import { prisma } from '../prisma.js';
 
-// simple SR number generator
 const generateSRNumber = () => 'SR-' + Date.now();
 
-// ✅ Customer / Guest create Service Request
+// ✅ Create Service Request (guest or customer)
 export const createServiceRequest = async (srData) => {
   const {
     name,
@@ -28,7 +27,7 @@ export const createServiceRequest = async (srData) => {
       data: {
         phone,
         name: name || null,
-        passwordHash: '', // guest (no real login yet)
+        passwordHash: '',
         role: 'CUSTOMER',
       },
     });
@@ -39,14 +38,14 @@ export const createServiceRequest = async (srData) => {
     data: {
       srNumber: generateSRNumber(),
       customerId: customer.id,
-      createdById: null,     // guest/customer, no agent
+      createdById: null,
       categoryId: Number(categoryId),
       subserviceId: Number(subserviceId),
       serviceId: serviceId ? Number(serviceId) : null,
       description: description || null,
       priority: priority || 'MEDIUM',
       address,
-      paymentType,           // CASH / MOBILE_MONEY
+      paymentType,
       status: 'NEW',
       source: source || 'CUSTOMER_APP',
       isGuest,
@@ -65,7 +64,7 @@ export const createServiceRequest = async (srData) => {
   return sr;
 };
 
-// ✅ Dispatcher / Call Center / Admin list SRs
+// ✅ Find Service Requests with filters
 export const findServiceRequests = async (filters) => {
   const { status, phone } = filters;
 

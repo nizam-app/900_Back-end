@@ -13,9 +13,15 @@ export const updateLocation = async (req, res, next) => {
     const technicianId = req.user.id;
     const { latitude, longitude, status } = req.body;
 
-    if (!latitude || !longitude) {
-      return res.status(400).json({ message: 'Latitude and longitude are required' });
-    }
+  const user = await prisma.user.update({
+    where: { id: technicianId },
+    data: {
+      lastLatitude: Number(latitude),
+      lastLongitude: Number(longitude),
+      locationStatus: status || 'ONLINE',
+      locationUpdatedAt: new Date(),
+    },
+  });
 
     // Validate coordinates
     const lat = Number(latitude);
@@ -163,6 +169,8 @@ export const getNearbyTechnicians = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+
+  return filtered;
 };
 
 // ✅ Get technician location history
