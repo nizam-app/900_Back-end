@@ -353,7 +353,8 @@
 							"script": {
 								"exec": [
 									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"woId\", jsonData.id);"
+									"pm.environment.set(\"woId\", jsonData.woNumber || jsonData.id);",
+									"pm.environment.set(\"woNumber\", jsonData.woNumber);"
 								],
 								"type": "text/javascript"
 							}

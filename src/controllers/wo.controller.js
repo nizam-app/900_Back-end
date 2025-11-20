@@ -8,6 +8,75 @@ import {
 
 const generateWONumber = () => 'WO-' + Date.now();
 
+export const getWOById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    const workOrder = await prisma.workOrder.findFirst({
+      where: { woNumber: id },
+      include: {
+        customer: {
+          select: { id: true, name: true, phone: true, email: true }
+        },
+        technician: {
+          select: { id: true, name: true, phone: true, role: true }
+        },
+        dispatcher: {
+          select: { id: true, name: true, phone: true }
+        },
+        category: {
+          select: { id: true, name: true, description: true }
+        },
+        service: {
+          select: { id: true, name: true, description: true, baseRate: true }
+        },
+        subservice: {
+          select: { id: true, name: true, description: true }
+        },
+        serviceRequest: {
+          select: { id: true, srNumber: true, description: true, priority: true }
+        },
+        payments: {
+          select: {
+            id: true,
+            amount: true,
+            method: true,
+            status: true,
+            createdAt: true
+          }
+        },
+        commissions: {
+          select: {
+            id: true,
+            type: true,
+            amount: true,
+            status: true
+          }
+        }
+      }
+    });
+
+    if (!workOrder) {
+      return res.status(404).json({ message: 'Work Order not found' });
+    }
+
+    // Check access permissions
+    if (userRole === 'CUSTOMER' && workOrder.customerId !== userId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    if ((userRole === 'TECH_INTERNAL' || userRole === 'TECH_FREELANCER') && workOrder.technicianId !== userId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    return res.json(workOrder);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getAllWorkOrders = async (req, res, next) => {
   try {
     const { status, technicianId, customerId, priority, page = 1, limit = 10 } = req.query;
@@ -150,7 +219,7 @@ export const createWOFromSR = async (req, res, next) => {
 
 export const assignWO = async (req, res, next) => {
   try {
-    const woId = Number(req.params.woId);
+    const woIdParam = req.params.woId;
     const { technicianId } = req.body;
 
     if (!technicianId) {
@@ -169,8 +238,13 @@ export const assignWO = async (req, res, next) => {
       return res.status(400).json({ message: 'Technician is blocked' });
     }
 
+    // Find WO by either numeric ID or woNumber
+    const whereClause = isNaN(woIdParam) 
+      ? { woNumber: woIdParam } 
+      : { id: Number(woIdParam) };
+
     const wo = await prisma.workOrder.update({
-      where: { id: woId },
+      where: whereClause,
       data: {
         technicianId: Number(technicianId),
         status: 'ASSIGNED',
@@ -197,7 +271,10 @@ export const assignWO = async (req, res, next) => {
 
 export const respondWO = async (req, res, next) => { 
   try {
-    const woId = Number(req.params.woId);
+    const woIdParam = req.params.woId;
+    const whereClause = isNaN(woIdParam) 
+      ? { woNumber: woIdParam } 
+      : { id: Number(woIdParam) };
     const { action } = req.body;
     const techId = req.user.id;
 
@@ -214,7 +291,7 @@ export const respondWO = async (req, res, next) => {
     }
 
     const wo = await prisma.workOrder.findUnique({
-      where: { id: woId },
+      where: whereClause,
     });
 
     if (!wo) {
@@ -233,7 +310,7 @@ export const respondWO = async (req, res, next) => {
 
     if (action === 'ACCEPT') {
       updated = await prisma.workOrder.update({
-        where: { id: woId },
+        where: whereClause,
         data: {
           status: 'ACCEPTED',
           acceptedAt: new Date(),
@@ -241,7 +318,7 @@ export const respondWO = async (req, res, next) => {
       });
     } else if (action === 'DECLINE') {
       updated = await prisma.workOrder.update({
-        where: { id: woId },
+        where: whereClause,
         data: {
           status: 'UNASSIGNED',
           technicianId: null,
@@ -273,7 +350,10 @@ export const respondWO = async (req, res, next) => {
 
 export const startWO = async (req, res, next) => {
   try {
-    const woId = Number(req.params.woId);
+    const woIdParam = req.params.woId;
+    const whereClause = isNaN(woIdParam) 
+      ? { woNumber: woIdParam } 
+      : { id: Number(woIdParam) };
     const techId = req.user.id;
     const { latitude, longitude } = req.body;
 
@@ -295,7 +375,7 @@ export const startWO = async (req, res, next) => {
     }
 
     const wo = await prisma.workOrder.findUnique({
-      where: { id: woId },
+      where: whereClause,
     });
 
     if (!wo) {
@@ -303,7 +383,7 @@ export const startWO = async (req, res, next) => {
     }
 
     if (wo.technicianId !== techId) {
-      return res.status(403).json({ message: 'This WO does not belong to you' });
+      return res.status(403).json({ message: 'Not assigned to you' });
     }
 
     if (wo.status !== 'ACCEPTED') {
@@ -311,7 +391,7 @@ export const startWO = async (req, res, next) => {
     }
 
     const updatedWO = await prisma.workOrder.update({
-      where: { id: woId },
+      where: whereClause,
       data: {
         status: 'IN_PROGRESS',
         startedAt: new Date(),
@@ -324,7 +404,7 @@ export const startWO = async (req, res, next) => {
 
     await prisma.technicianCheckin.create({
       data: {
-        woId,
+        woId: wo.id,
         technicianId: techId,
         latitude: lat,
         longitude: lng,
@@ -352,12 +432,15 @@ export const startWO = async (req, res, next) => {
 
 export const completeWO = async (req, res, next) => {
   try {
-    const woId = Number(req.params.woId);
+    const woIdParam = req.params.woId;
+    const whereClause = isNaN(woIdParam) 
+      ? { woNumber: woIdParam } 
+      : { id: Number(woIdParam) };
     const techId = req.user.id;
     const { completionNotes, materialsUsed } = req.body;
 
     const wo = await prisma.workOrder.findUnique({
-      where: { id: woId },
+      where: whereClause,
     });
 
     if (!wo) {
@@ -384,7 +467,7 @@ export const completeWO = async (req, res, next) => {
     }
 
     const updated = await prisma.workOrder.update({
-      where: { id: woId },
+      where: whereClause,
       data: {
         status: 'COMPLETED_PENDING_PAYMENT',
         completedAt: new Date(),

@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # FSM System - Complete Architecture & Flow Documentation
 
 ## 🏗️ System Architecture Overview
@@ -556,6 +558,7 @@ ADMIN REPORT REQUEST
 ## 🗂️ File Structure Explanation
 
 ### Configuration & Setup
+
 ```
 ├── package.json              # Dependencies (Express, Prisma 6.19.0, JWT, bcrypt)
 ├── prisma/
@@ -570,6 +573,7 @@ ADMIN REPORT REQUEST
 ```
 
 ### Middleware Layer
+
 ```
 src/middleware/
 ├── auth.js                   # JWT verification, role extraction
@@ -577,6 +581,7 @@ src/middleware/
 ```
 
 ### Routing Layer
+
 ```
 src/routes/
 ├── auth.routes.js            # POST /login, /register, /refresh
@@ -593,6 +598,7 @@ src/routes/
 ```
 
 ### Controller Layer (Request Handlers)
+
 ```
 src/controllers/
 ├── auth.controller.js        # Login, register, token refresh
@@ -609,6 +615,7 @@ src/controllers/
 ```
 
 ### Service Layer (Business Logic)
+
 ```
 src/services/
 ├── auth.service.js           # Password hashing, JWT generation
@@ -625,6 +632,7 @@ src/services/
 ```
 
 ### Utilities
+
 ```
 src/utils/
 ├── jwt.js                    # signAccessToken(), signRefreshToken(), verifyToken()
@@ -632,6 +640,7 @@ src/utils/
 ```
 
 ### Storage
+
 ```
 uploads/                      # User-uploaded files (images, documents)
 ├── wo-completion/            # Work order completion images
@@ -709,23 +718,27 @@ SubService (1) ─────< (M) ServiceRequest
 ## 🚀 API Endpoint Summary
 
 ### Authentication
+
 - `POST /api/auth/login` - User login
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/refresh` - Refresh access token
 
 ### Categories
+
 - `GET /api/categories` - List all categories
 - `POST /api/categories` - Create category (Admin)
 - `POST /api/categories/services` - Create service (Admin)
 - `POST /api/categories/subservices` - Create subservice (Admin)
 
 ### Service Requests
+
 - `POST /api/sr` - Create SR (Customer)
 - `GET /api/sr` - List SRs (filtered by role)
 - `GET /api/sr/:id` - Get SR by ID
 - `PUT /api/sr/:id/status` - Update SR status (Dispatcher/CallCenter)
 
 ### Work Orders
+
 - `POST /api/wos/from-sr/:srId` - Create WO from SR (Dispatcher)
 - `GET /api/wos` - List WOs (filtered by role)
 - `GET /api/wos/:id` - Get WO details
@@ -733,30 +746,37 @@ SubService (1) ─────< (M) ServiceRequest
 - `POST /api/wos/:id/completion` - Mark WO complete with images (Tech)
 
 ### Commissions
+
 - `GET /api/commissions/wallet` - Get wallet balance (Tech)
 - `GET /api/commissions/my-commissions` - List own commissions (Tech)
 
 ### Payments
+
 - `POST /api/payments` - Create payment (Customer)
 - `GET /api/payments/:woId` - Get payment details
 
 ### Notifications
+
 - `GET /api/notifications` - List notifications
 - `PUT /api/notifications/:id/read` - Mark as read
 
 ### Location
+
 - `POST /api/location/update` - Update GPS location (Tech)
 - `GET /api/location/:userId` - Get tech location (Dispatcher)
 
 ### Reports
+
 - `GET /api/reports/commissions` - Commission report (Admin)
 - `GET /api/reports/work-orders` - WO statistics (Admin)
 
 ### Admin
+
 - `GET /api/admin/users` - List all users (Admin)
 - `PUT /api/admin/users/:id/role` - Change user role (Admin)
 
 ### OTP
+
 - `POST /api/otp/send` - Send OTP to phone
 - `POST /api/otp/verify` - Verify OTP code
 
@@ -765,19 +785,23 @@ SubService (1) ─────< (M) ServiceRequest
 ## 🛡️ Security Measures
 
 1. **JWT Authentication**
+
    - Access tokens expire in 15 minutes
    - Refresh tokens expire in 7 days
    - Tokens signed with secret from env
 
 2. **Password Security**
+
    - Bcrypt hashing with salt rounds
    - Passwords never stored in plain text
 
 3. **Role-Based Access Control**
+
    - Every protected route checks role
    - Middleware validates permissions
 
 4. **File Upload Security**
+
    - Multer validates file types
    - Files stored with hashed names
    - Max file size limits enforced
