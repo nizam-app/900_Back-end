@@ -168,9 +168,9 @@ model WorkOrder {
   subservice     Subservice     @relation(fields: [subserviceId], references: [id])
   service        Service?       @relation(fields: [serviceId], references: [id])
 
-  checkins     TechnicianCheckin[]
-  payments     Payment[]
-  commissions  Commission[]
+  checkins    TechnicianCheckin[]
+  payments    Payment[]
+  commissions Commission[]
 }
 
 model TechnicianCheckin {
