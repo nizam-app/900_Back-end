@@ -8,11 +8,86 @@ import {
 
 const generateWONumber = () => 'WO-' + Date.now();
 
+export const getAllWorkOrders = async (req, res, next) => {
+  try {
+    const { status, technicianId, customerId, priority, page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const where = {};
+    if (status) where.status = status;
+    if (technicianId) where.technicianId = Number(technicianId);
+    if (customerId) where.customerId = Number(customerId);
+    if (priority) where.priority = priority;
+
+    const [workOrders, total] = await Promise.all([
+      prisma.workOrder.findMany({
+        where,
+        include: {
+          customer: {
+            // select: { id: true, firstName: true, lastName: true, phone: true }
+          },
+          technician: {
+            // select: { id: true, firstName: true, lastName: true, phone: true }
+          },
+          dispatcher: {
+            // select: { id: true, firstName: true, lastName: true }
+          },
+          category: {
+            select: { id: true, name: true }
+          },
+          service: {
+            select: { id: true, name: true }
+          },
+          subservice: {
+            select: { id: true, name: true }
+          },
+          serviceRequest: {
+            select: { id: true, srNumber: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: Number(offset),
+        take: Number(limit),
+      }),
+      prisma.workOrder.count({ where })
+    ]);
+
+    return res.json({
+      workOrders,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const createWOFromSR = async (req, res, next) => {
   try {
-    const srId = Number(req.params.srId);
+    // Validate srId parameter
+    const srIdParam = req.params.srId;
+    if (!srIdParam || isNaN(srIdParam)) {
+      return res.status(400).json({ 
+        message: 'Valid Service Request ID is required',
+        error: 'INVALID_SR_ID' 
+      });
+    }
+
+    const srId = Number(srIdParam);
     const { technicianId, scheduledAt, notes } = req.body;
     const dispatcherId = req.user.id;
+
+    // Additional validation for technicianId if provided
+    if (technicianId && isNaN(technicianId)) {
+      return res.status(400).json({ 
+        message: 'Valid Technician ID is required',
+        error: 'INVALID_TECHNICIAN_ID' 
+      });
+    }
 
     const sr = await prisma.serviceRequest.findUnique({
       where: { id: srId },
@@ -59,9 +134,13 @@ export const createWOFromSR = async (req, res, next) => {
       },
     });
 
+    // Send notifications
     if (technicianId) {
       await notifyWOAssignment(Number(technicianId), wo);
     }
+
+    // Real-time notification removed - notifications stored in database only
+    console.log(`📋 Work Order created: ${wo.woNumber}`);
 
     return res.status(201).json(wo);
   } catch (err) {
@@ -116,7 +195,7 @@ export const assignWO = async (req, res, next) => {
   }
 };
 
-export const respondWO = async (req, res, next) => {
+export const respondWO = async (req, res, next) => { 
   try {
     const woId = Number(req.params.woId);
     const { action } = req.body;
@@ -196,7 +275,24 @@ export const startWO = async (req, res, next) => {
   try {
     const woId = Number(req.params.woId);
     const techId = req.user.id;
-    const { lat, lng } = req.body;
+    const { latitude, longitude } = req.body;
+
+    // Validate required fields
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: 'Latitude and longitude are required' });
+    }
+
+    // Validate coordinates
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ message: 'Invalid latitude or longitude values' });
+    }
+
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return res.status(400).json({ message: 'Latitude must be between -90 and 90, longitude between -180 and 180' });
+    }
 
     const wo = await prisma.workOrder.findUnique({
       where: { id: woId },
@@ -214,20 +310,24 @@ export const startWO = async (req, res, next) => {
       return res.status(400).json({ message: 'WO is not in ACCEPTED status' });
     }
 
-    await prisma.workOrder.update({
+    const updatedWO = await prisma.workOrder.update({
       where: { id: woId },
       data: {
         status: 'IN_PROGRESS',
         startedAt: new Date(),
       },
+      include: {
+        customer: true,
+        technician: true
+      }
     });
 
     await prisma.technicianCheckin.create({
       data: {
         woId,
         technicianId: techId,
-        latitude: Number(lat),
-        longitude: Number(lng),
+        latitude: lat,
+        longitude: lng,
       },
     });
 
@@ -240,7 +340,11 @@ export const startWO = async (req, res, next) => {
       },
     });
 
-    return res.json({ message: 'Work started' });
+    // Real-time notification for work started
+    const { notifyWorkStarted } = await import('../services/notification.service.js');
+    await notifyWorkStarted(updatedWO);
+
+    return res.json({ message: 'Work started', wo: updatedWO });
   } catch (err) {
     next(err);
   }

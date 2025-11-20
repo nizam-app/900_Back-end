@@ -91,8 +91,87 @@ export const getAuditLogs = async (req, res, next) => {
 
 export const getTechnicianLocations = async (req, res, next) => {
   try {
-    const technicians = await adminService.getActiveTechnicianLocations();
-    return res.json(technicians);
+    const { includeLocationName, centerLat, centerLng } = req.query;
+    
+    const technicians = await prisma.user.findMany({
+      where: {
+        role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
+        isBlocked: false,
+        lastLatitude: { not: null },
+        lastLongitude: { not: null },
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        role: true,
+        lastLatitude: true,
+        lastLongitude: true,
+        locationStatus: true,
+        locationUpdatedAt: true,
+        technicianProfile: {
+          select: {
+            type: true,
+            status: true
+          }
+        }
+      },
+    });
+
+    // Enhanced response with location names and distances
+    let enhancedTechnicians = technicians;
+    
+    if (includeLocationName === 'true' || (centerLat && centerLng)) {
+      const { getLocationName, calculateDistance } = await import('../utils/location.js');
+      
+      enhancedTechnicians = await Promise.all(
+        technicians.map(async (tech) => {
+          let locationName = null;
+          let distanceFromCenter = null;
+          
+          // Get location name if requested
+          if (includeLocationName === 'true') {
+            try {
+              locationName = await getLocationName(tech.lastLatitude, tech.lastLongitude);
+            } catch (error) {
+              console.error(`Error getting location for technician ${tech.id}:`, error);
+              locationName = 'Location unavailable';
+            }
+          }
+          
+          // Calculate distance from center point if provided
+          if (centerLat && centerLng) {
+            distanceFromCenter = calculateDistance(
+              Number(centerLat),
+              Number(centerLng),
+              tech.lastLatitude,
+              tech.lastLongitude
+            );
+          }
+          
+          return {
+            ...tech,
+            locationName,
+            distanceFromCenter,
+            coordinates: `${tech.lastLatitude}, ${tech.lastLongitude}`,
+            isOnline: tech.locationStatus === 'ONLINE',
+            lastSeenMinutesAgo: tech.locationUpdatedAt ? 
+              Math.floor((new Date() - new Date(tech.locationUpdatedAt)) / 60000) : null
+          };
+        })
+      );
+      
+      // Sort by distance if center point provided
+      if (centerLat && centerLng) {
+        enhancedTechnicians.sort((a, b) => a.distanceFromCenter - b.distanceFromCenter);
+      }
+    }
+
+    return res.json({
+      count: enhancedTechnicians.length,
+      onlineCount: enhancedTechnicians.filter(t => t.locationStatus === 'ONLINE').length,
+      technicians: enhancedTechnicians
+    });
   } catch (err) {
     next(err);
   }

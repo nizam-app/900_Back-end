@@ -24,9 +24,9 @@ router.patch('/payout-requests/:id', authMiddleware, requireRole('ADMIN'), revie
 // Admin triggers weekly payout (you can later move to cron)
 router.post(
   '/payouts/weekly',
-  authMiddleware,
+  authMiddleware, 
   requireRole('ADMIN'),
   runWeeklyPayout
 );
-
+ 
 export default router;

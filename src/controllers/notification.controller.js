@@ -19,7 +19,7 @@ export const getNotifications = async (req, res, next) => {
     });
 
     return res.json(notifications);
-  } catch (err) {
+  } catch (err) { 
     next(err);
   }
 };
@@ -51,7 +51,7 @@ export const markAsRead = async (req, res, next) => {
   }
 };
 
-export const markAllAsRead = async (req, res, next) => {
+export const markAllAsRead = async (req, res, next) => { 
   try {
     const userId = req.user.id;
 

@@ -1,0 +1,384 @@
+{
+  "info": {
+    "name": "FSM Location Services - Enhanced",
+    "description": "Test collection for enhanced location services with geocoding and distance calculations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "auth_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login as Technician",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"1234567890\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.token);",
+                  "    console.log('Token saved:', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login as Admin/Dispatcher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"admin123\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.token);",
+                  "    console.log('Admin token saved:', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Location Services",
+      "item": [
+        {
+          "name": "Update Technician Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/location/update",
+              "host": ["{{base_url}}"],
+              "path": ["location", "update"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success', true);",
+                  "});",
+                  "",
+                  "pm.test('Response includes location name', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('locationName');",
+                  "    console.log('Location Name:', response.locationName);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Nearby Technicians",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/location/nearby?latitude=40.7128&longitude=-74.0060&radius=10&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["location", "nearby"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "40.7128",
+                  "description": "Customer/Work Order latitude"
+                },
+                {
+                  "key": "longitude",
+                  "value": "-74.0060",
+                  "description": "Customer/Work Order longitude"
+                },
+                {
+                  "key": "radius",
+                  "value": "10",
+                  "description": "Search radius in kilometers"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Maximum number of technicians to return"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has technicians array', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('technicians');",
+                  "    pm.expect(response.technicians).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Each technician has distance and location name', function () {",
+                  "    const response = pm.response.json();",
+                  "    if (response.technicians.length > 0) {",
+                  "        response.technicians.forEach(tech => {",
+                  "            pm.expect(tech).to.have.property('distance');",
+                  "            pm.expect(tech).to.have.property('locationName');",
+                  "            pm.expect(tech).to.have.property('estimatedArrival');",
+                  "            console.log(`${tech.name}: ${tech.distance}km away at ${tech.locationName}`);",
+                  "        });",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Location History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/location/history/1?startDate=2024-11-01&endDate=2024-11-19&limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["location", "history", "1"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-11-01",
+                  "description": "Start date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-11-19",
+                  "description": "End date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "description": "Maximum number of location records"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has location history', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success', true);",
+                  "    pm.expect(response).to.have.property('locations');",
+                  "    console.log('Location history entries:', response.locations.length);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Test Different Locations",
+      "item": [
+        {
+          "name": "Update Location - New York",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/location/update",
+              "host": ["{{base_url}}"],
+              "path": ["location", "update"]
+            }
+          }
+        },
+        {
+          "name": "Update Location - Los Angeles",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 34.0522,\n  \"longitude\": -118.2437\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/location/update",
+              "host": ["{{base_url}}"],
+              "path": ["location", "update"]
+            }
+          }
+        },
+        {
+          "name": "Update Location - London",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 51.5074,\n  \"longitude\": -0.1278\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/location/update",
+              "host": ["{{base_url}}"],
+              "path": ["location", "update"]
+            }
+          }
+        },
+        {
+          "name": "Get Nearby - Times Square Area",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/location/nearby?latitude=40.7580&longitude=-73.9855&radius=5&limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["location", "nearby"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "40.7580"
+                },
+                {
+                  "key": "longitude",
+                  "value": "-73.9855"
+                },
+                {
+                  "key": "radius",
+                  "value": "5"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

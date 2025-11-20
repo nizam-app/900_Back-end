@@ -4,13 +4,25 @@ import {
   notifyWOAssignment,
   notifyWOAccepted,
   notifyWOCompleted,
+  
 } from './notification.service.js';
 
 const generateWONumber = () => 'WO-' + Date.now();
 
 // ✅ Dispatcher: Convert SR → WO
-export const createWorkOrderFromSR = async (srId, woData, dispatcherId) => {
-  const { technicianId, scheduledAt, notes } = woData;
+export const createWOFromSR = async (req, res, next) => {
+  try {
+    const srId = Number(req.params.srId);
+    const { technicianId, scheduledAt, notes } = req.body;
+    const dispatcherId = req.user.id;
+
+    const sr = await prisma.serviceRequest.findUnique({
+      where: { id: srId },
+    }); 
+
+    if (!sr) {
+      return res.status(404).json({ message: 'Service Request not found' });
+    }
 
   const sr = await prisma.serviceRequest.findUnique({
     where: { id: srId },
@@ -230,8 +242,22 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
     throw new Error('WO is not in IN_PROGRESS status');
   }
 
-  // Process uploaded photos
-  const photoUrls = files ? files.map(file => `/uploads/wo-completion/${file.filename}`) : [];
+    // const modiftyingFiedns = {
+    //   completeWO:
+    //      completionNotes || photoUrls.length > 0 || parsedMaterials,
+    //      completedAt: new Date(),
+    //      completionPhones: pohoneUrs.length > 1,
+    //      materialsUsed: parsedMaterials,
+    // }
+
+    await prisma.auditLog.create({
+      data: {
+        userId: techId,
+        action: 'WO_COMPLETE',
+        entityType: 'WORK_ORDER',
+        entityId: wo.id,
+      },
+    });
 
   // Parse materialsUsed if it's a JSON string
   let parsedMaterials = null;
@@ -270,3 +296,12 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
 
   return updated;
 };
+
+
+
+
+
+
+
+
+

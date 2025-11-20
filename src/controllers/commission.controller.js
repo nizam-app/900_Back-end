@@ -41,7 +41,7 @@ export const getTechnicianDashboard = async (req, res, next) => {
   try {
     const technicianId = req.user.id;
 
-    const [wallet, totalEarned, totalPaid, pendingPayout] = await Promise.all([
+    const [wallet, totalEarned, totalPaid, allCommissions] = await Promise.all([
       prisma.wallet.findUnique({ where: { technicianId } }),
       prisma.commission.aggregate({
         where: { technicianId, status: 'EARNED' },
@@ -52,17 +52,51 @@ export const getTechnicianDashboard = async (req, res, next) => {
         _sum: { amount: true },
       }),
       prisma.commission.aggregate({
-        where: { technicianId, status: 'EARNED' },
+        where: { technicianId },
         _sum: { amount: true },
       }),
     ]);
 
-    return res.json({
-      walletBalance: wallet?.balance || 0,
-      totalEarned: totalEarned._sum.amount || 0,
-      totalPaid: totalPaid._sum.amount || 0,
-      pendingPayout: pendingPayout._sum.amount || 0,
-    });
+    // Handle wallet balance validation
+    const currentBalance = wallet?.balance || 0;
+    let walletBalance = currentBalance;
+    let hasNegativeBalance = false;
+
+    if (currentBalance < 0) {
+      walletBalance = 0; // Always show 0 or positive
+      hasNegativeBalance = true;
+    }
+
+    const earnedAmount = totalEarned._sum.amount || 0;
+    const paidAmount = totalPaid._sum.amount || 0;
+    const totalAmount = allCommissions._sum.amount || 0;
+
+    const response = {
+      walletBalance,
+      totalEarned: earnedAmount,
+      totalPaid: paidAmount,
+      pendingPayout: earnedAmount, // Only earned commissions are pending
+      totalAllTimeEarnings: totalAmount,
+    };
+
+    // Add warning for negative balance
+    if (hasNegativeBalance) {
+      response.warning = {
+        message: "Wallet balance adjustment needed. Please contact support.",
+        actualBalance: currentBalance,
+        error: "NEGATIVE_BALANCE_DETECTED"
+      };
+    }
+
+    // Add validation message if no wallet exists
+    if (!wallet) {
+      response.info = {
+        message: "Wallet not initialized. Complete your first work order to activate wallet.",
+        error: "WALLET_NOT_FOUND"
+      };
+    }
+
+    return res.json(response);
   } catch (err) {
     next(err);
   }
