@@ -45,7 +45,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/location', locationRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ status: 'FSM backend running' });
+  res.json({ status: 'FSM backend running ok' });
 });
 
 app.use(errorHandler);
