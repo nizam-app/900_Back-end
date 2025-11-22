@@ -57,3 +57,66 @@ export const changePassword = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getProfile = async (req, res, next) => {
+  try {
+    const profile = await authService.getUserProfile(req.user.id);
+    return res.json(profile);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateProfile = async (req, res, next) => {
+  try {
+    const allowedFields = ['name', 'email'];
+    const updates = {};
+    
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: 'No valid fields to update' });
+    }
+
+    const updatedProfile = await authService.updateUserProfile(req.user.id, updates);
+    return res.json(updatedProfile);
+  } catch (err) {
+    if (err.message === 'Email already in use') {
+      return res.status(400).json({ message: err.message });
+    }
+    next(err);
+  }
+};
+
+export const updateCustomerProfile = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const allowedFields = ['name', 'email'];
+    const updates = {};
+    
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: 'No valid fields to update' });
+    }
+
+    const updatedProfile = await authService.updateUserProfile(parseInt(userId), updates);
+    return res.json(updatedProfile);
+  } catch (err) {
+    if (err.message === 'Email already in use') {
+      return res.status(400).json({ message: err.message });
+    }
+    if (err.message === 'User not found') {
+      return res.status(404).json({ message: err.message });
+    }
+    next(err);
+  }
+};

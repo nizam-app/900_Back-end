@@ -85,7 +85,7 @@ export const createWOFromSR = async (req, res, next) => {
     }
 
     const srId = Number(srIdParam);
-    const { technicianId, scheduledAt, notes } = req.body;
+    const { technicianId, scheduledAt, notes, estimatedHours } = req.body;
     const dispatcherId = req.user.id;
 
     // Additional validation for technicianId if provided
@@ -93,6 +93,14 @@ export const createWOFromSR = async (req, res, next) => {
       return res.status(400).json({ 
         message: 'Valid Technician ID is required',
         error: 'INVALID_TECHNICIAN_ID' 
+      });
+    }
+
+    // Validate estimatedHours if provided
+    if (estimatedHours && (isNaN(estimatedHours) || estimatedHours < 1)) {
+      return res.status(400).json({ 
+        message: 'Estimated hours must be a positive number',
+        error: 'INVALID_ESTIMATED_HOURS' 
       });
     }
 
@@ -124,6 +132,7 @@ export const createWOFromSR = async (req, res, next) => {
         status: technicianId ? 'ASSIGNED' : 'UNASSIGNED',
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         notes: notes || null,
+        estimatedHours: estimatedHours ? Number(estimatedHours) : null,
       },
     });
 

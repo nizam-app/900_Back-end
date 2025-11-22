@@ -49,15 +49,16 @@ model User {
 }
 
 model TechnicianProfile {
-  id             Int      @id @default(autoincrement())
-  userId         Int      @unique
+  id             Int       @id @default(autoincrement())
+  userId         Int       @unique
   type           TechType
+  specialty      Specialty @default(GENERAL)
   commissionRate Float
   bonusRate      Float
   status         String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id])
 }
 
 model Category {
@@ -138,6 +139,7 @@ model WorkOrder {
   address          String
   paymentType      String
   priority         String
+  estimatedHours   Int?
   status           String
   scheduledAt      DateTime?
   acceptedAt       DateTime?
@@ -315,4 +317,13 @@ enum Role {
 enum TechType {
   INTERNAL
   FREELANCER
+}
+
+enum Specialty {
+  ELECTRICAL
+  PLUMBING
+  HVAC
+  GENERAL
+  CARPENTRY
+  PAINTING
 }

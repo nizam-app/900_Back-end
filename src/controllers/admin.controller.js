@@ -47,7 +47,7 @@ export const updateUser = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-};
+}; 
 
 export const blockTechnician = async (req, res, next) => {
   try {
