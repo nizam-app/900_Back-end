@@ -48,7 +48,7 @@ const upload = multer({
 
 // Get all work orders with filtering and pagination
 router.get(
-  '/',
+  '/list',
   authMiddleware,
   getAllWorkOrders
 );
