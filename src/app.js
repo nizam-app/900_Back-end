@@ -21,7 +21,31 @@ import dispatcherRoutes from './routes/dispatcher.routes.js';
 
 const app = express();
 
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://outside1backend.mtscorporate.com',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now, restrict later
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(morgan('dev'));
 
@@ -37,7 +61,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/sr', srRoutes);
-app.use('/api/wos', woRoutes);
+app.use('/api/wo', woRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/commissions', commissionRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -49,7 +73,32 @@ app.use('/api/callcenter', callCenterRoutes);
 app.use('/api/dispatcher', dispatcherRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ status: 'FSM backend running' });
+  res.json({ status: 'FSM backend running ok' });
+});
+
+// Health check endpoint for monitoring
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// API status check
+app.get('/api/status', (req, res) => {
+  res.json({
+    message: 'API is working',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      workOrders: '/api/wo',
+      serviceRequests: '/api/sr',
+      categories: '/api/categories',
+      admin: '/api/admin'
+    }
+  });
 });
 
 app.use(errorHandler);

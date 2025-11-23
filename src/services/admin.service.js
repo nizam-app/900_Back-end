@@ -63,7 +63,7 @@ export const getDashboardStats = async () => {
     totalRevenue: totalRevenue._sum.amount || 0,
     monthlyRevenue: monthlyRevenue._sum.amount || 0,
     totalCommissions: totalCommissions._sum.amount || 0,
-    monthlyCommissions: monthlyCommissions._sum.amount || 0,
+    monthlyCommissions: monthlyCommissions._sum.amount || 0, 
     activeTechnicians,
     totalCustomers,
   };
@@ -125,10 +125,18 @@ export const createUserWithProfile = async (userData, adminId) => {
 
   // Create technician profile if role is technician
   if (role === 'TECH_INTERNAL' || role === 'TECH_FREELANCER') {
+    const validSpecialties = ['ELECTRICAL', 'PLUMBING', 'HVAC', 'GENERAL', 'CARPENTRY', 'PAINTING'];
+    const specialty = technicianProfile?.specialty || 'GENERAL';
+    
+    if (!validSpecialties.includes(specialty)) {
+      throw new Error(`Invalid specialty. Must be one of: ${validSpecialties.join(', ')}`);
+    }
+
     await prisma.technicianProfile.create({
       data: {
         userId: user.id,
         type: role === 'TECH_INTERNAL' ? 'INTERNAL' : 'FREELANCER',
+        specialty: specialty,
         commissionRate: technicianProfile?.commissionRate || 0.2,
         bonusRate: technicianProfile?.bonusRate || 0.05,
         status: 'ACTIVE',
@@ -211,15 +219,25 @@ export const setTechnicianBlockStatus = async (technicianId, isBlocked, blockedR
 
 // ✅ Update technician profile
 export const updateTechProfile = async (userId, profileData, adminId) => {
-  const { commissionRate, bonusRate, status } = profileData;
+  const { commissionRate, bonusRate, status, specialty } = profileData;
+
+  const updateData = {};
+
+  if (commissionRate !== undefined) updateData.commissionRate = Number(commissionRate);
+  if (bonusRate !== undefined) updateData.bonusRate = Number(bonusRate);
+  if (status) updateData.status = status;
+  
+  if (specialty) {
+    const validSpecialties = ['ELECTRICAL', 'PLUMBING', 'HVAC', 'GENERAL', 'CARPENTRY', 'PAINTING'];
+    if (!validSpecialties.includes(specialty)) {
+      throw new Error(`Invalid specialty. Must be one of: ${validSpecialties.join(', ')}`);
+    }
+    updateData.specialty = specialty;
+  }
 
   const profile = await prisma.technicianProfile.update({
     where: { userId },
-    data: {
-      commissionRate: commissionRate !== undefined ? Number(commissionRate) : undefined,
-      bonusRate: bonusRate !== undefined ? Number(bonusRate) : undefined,
-      status,
-    },
+    data: updateData,
   });
 
   await prisma.auditLog.create({

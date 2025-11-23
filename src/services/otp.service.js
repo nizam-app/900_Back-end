@@ -17,14 +17,14 @@ export const sendOTP = async (phone, type) => {
     where: { phone },
   });
 
-  // Create OTP record in database
+  // Save OTP to database
   await prisma.oTP.create({
     data: {
       phone,
       code,
       type,
       expiresAt,
-      userId: user ? user.id : null,
+      userId: user?.id,
     },
   });
 

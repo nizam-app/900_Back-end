@@ -219,6 +219,20 @@ export const validateCoordinates = (latitude, longitude) => {
 };
 
 /**
+ * Validate coordinates for Bangladesh region specifically
+ * @param {number} latitude 
+ * @param {number} longitude 
+ * @returns {boolean} Whether coordinates are valid for Bangladesh
+ */
+export const validateBangladeshCoordinates = (latitude, longitude) => {
+  return (
+    validateCoordinates(latitude, longitude) &&
+    latitude >= 20.5 && latitude <= 26.5 &&  // Bangladesh latitude range
+    longitude >= 88.0 && longitude <= 93.0   // Bangladesh longitude range
+  );
+};
+
+/**
  * Format coordinates for display
  * @param {number} latitude 
  * @param {number} longitude 

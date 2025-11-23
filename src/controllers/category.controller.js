@@ -1,4 +1,4 @@
-// src/controllers/category.controller.js
+
 import { prisma } from '../prisma.js';
 
 export const listCategories = async (req, res, next) => {

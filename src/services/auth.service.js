@@ -103,3 +103,59 @@ export const changeUserPassword = async (userId, oldPassword, newPassword) => {
 
   return { message: 'Password changed successfully' };
 };
+
+// ✅ Get user profile
+export const getUserProfile = async (userId) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      email: true,
+      role: true,
+      isBlocked: true,
+      blockedReason: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return user;
+};
+
+// ✅ Update user profile
+export const updateUserProfile = async (userId, updates) => {
+  // If email is being updated, check if it's already in use
+  if (updates.email) {
+    const existingEmail = await prisma.user.findFirst({
+      where: {
+        email: updates.email,
+        NOT: { id: userId },
+      },
+    });
+
+    if (existingEmail) {
+      throw new Error('Email already in use');
+    }
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: updates,
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      email: true,
+      role: true,
+      updatedAt: true,
+    },
+  });
+
+  return updatedUser;
+};
