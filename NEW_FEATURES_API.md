@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # New Features API Documentation
 
 ## 📋 Implemented Features
@@ -5,17 +7,21 @@
 ### 1. Enhanced Service Request Creation
 
 #### Create Service Request with GPS Coordinates
+
 **Endpoint:** `POST /api/sr`
 
 **New Fields:**
+
 - `latitude` (optional): GPS latitude (-90 to 90)
 - `longitude` (optional): GPS longitude (-180 to 180)
 
 **Response Changes:**
+
 - Now includes `srId` property (same as `id`)
 - Explicitly includes `status` property
 
 **Example Request:**
+
 ```json
 {
   "name": "John Doe",
@@ -34,6 +40,7 @@
 ```
 
 **Example Response:**
+
 ```json
 {
   "id": 123,
@@ -52,16 +59,20 @@
 ### 2. Enhanced Work Order Creation
 
 #### Convert SR to WO with Estimated Duration
+
 **Endpoint:** `POST /api/wos/from-sr/:srId`
 
 **New Fields:**
+
 - `estimatedDuration` (optional): Estimated duration in minutes
 
 **Behavior:**
+
 - Automatically copies GPS coordinates from SR to WO
 - Includes estimated duration for job planning
 
 **Example Request:**
+
 ```json
 {
   "technicianId": 6,
@@ -76,12 +87,14 @@
 ### 3. Call Center Features
 
 #### Create New Customer
+
 **Endpoint:** `POST /api/callcenter/customers`
 **Auth:** CALL_CENTER, ADMIN only
 
 **Purpose:** Create new customers with manually defined address and GPS coordinates
 
 **Request Body:**
+
 ```json
 {
   "name": "Jane Smith",
@@ -95,6 +108,7 @@
 ```
 
 **Response:**
+
 ```json
 {
   "id": 45,
@@ -112,12 +126,14 @@
 ---
 
 #### Get Technician Info for Work Order
+
 **Endpoint:** `GET /api/callcenter/wos/:woId/technician`
 **Auth:** CALL_CENTER, ADMIN, DISPATCHER
 
 **Purpose:** View which technician is assigned to a WO and their current location/status
 
 **Response:**
+
 ```json
 {
   "woNumber": "WO-1732345678902",
@@ -137,8 +153,8 @@
     "locationStatus": "ONLINE",
     "lastLocationUpdate": "2025-11-23T10:25:00.000Z",
     "currentLocation": {
-      "latitude": -1.290000,
-      "longitude": 36.820000
+      "latitude": -1.29,
+      "longitude": 36.82
     },
     "distanceFromJob": "2.35 km",
     "estimatedArrival": "5 minutes"
@@ -157,27 +173,32 @@
 ### 4. Dispatcher Features
 
 #### Get Nearby Technicians with Distance & Availability
+
 **Endpoint:** `GET /api/dispatcher/technicians/nearby`
 **Auth:** DISPATCHER, ADMIN only
 
 **Query Parameters:**
+
 - `latitude` (required): Job location latitude
 - `longitude` (required): Job location longitude
 - `categoryId` (optional): Filter by category/specialization
 - `maxDistance` (optional): Maximum distance in km
 
-**Purpose:** 
+**Purpose:**
+
 - View all technicians with distance from job location
 - See technician availability (AVAILABLE, BUSY, OFFLINE)
 - View number of open jobs for each technician
 - Help dispatcher efficiently assign work orders
 
 **Example Request:**
+
 ```
 GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&categoryId=1
 ```
 
 **Response:**
+
 ```json
 {
   "total": 5,
@@ -198,8 +219,8 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
       "locationStatus": "ONLINE",
       "lastLocationUpdate": "2025-11-23T10:25:00.000Z",
       "currentLocation": {
-        "latitude": -1.290000,
-        "longitude": 36.820000
+        "latitude": -1.29,
+        "longitude": 36.82
       },
       "distance": 2.35,
       "distanceKm": "2.35 km",
@@ -207,7 +228,7 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
       "openJobsCount": 0,
       "openJobs": [],
       "rates": {
-        "commissionRate": 0.20,
+        "commissionRate": 0.2,
         "bonusRate": 0.05,
         "baseSalary": 30000
       }
@@ -233,7 +254,7 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
         }
       ],
       "rates": {
-        "commissionRate": 0.20
+        "commissionRate": 0.2
       }
     }
   ]
@@ -241,6 +262,7 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
 ```
 
 **Features:**
+
 - ✅ Sorted by distance (nearest first)
 - ✅ Shows availability: AVAILABLE, BUSY, or OFFLINE
 - ✅ Displays open jobs count and details
@@ -251,12 +273,14 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
 ---
 
 #### Get Technician Workload
+
 **Endpoint:** `GET /api/dispatcher/technicians/:id/workload`
 **Auth:** DISPATCHER, ADMIN only
 
 **Purpose:** View all open jobs assigned to a specific technician
 
 **Response:**
+
 ```json
 {
   "technician": {
@@ -301,10 +325,12 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
 ### Enhanced Fields
 
 #### User Model
+
 - `homeAddress` - Home address (primarily for technicians)
 - `latitude`, `longitude` - GPS coordinates
 
 #### TechnicianProfile Model
+
 - `baseSalary` - Base salary for internal employees
 - `specialization` - Job specialization (electrician, plumber, etc.)
 - `academicTitle` - Academic qualifications
@@ -315,10 +341,12 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
 - `degreesUrl` - Degrees/certificates
 
 #### ServiceRequest & WorkOrder Models
+
 - `latitude`, `longitude` - GPS coordinates
 - `estimatedDuration` (WO only) - Estimated job duration in minutes
 
 #### SystemConfig Model (New)
+
 - Global configuration for commission rates and salaries
 - Only admin can modify
 - Auto-applied to new technicians
@@ -328,12 +356,14 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
 ## 🔒 Role-Based Access Control
 
 ### CALL_CENTER Role
+
 - ✅ Create new customers with GPS coordinates
 - ✅ Create service requests
 - ✅ View work order technician information
 - ✅ View all service requests
 
 ### DISPATCHER Role
+
 - ✅ View nearby technicians with distance
 - ✅ View technician availability status
 - ✅ View technician workload
@@ -341,6 +371,7 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
 - ❌ Cannot modify commission or salary rates
 
 ### ADMIN Role
+
 - ✅ All CALL_CENTER and DISPATCHER permissions
 - ✅ Modify global commission/salary configuration
 - ✅ Override individual technician rates
@@ -351,6 +382,7 @@ GET /api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&ca
 ## 📊 Commission & Salary Management
 
 ### Global Configuration (Admin Only)
+
 The system uses global default rates that can only be modified by administrators:
 
 - **Freelancer Commission Rate**: 20% (default)
@@ -358,6 +390,7 @@ The system uses global default rates that can only be modified by administrators
 - **Internal Employee Base Salary**: Configurable per organization
 
 ### Apply Rates
+
 - New technicians automatically receive global rates
 - Admins can override for specific individuals
 - Dispatchers cannot modify any rates (view only)
@@ -367,22 +400,26 @@ The system uses global default rates that can only be modified by administrators
 ## 📝 Testing Checklist
 
 ### Service Request API
+
 - [✅] List service requests returns array with filters
 - [✅] Create SR with GPS coordinates works
 - [✅] Response includes `srId` and `status` properties
 - [✅] GPS coordinates saved to customer profile
 
 ### Work Order API
+
 - [✅] List work orders returns array with filters
 - [✅] Convert SR to WO includes GPS coordinates
 - [✅] Convert SR to WO accepts `estimatedDuration`
 
 ### Call Center API
+
 - [ ] Create customer with GPS coordinates
 - [ ] Get WO technician info shows distance and ETA
 - [ ] Only CALL_CENTER and ADMIN can access
 
 ### Dispatcher API
+
 - [ ] Get nearby technicians calculates distances
 - [ ] Shows technician availability correctly
 - [ ] Displays open jobs count

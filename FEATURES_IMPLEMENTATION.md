@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # Feature Implementation Summary
 
 ## ✅ Completed Changes
@@ -5,11 +7,13 @@
 ### 1. Schema Enhancements
 
 #### User Model
+
 - ✅ Added `homeAddress` (String?) - Home address for technicians
 - ✅ Added `latitude` (Float?) - GPS coordinates for customers/locations
 - ✅ Added `longitude` (Float?) - GPS coordinates for customers/locations
 
 #### TechnicianProfile Model
+
 - ✅ Added `baseSalary` (Float?) - Base salary for internal employees
 - ✅ Added `specialization` (String?) - e.g., electrician, plumber, AC repair
 - ✅ Added `academicTitle` (String?) - BSc, MSc, Diploma, etc.
@@ -21,15 +25,18 @@
 - ✅ Added `degreesUrl` (String?) - Degrees/certificates JSON array
 
 #### ServiceRequest Model
+
 - ✅ Added `latitude` (Float?) - GPS coordinates
 - ✅ Added `longitude` (Float?) - GPS coordinates
 
 #### WorkOrder Model
+
 - ✅ Added `latitude` (Float?) - GPS coordinates
 - ✅ Added `longitude` (Float?) - GPS coordinates
 - ✅ Added `estimatedDuration` (Int?) - Estimated duration in minutes
 
 #### New SystemConfig Model
+
 - ✅ Added global configuration table for commission/salary rates
 - `freelancerCommissionRate` - Default 20% for freelancers
 - `internalEmployeeBonusRate` - Default 5% bonus for internal employees
@@ -39,6 +46,7 @@
 ### 2. Controller Enhancements
 
 #### Service Request Controller (sr.controller.js)
+
 - ✅ Added GPS coordinate validation (latitude/longitude)
 - ✅ Save GPS coordinates to Service Request
 - ✅ Auto-save GPS coordinates to customer User profile
@@ -46,11 +54,13 @@
 - ✅ Support for call center role to create service requests
 
 #### Work Order Controller (wo.controller.js)
+
 - ✅ Copy GPS coordinates from SR to WO when converting
 - ✅ Added `estimatedDuration` parameter to createWOFromSR
 - ✅ Include GPS coordinates in WO creation
 
 ### 3. User Roles
+
 - ✅ `CALL_CENTER` role already exists in schema
 - ✅ `TECH_FREELANCER` role already exists in schema
 - ✅ Both roles properly configured in enum
@@ -58,7 +68,9 @@
 ## 📋 Next Steps (To Be Implemented)
 
 ### Phase 1: Call Center Features
+
 1. **Customer Creation Enhancement**
+
    - [ ] Create endpoint for call center to create new customers
    - [ ] Allow manual address entry with GPS coordinates
    - [ ] Validate that only CALL_CENTER role can create customers
@@ -69,13 +81,16 @@
    - [ ] Show technician contact information
 
 ### Phase 2: Dispatcher Features
+
 1. **Technician Distance & Availability**
+
    - [ ] Create endpoint to list technicians with distance from job location
    - [ ] Calculate distance using Haversine formula
    - [ ] Show technician availability status (ONLINE, BUSY, OFFLINE)
    - [ ] Show count of assigned jobs per technician
 
 2. **Commission & Salary Management**
+
    - [ ] Create admin-only endpoints to configure global rates
    - [ ] Prevent dispatcher from modifying commission/salary values
    - [ ] Auto-apply configured rates when creating technicians
@@ -87,7 +102,9 @@
    - [ ] Allow assignment to both busy and available technicians
 
 ### Phase 3: Technician Management
+
 1. **Enhanced Profile Creation**
+
    - [ ] Add file upload endpoints for:
      - Profile photo
      - ID card/passport
@@ -103,12 +120,15 @@
    - [ ] Only admin can modify global or individual rates
 
 ### Phase 4: Administrator Features
+
 1. **Technician Overview**
+
    - [ ] Filter technicians by specialization
    - [ ] Show count of technicians per category/specialization
    - [ ] Display active vs inactive technicians
 
 2. **Enhanced Audit Log**
+
    - [ ] Track WO creator (who converted SR to WO)
    - [ ] Track WO dispatcher (who assigned technician)
    - [ ] Track payment verifier (who marked as paid)
@@ -121,7 +141,9 @@
    - [ ] Create dashboard endpoint
 
 ### Phase 5: API Fixes
+
 1. **List Service Request API**
+
    - [✅] Already working - returns array of SRs with filters
    - [ ] Test with Postman to verify
 
@@ -141,16 +163,19 @@ npx prisma generate
 ## API Endpoints to Create
 
 ### Call Center
+
 - `POST /api/admin/users` - Create new customer (CALL_CENTER, ADMIN only)
 - `GET /api/wos/:woId/technician-info` - Get assigned technician info
 
 ### Dispatcher
+
 - `GET /api/technicians/nearby` - Get technicians with distance from location
   - Query params: `latitude`, `longitude`, `categoryId`
   - Returns: technician list with distance, availability, open jobs count
 - `GET /api/technicians/:id/workload` - Get technician's current workload
 
 ### Admin
+
 - `GET /api/admin/config` - Get system configuration
 - `PUT /api/admin/config` - Update system configuration (ADMIN only)
 - `PUT /api/admin/technicians/:id/rates` - Override rates for specific technician (ADMIN only)
@@ -159,6 +184,7 @@ npx prisma generate
 - `GET /api/admin/reports/audit-log` - Enhanced audit log
 
 ### File Uploads
+
 - `POST /api/technicians/:id/photo` - Upload profile photo
 - `POST /api/technicians/:id/documents` - Upload documents (ID, permit, degrees)
 
@@ -178,17 +204,20 @@ npx prisma generate
 ## Security Considerations
 
 1. **File Uploads**
+
    - Validate file types (only images for photos, PDFs for documents)
    - Limit file sizes (max 10MB)
    - Sanitize filenames
    - Store in secure location
 
 2. **GPS Coordinates**
+
    - Validate coordinate ranges
    - Prevent injection attacks
    - Log coordinate updates for audit
 
 3. **Rate Configuration**
+
    - Only ADMIN role can modify
    - Log all configuration changes
    - Validate rate ranges (0-100%)
