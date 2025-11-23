@@ -170,14 +170,6 @@ export const createWOFromSR = async (req, res, next) => {
       });
     }
 
-    // Validate estimatedHours if provided
-    if (estimatedHours && (isNaN(estimatedHours) || estimatedHours < 1)) {
-      return res.status(400).json({ 
-        message: 'Estimated hours must be a positive number',
-        error: 'INVALID_ESTIMATED_HOURS' 
-      });
-    }
-
     const sr = await prisma.serviceRequest.findUnique({
       where: { id: srId },
     });
@@ -209,7 +201,6 @@ export const createWOFromSR = async (req, res, next) => {
         status: technicianId ? 'ASSIGNED' : 'UNASSIGNED',
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         notes: notes || null,
-        estimatedHours: estimatedHours ? Number(estimatedHours) : null,
       },
     });
 
@@ -288,7 +279,7 @@ export const assignWO = async (req, res, next) => {
     await notifyWOAssignment(Number(technicianId), wo);
 
     // Set response deadline for technician
-    const deadline = await setResponseDeadline(woId, TIME_CONFIG.RESPONSE_TIME_MINUTES);
+    const deadline = await setResponseDeadline(wo.id, TIME_CONFIG.RESPONSE_TIME_MINUTES);
 
     return res.json({
       ...wo,
@@ -343,14 +334,14 @@ export const respondWO = async (req, res, next) => {
     }
 
     // Check if response time has expired
-    if (isWorkOrderExpired(woId)) {
+    if (isWorkOrderExpired(wo.id)) {
       return res.status(410).json({ 
         message: 'Response time expired. This work order has been automatically unassigned.',
         code: 'RESPONSE_TIMEOUT'
       });
     }
 
-    const remainingTime = getRemainingTime(woId);
+    const remainingTime = getRemainingTime(wo.id);
 
     let updated;
 
@@ -385,7 +376,7 @@ export const respondWO = async (req, res, next) => {
     });
 
     // Clear response deadline since technician responded
-    clearResponseDeadline(woId);
+    clearResponseDeadline(wo.id);
 
     if (action === 'ACCEPT' && wo.dispatcherId) {
       await notifyWOAccepted(wo.dispatcherId, updated);
@@ -413,22 +404,26 @@ export const startWO = async (req, res, next) => {
       ? { woNumber: woIdParam } 
       : { id: Number(woIdParam) };
     const techId = req.user.id;
-    const { latitude, longitude } = req.body;
+    const { latitude, longitude, lat, lng } = req.body;
+
+    // Support both formats: {latitude, longitude} or {lat, lng}
+    const finalLat = latitude || lat;
+    const finalLng = longitude || lng;
 
     // Validate required fields
-    if (!latitude || !longitude) {
+    if (!finalLat || !finalLng) {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
 
     // Validate coordinates
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
+    const latValue = parseFloat(finalLat);
+    const lngValue = parseFloat(finalLng);
     
-    if (isNaN(lat) || isNaN(lng)) {
+    if (isNaN(latValue) || isNaN(lngValue)) {
       return res.status(400).json({ message: 'Invalid latitude or longitude values' });
     }
 
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    if (latValue < -90 || latValue > 90 || lngValue < -180 || lngValue > 180) {
       return res.status(400).json({ message: 'Latitude must be between -90 and 90, longitude between -180 and 180' });
     }
 
@@ -464,8 +459,8 @@ export const startWO = async (req, res, next) => {
       data: {
         woId: wo.id,
         technicianId: techId,
-        latitude: lat,
-        longitude: lng,
+        latitude: latValue,
+        longitude: lngValue,
       },
     });
 

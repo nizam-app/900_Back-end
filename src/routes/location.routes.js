@@ -18,7 +18,7 @@ router.post('/update', authMiddleware, requireRole('TECH_INTERNAL', 'TECH_FREELA
 router.get('/nearby', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getNearbyTechnicians);
 
 // Get specific technician's current location
-router.get('/technician/:id', authMiddleware, requireRole('ADMIN', 'DISPATCHER', 'CUSTOMER'), getTechnicianLocation);
+router.get('/technician/:id', authMiddleware, requireRole('ADMIN', 'DISPATCHER', 'CUSTOMER'), getTechnicianLocation); 
 
 // Get ETA for technician to destination
 router.get('/eta', authMiddleware, requireRole('ADMIN', 'DISPATCHER', 'CUSTOMER'), getETA);

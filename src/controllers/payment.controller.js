@@ -210,7 +210,7 @@ export const verifyPayment = async (req, res, next) => {
           status: 'VERIFIED',
           verifiedById: verifierId,
           verifiedAt: new Date(),
-        },
+        }, 
       });
 
       await prisma.workOrder.update({
