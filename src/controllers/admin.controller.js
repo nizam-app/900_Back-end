@@ -1,4 +1,5 @@
 // src/controllers/admin.controller.js
+import { prisma } from '../prisma.js';
 import * as adminService from '../services/admin.service.js';
 
 export const getDashboard = async (req, res, next) => {
