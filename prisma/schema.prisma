@@ -41,25 +41,15 @@ model User {
   notifications          Notification[]
   auditLogs              AuditLog[]
   commissions            Commission[]
-  notifications          Notification[]
   otpRecords             OTP[]
-  payments               Payment[]           @relation("TechnicianPayment")
-  paymentsVerified       Payment[]           @relation("PaymentVerifier")
   createdPayouts         Payout[]            @relation("PayoutCreator")
   payouts                Payout[]
   reviewedPayoutRequests PayoutRequest[]     @relation("PayoutReviewer")
   payoutRequests         PayoutRequest[]
-  createdSRs             ServiceRequest[]    @relation("CreatedBySR")
-  serviceRequests        ServiceRequest[]    @relation("CustomerSR")
   checkins               TechnicianCheckin[]
-  technicianProfile      TechnicianProfile?
   blockedBy              User?               @relation("BlockedByUser", fields: [blockedById], references: [id])
   blockedUsers           User[]              @relation("BlockedByUser")
-  wallet                 Wallet?
   walletTransactions     WalletTransaction[]
-  workOrders             WorkOrder[]         @relation("CustomerWO")
-  dispatchWOs            WorkOrder[]         @relation("DispatcherWO")
-  technicianWOs          WorkOrder[]         @relation("TechWO")
 }
 
 model TechnicianProfile {
@@ -125,8 +115,8 @@ model Service {
 }
 
 model ServiceRequest {
-  id           Int         @id @default(autoincrement())
-  srNumber     String      @unique
+  id           Int      @id @default(autoincrement())
+  srNumber     String   @unique
   customerId   Int
   createdById  Int?
   categoryId   Int
