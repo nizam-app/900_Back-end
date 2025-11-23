@@ -50,6 +50,8 @@ model User {
   blockedBy              User?               @relation("BlockedByUser", fields: [blockedById], references: [id])
   blockedUsers           User[]              @relation("BlockedByUser")
   walletTransactions     WalletTransaction[]
+  customerReviews        Review[]            @relation("CustomerReviews")
+  technicianReviews      Review[]            @relation("TechnicianReviews")
 }
 
 model TechnicianProfile {
@@ -190,6 +192,7 @@ model WorkOrder {
   checkins    TechnicianCheckin[]
   payments    Payment[]
   commissions Commission[]
+  review      Review?
 }
 
 model TechnicianCheckin {
@@ -361,4 +364,20 @@ model SystemConfig {
   payoutFrequency            String    @default("WEEKLY") // WEEKLY or MONTHLY
   updatedAt                  DateTime  @updatedAt
   updatedById                Int?
+}
+
+model Review {
+  id           Int      @id @default(autoincrement())
+  woId         Int
+  customerId   Int
+  technicianId Int
+  rating       Int // 1-5 stars
+  comment      String?
+  createdAt    DateTime @default(now())
+
+  workOrder  WorkOrder @relation(fields: [woId], references: [id])
+  customer   User      @relation("CustomerReviews", fields: [customerId], references: [id])
+  technician User      @relation("TechnicianReviews", fields: [technicianId], references: [id])
+
+  @@unique([woId]) // One review per work order
 }

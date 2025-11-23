@@ -10,6 +10,8 @@ import {
   updateTechnicianProfile,
   getAuditLogs,
   getTechnicianLocations,
+  getTop5Technicians,
+  createWeeklyPayoutBatch
 } from '../controllers/admin.controller.js';
 
 const router = Router();
@@ -23,5 +25,8 @@ router.patch('/users/:id/block', authMiddleware, requireRole('ADMIN', 'DISPATCHE
 router.patch('/users/:id/profile', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), updateTechnicianProfile);
 router.get('/audit-logs', authMiddleware, requireRole('ADMIN'), getAuditLogs);
 router.get('/technician-locations', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getTechnicianLocations);
+router.get('/top-5-technicians', authMiddleware, requireRole('ADMIN'), getTop5Technicians);
+router.post('/payouts/batch', authMiddleware, requireRole('ADMIN'), createWeeklyPayoutBatch);
 
-export default router;  
+export default router;
+  
