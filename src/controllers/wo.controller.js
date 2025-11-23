@@ -443,6 +443,12 @@ export const startWO = async (req, res, next) => {
       return res.status(400).json({ message: 'WO is not in ACCEPTED status' });
     }
 
+    // Update technician status to BUSY
+    await prisma.user.update({
+      where: { id: techId },
+      data: { locationStatus: 'BUSY' }
+    });
+
     const updatedWO = await prisma.workOrder.update({
       where: whereClause,
       data: {

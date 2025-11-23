@@ -146,9 +146,9 @@ export const getTechnicianLocation = async (req, res, next) => {
       role: technician.role,
       latitude: technician.lastLatitude,
       longitude: technician.lastLongitude,
-      locationStatus: technician.locationStatus || 'ONLINE',
+      status: technician.locationStatus || 'ONLINE',
       lastUpdated: technician.locationUpdatedAt,
-      technicianProfile: technician.technicianProfile,
+      technicianProfile: technician.technicianProfile
     });
   } catch (err) {
     next(err);

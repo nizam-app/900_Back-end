@@ -73,6 +73,20 @@ export const blockTechnician = async (req, res, next) => {
 export const updateTechnicianProfile = async (req, res, next) => {
   try {
     const userId = Number(req.params.id);
+    const userRole = req.user.role;
+    
+    // Dispatcher cannot update images/documents - Admin only
+    if (userRole === 'DISPATCHER') {
+      const restrictedFields = ['photoUrl', 'idCardUrl', 'residencePermitUrl', 'degreesUrl', 'baseSalary'];
+      const hasRestrictedField = restrictedFields.some(field => req.body[field] !== undefined);
+      
+      if (hasRestrictedField) {
+        return res.status(403).json({ 
+          message: 'Dispatcher cannot update profile images, documents, or salary. Admin access required.' 
+        });
+      }
+    }
+    
     const profile = await adminService.updateTechProfile(userId, req.body, req.user.id);
     return res.json(profile);
   } catch (err) {
@@ -171,6 +185,231 @@ export const getTechnicianLocations = async (req, res, next) => {
       count: enhancedTechnicians.length,
       onlineCount: enhancedTechnicians.filter(t => t.locationStatus === 'ONLINE').length,
       technicians: enhancedTechnicians
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get top 5 technicians by rating
+export const getTop5Technicians = async (req, res, next) => {
+  try {
+    const { timeframe = '30days', startDate, endDate } = req.query;
+
+    let dateFilter = {};
+    if (timeframe === '7days') {
+      dateFilter = {
+        createdAt: {
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        }
+      };
+    } else if (timeframe === '30days') {
+      dateFilter = {
+        createdAt: {
+          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        }
+      };
+    } else if (timeframe === 'custom' && startDate && endDate) {
+      dateFilter = {
+        createdAt: {
+          gte: new Date(startDate),
+          lte: new Date(endDate)
+        }
+      };
+    }
+
+    // Get all technicians with their reviews
+    const technicians = await prisma.user.findMany({
+      where: {
+        role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
+        isBlocked: false
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        role: true,
+        technicianProfile: {
+          select: {
+            type: true,
+            specialization: true
+          }
+        },
+        technicianReviews: {
+          where: dateFilter,
+          select: {
+            rating: true,
+            createdAt: true
+          }
+        },
+        technicianWOs: {
+          where: {
+            status: 'PAID_VERIFIED',
+            ...dateFilter
+          },
+          select: {
+            id: true,
+            payments: {
+              select: { amount: true }
+            }
+          }
+        }
+      }
+    });
+
+    // Calculate stats for each technician
+    const techWithStats = technicians.map(tech => {
+      const reviews = tech.technicianReviews;
+      const avgRating = reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : 0;
+
+      const totalRevenue = tech.technicianWOs.reduce((sum, wo) => {
+        const woRevenue = wo.payments.reduce((s, p) => s + p.amount, 0);
+        return sum + woRevenue;
+      }, 0);
+
+      return {
+        id: tech.id,
+        name: tech.name,
+        phone: tech.phone,
+        role: tech.role,
+        type: tech.technicianProfile?.type,
+        specialization: tech.technicianProfile?.specialization,
+        averageRating: parseFloat(avgRating.toFixed(2)),
+        totalReviews: reviews.length,
+        completedJobs: tech.technicianWOs.length,
+        totalRevenue: parseFloat(totalRevenue.toFixed(2))
+      };
+    });
+
+    // Sort by rating first, then by completed jobs, then by revenue
+    const top5 = techWithStats
+      .sort((a, b) => {
+        if (b.averageRating !== a.averageRating) {
+          return b.averageRating - a.averageRating;
+        }
+        if (b.completedJobs !== a.completedJobs) {
+          return b.completedJobs - a.completedJobs;
+        }
+        return b.totalRevenue - a.totalRevenue;
+      })
+      .slice(0, 5);
+
+    return res.json({
+      timeframe,
+      startDate: dateFilter.createdAt?.gte || null,
+      endDate: dateFilter.createdAt?.lte || null,
+      top5Technicians: top5
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Create weekly payout batch (Admin only)
+export const createWeeklyPayoutBatch = async (req, res, next) => {
+  try {
+    const adminId = req.user.id;
+
+    // Get all technicians with BOOKED commissions
+    const techsWithCommissions = await prisma.commission.groupBy({
+      by: ['technicianId'],
+      where: {
+        status: 'BOOKED'
+      },
+      _sum: {
+        amount: true
+      },
+      _count: {
+        id: true
+      }
+    });
+
+    if (techsWithCommissions.length === 0) {
+      return res.status(400).json({ message: 'No pending commissions to payout' });
+    }
+
+    const payouts = [];
+
+    // Create payout for each technician
+    for (const tech of techsWithCommissions) {
+      const commissions = await prisma.commission.findMany({
+        where: {
+          technicianId: tech.technicianId,
+          status: 'BOOKED'
+        }
+      });
+
+      const payout = await prisma.payout.create({
+        data: {
+          technicianId: tech.technicianId,
+          totalAmount: tech._sum.amount,
+          type: 'WEEKLY',
+          status: 'PROCESSED',
+          processedAt: new Date(),
+          createdById: adminId
+        }
+      });
+
+      // Update commissions to PAID_OUT status
+      await prisma.commission.updateMany({
+        where: {
+          id: { in: commissions.map(c => c.id) }
+        },
+        data: {
+          status: 'PAID_OUT',
+          payoutId: payout.id
+        }
+      });
+
+      // Deduct from wallet
+      await prisma.wallet.update({
+        where: { technicianId: tech.technicianId },
+        data: {
+          balance: {
+            decrement: tech._sum.amount
+          }
+        }
+      });
+
+      // Log wallet transaction
+      const wallet = await prisma.wallet.findUnique({
+        where: { technicianId: tech.technicianId }
+      });
+
+      await prisma.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          technicianId: tech.technicianId,
+          type: 'PAYOUT',
+          sourceType: 'PAYOUT',
+          sourceId: payout.id,
+          amount: -tech._sum.amount,
+          description: 'Weekly payout batch'
+        }
+      });
+
+      payouts.push({
+        technicianId: tech.technicianId,
+        payoutId: payout.id,
+        amount: tech._sum.amount,
+        commissionsCount: tech._count.id
+      });
+    }
+
+    // Update system config next payout date (add 7 days)
+    await prisma.systemConfig.updateMany({
+      data: {
+        nextPayoutDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      }
+    });
+
+    return res.json({
+      message: 'Weekly payout batch created successfully',
+      totalPayouts: payouts.length,
+      totalAmount: payouts.reduce((sum, p) => sum + p.amount, 0),
+      payouts
     });
   } catch (err) {
     next(err);

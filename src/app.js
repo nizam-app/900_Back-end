@@ -18,6 +18,7 @@ import reportRoutes from './routes/report.routes.js';
 import locationRoutes from './routes/location.routes.js';
 import callCenterRoutes from './routes/callcenter.routes.js';
 import dispatcherRoutes from './routes/dispatcher.routes.js';
+import reviewRoutes from './routes/review.routes.js';
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/location', locationRoutes);
 app.use('/api/callcenter', callCenterRoutes);
 app.use('/api/dispatcher', dispatcherRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 app.get('/', (req, res) => {
   res.json({ status: 'FSM backend running ok' });
