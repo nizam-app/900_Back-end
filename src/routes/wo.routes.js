@@ -47,18 +47,18 @@ const upload = multer({
   },
 });
 
-// Get all work orders with filtering and pagination
-router.get(
-  '/list',
-  authMiddleware,
-  getAllWorkOrders
-);
-
-// Get work order by ID (woNumber)
+// Get work order by ID (woNumber) - MUST come before '/' to avoid conflict
 router.get(
   '/:woId',
   authMiddleware,
   getWOById
+);
+
+// Get all work orders with filtering and pagination
+router.get(
+  '/',
+  authMiddleware,
+  getAllWorkOrders
 );
 
 router.post(

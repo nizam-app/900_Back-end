@@ -252,14 +252,17 @@
 			"name": "Service Requests",
 			"item": [
 				{
-					"name": "Create SR (Guest)",
+					"name": "Create SR (Guest) with GPS",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.environment.set(\"srId\", jsonData.id);"
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"srId\", jsonData.serviceRequest.id);",
+									"    pm.environment.set(\"srNumber\", jsonData.serviceRequest.srNumber);",
+									"}"
 								],
 								"type": "text/javascript"
 							}
@@ -275,7 +278,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Jane Customer\",\n  \"phone\": \"8888888888\",\n  \"address\": \"456 Oak Street, Downtown\",\n  \"categoryId\": 1,\n  \"subserviceId\": 1,\n  \"serviceId\": 1,\n  \"description\": \"AC not cooling properly\",\n  \"paymentType\": \"MOBILE_MONEY\",\n  \"priority\": \"HIGH\"\n}"
+							"raw": "{\n  \"name\": \"Jane Customer\",\n  \"phone\": \"8888888888\",\n  \"address\": \"456 Oak Street, Downtown\",\n  \"latitude\": -1.292066,\n  \"longitude\": 36.821946,\n  \"categoryId\": 1,\n  \"subserviceId\": 1,\n  \"serviceId\": 1,\n  \"description\": \"AC not cooling properly\",\n  \"paymentType\": \"MOBILE_MONEY\",\n  \"priority\": \"HIGH\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/sr",
@@ -286,7 +289,54 @@
 								"api",
 								"sr"
 							]
+						},
+						"description": "Create service request with GPS coordinates. Returns srId and status explicitly."
+					}
+				},
+				{
+					"name": "Create SR (Authenticated Customer)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"srId\", jsonData.serviceRequest.id);",
+									"    pm.environment.set(\"srNumber\", jsonData.serviceRequest.srNumber);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
 						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customerToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"address\": \"789 Service Street, Nairobi\",\n  \"latitude\": -1.286389,\n  \"longitude\": 36.817223,\n  \"categoryId\": 1,\n  \"subserviceId\": 1,\n  \"serviceId\": 1,\n  \"description\": \"Refrigerator not cooling\",\n  \"paymentType\": \"CASH\",\n  \"priority\": \"MEDIUM\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/sr",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sr"
+							]
+						},
+						"description": "Authenticated customer creates SR. GPS coordinates auto-saved to customer profile."
 					}
 				},
 				{
@@ -379,7 +429,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"technicianId\": 6,\n  \"scheduledAt\": \"2025-11-21T09:00:00Z\",\n  \"notes\": \"Customer prefers morning\"\n}"
+							"raw": "{\n  \"technicianId\": 4,\n  \"scheduledAt\": \"2025-11-24T09:00:00Z\",\n  \"estimatedDuration\": 120,\n  \"notes\": \"Customer prefers morning. Estimated 2 hours.\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/wos/from-sr/{{srId}}",
@@ -392,7 +442,8 @@
 								"from-sr",
 								"{{srId}}"
 							]
-						}
+						},
+						"description": "Convert SR to WO with estimatedDuration (minutes). GPS coordinates automatically copied from SR."
 					}
 				},
 				{
@@ -1781,6 +1832,200 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "Call Center",
+			"item": [
+				{
+					"name": "Login - Call Center",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"callCenterToken\", jsonData.token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"3333333333\",\n  \"password\": \"callcenter123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Customer with GPS",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"newCustomerId\", jsonData.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{callCenterToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"New Customer\",\n  \"phone\": \"7777777777\",\n  \"password\": \"customer123\",\n  \"homeAddress\": \"123 Main Street, Dhaka\",\n  \"latitude\": -1.286389,\n  \"longitude\": 36.817223\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/callcenter/customers",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"callcenter",
+								"customers"
+							]
+						},
+						"description": "Call center creates a new customer with manual GPS coordinates and home address"
+					}
+				},
+				{
+					"name": "Get WO Technician Info",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{callCenterToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/callcenter/wos/{{woId}}/technician",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"callcenter",
+								"wos",
+								"{{woId}}",
+								"technician"
+							]
+						},
+						"description": "Get assigned technician info including location, distance, and ETA for a work order"
+					}
+				}
+			]
+		},
+		{
+			"name": "Dispatcher",
+			"item": [
+				{
+					"name": "Get Nearby Technicians for Job",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{dispatcherToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/dispatcher/technicians/nearby?latitude=-1.286389&longitude=36.817223&maxDistance=50&status=ONLINE",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dispatcher",
+								"technicians",
+								"nearby"
+							],
+							"query": [
+								{
+									"key": "latitude",
+									"value": "-1.286389",
+									"description": "Job location latitude"
+								},
+								{
+									"key": "longitude",
+									"value": "36.817223",
+									"description": "Job location longitude"
+								},
+								{
+									"key": "maxDistance",
+									"value": "50",
+									"description": "Maximum distance in km (optional)"
+								},
+								{
+									"key": "status",
+									"value": "ONLINE",
+									"description": "Filter by status (optional)"
+								}
+							]
+						},
+						"description": "Get list of technicians sorted by distance from job location with availability status and open jobs count"
+					}
+				},
+				{
+					"name": "Get Technician Workload",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{dispatcherToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/dispatcher/technicians/4/workload",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dispatcher",
+								"technicians",
+								"4",
+								"workload"
+							]
+						},
+						"description": "Get technician's current workload including all open work orders and summary"
+					}
+				}
+			]
 		}
 	],
 	"variable": [
@@ -1831,6 +2076,26 @@
 		},
 		{
 			"key": "customerToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "callCenterToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "newCustomerId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "srNumber",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "woNumber",
 			"value": "",
 			"type": "string"
 		}
