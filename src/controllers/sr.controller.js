@@ -134,7 +134,7 @@ export const createSR = async (req, res, next) => {
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         paymentType: finalPaymentType,
-        status: 'NEW',
+        status: 'PENDING',
         source: finalSource,
         isGuest,
       },

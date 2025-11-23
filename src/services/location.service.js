@@ -23,7 +23,7 @@ export const updateLocation = async (req, res, next) => {
 
     // Get location name
     let locationName = 'Unknown Location';
-    try {
+    try { 
       locationName = await getLocationName(lat, lng);
     } catch (error) {
       console.error('Error getting location name:', error);
