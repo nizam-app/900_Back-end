@@ -1,7 +1,7 @@
 // src/routes/sr.routes.js
 import { Router } from 'express';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
-import { createSR, listSR } from '../controllers/sr.controller.js';
+import { createSR, listSR, getSRById } from '../controllers/sr.controller.js';
 
 const router = Router();
 
@@ -14,6 +14,14 @@ router.get(
   authMiddleware,
   requireRole('CUSTOMER', 'DISPATCHER', 'ADMIN', 'CALL_CENTER'),
   listSR
+);
+
+// Get SR by ID (srNumber)
+router.get(
+  '/:id',
+  authMiddleware,
+  requireRole('CUSTOMER', 'DISPATCHER', 'ADMIN', 'CALL_CENTER'),
+  getSRById
 );
 
 export default router;

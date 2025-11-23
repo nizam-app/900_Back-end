@@ -2,21 +2,8 @@
 import { prisma } from '../prisma.js';
 
 // ✅ Work Order Report
-export const getWorkOrderReport = async (req, res, next) => {
-  try {
-    const { startDate, endDate, status, technicianId, categoryId } = req.query;
-
-    const where = {};
-
-    if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) {
-        where.createdAt.gte = new Date(startDate);
-      }
-      if (endDate) {
-        where.createdAt.lte = new Date(endDate); 
-      }
-    }
+export const getWorkOrderReport = async (filters) => {
+  const { startDate, endDate, status, technicianId, categoryId } = filters;
 
   const where = {};
 

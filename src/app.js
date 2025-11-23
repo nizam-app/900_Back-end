@@ -34,7 +34,7 @@ app.use('/uploads', express.static('uploads'));
 // ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/otp', otpRoutes);
-app.use('/api/srs', srRoutes);
+app.use('/api/sr', srRoutes);
 app.use('/api/wos', woRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/commissions', commissionRoutes);

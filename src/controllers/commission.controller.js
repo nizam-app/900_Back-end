@@ -1,6 +1,50 @@
 // src/controllers/commission.controller.js
 import { prisma } from '../prisma.js';
 
+export const getWalletBalance = async (req, res, next) => {
+  try {
+    const technicianId = req.user.id;
+
+    const wallet = await prisma.wallet.findUnique({
+      where: { technicianId },
+      include: {
+        transactions: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
+    });
+
+    if (!wallet) {
+      return res.status(404).json({
+        message: 'Wallet not found. Complete your first work order to activate wallet.',
+        balance: 0,
+      });
+    }
+
+    const response = {
+      id: wallet.id,
+      technicianId: wallet.technicianId,
+      balance: wallet.balance < 0 ? 0 : wallet.balance,
+      actualBalance: wallet.balance,
+      recentTransactions: wallet.transactions,
+      createdAt: wallet.createdAt,
+      updatedAt: wallet.updatedAt,
+    };
+
+    if (wallet.balance < 0) {
+      response.warning = {
+        message: 'Wallet balance adjustment needed. Please contact support.',
+        error: 'NEGATIVE_BALANCE_DETECTED',
+      };
+    }
+
+    return res.json(response);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getMyCommissions = async (req, res, next) => {
   try {
     const technicianId = req.user.id;
