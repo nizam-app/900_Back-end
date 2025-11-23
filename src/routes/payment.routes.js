@@ -3,12 +3,33 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
-import { uploadPaymentProof, verifyPayment } from '../controllers/payment.controller.js';
+import { 
+  getAllPayments, 
+  getPaymentById, 
+  uploadPaymentProof, 
+  verifyPayment 
+} from '../controllers/payment.controller.js';
 
 const router = Router();
 
 // store files in /uploads for now
 const upload = multer({ dest: 'uploads/' });
+
+// Get all payments (Admin/Dispatcher)
+router.get(
+  '/',
+  authMiddleware,
+  requireRole('ADMIN', 'DISPATCHER'),
+  getAllPayments
+);
+
+// Get payment by ID
+router.get(
+  '/:id',
+  authMiddleware,
+  requireRole('ADMIN', 'DISPATCHER', 'TECH_INTERNAL', 'TECH_FREELANCER'),
+  getPaymentById
+);
 
 // Technician uploads payment proof (multipart/form-data)
 router.post(

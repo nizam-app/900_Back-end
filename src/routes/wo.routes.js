@@ -5,6 +5,7 @@ import path from 'path';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import {
   getAllWorkOrders,
+  getWOById,
   createWOFromSR,
   assignWO,
   respondWO,
@@ -51,6 +52,13 @@ router.get(
   '/list',
   authMiddleware,
   getAllWorkOrders
+);
+
+// Get work order by ID (woNumber)
+router.get(
+  '/:woId',
+  authMiddleware,
+  getWOById
 );
 
 router.post(

@@ -2,6 +2,106 @@
 import { prisma } from '../prisma.js';
 import { notifyPaymentVerified } from '../services/notification.service.js';
 
+export const getAllPayments = async (req, res, next) => {
+  try {
+    const { status, woId, technicianId, method, page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const where = {};
+    if (status) where.status = status;
+    if (woId) where.woId = Number(woId);
+    if (technicianId) where.technicianId = Number(technicianId);
+    if (method) where.method = method;
+
+    const [payments, total] = await Promise.all([
+      prisma.payment.findMany({
+        where,
+        include: {
+          workOrder: {
+            select: {
+              id: true,
+              woNumber: true,
+              status: true,
+              customer: {
+                select: { id: true, name: true, phone: true }
+              }
+            }
+          },
+          technician: {
+            select: { id: true, name: true, phone: true }
+          },
+          verifiedBy: {
+            select: { id: true, name: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: Number(offset),
+        take: Number(limit),
+      }),
+      prisma.payment.count({ where })
+    ]);
+
+    return res.json({
+      payments,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getPaymentById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const payment = await prisma.payment.findUnique({
+      where: { id: Number(id) },
+      include: {
+        workOrder: {
+          include: {
+            customer: {
+              select: { id: true, name: true, phone: true, email: true }
+            },
+            technician: {
+              select: { id: true, name: true, phone: true }
+            },
+            category: true,
+            service: true,
+            subservice: true
+          }
+        },
+        technician: {
+          select: { id: true, name: true, phone: true }
+        },
+        verifiedBy: {
+          select: { id: true, name: true, phone: true }
+        },
+        commissions: {
+          select: {
+            id: true,
+            type: true,
+            amount: true,
+            status: true
+          }
+        }
+      }
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    return res.json(payment);
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const uploadPaymentProof = async (req, res, next) => {
   try {
     const { woId, method, transactionRef, amount: manualAmount } = req.body;
