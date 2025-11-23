@@ -63,6 +63,10 @@ async function main() {
       email: 'tech.internal@fsm.com',
       passwordHash: techInternalPassword,
       role: 'TECH_INTERNAL',
+      lastLatitude: -1.286389,
+      lastLongitude: 36.817223,
+      locationStatus: 'ONLINE',
+      homeAddress: '456 Tech Street, Nairobi',
     },
   });
 
@@ -74,6 +78,8 @@ async function main() {
       type: 'INTERNAL',
       commissionRate: 0.15,  // 15% for internal technicians
       bonusRate: 0.05,
+      baseSalary: 30000,
+      specialization: 'AC Repair, HVAC',
       status: 'ACTIVE',
     },
   });
@@ -90,6 +96,10 @@ async function main() {
       email: 'tech.freelancer@fsm.com',
       passwordHash: techFreelancerPassword,
       role: 'TECH_FREELANCER',
+      lastLatitude: -1.292066,
+      lastLongitude: 36.821946,
+      locationStatus: 'ONLINE',
+      homeAddress: '789 Freelancer Ave, Nairobi',
     },
   });
 
@@ -101,6 +111,7 @@ async function main() {
       type: 'FREELANCER',
       commissionRate: 0.40,  // 40% for freelancers (higher than internal)
       bonusRate: 0.05,
+      specialization: 'Electrical, Plumbing',
       status: 'ACTIVE',
     },
   });
@@ -228,9 +239,24 @@ async function main() {
       email: 'customer@example.com',
       passwordHash: customerPassword,
       role: 'CUSTOMER',
+      latitude: -1.286389,
+      longitude: 36.817223,
+      homeAddress: '123 Customer Lane, Nairobi',
     },
   });
   console.log('✅ Created sample customer:', customer.phone);
+
+  // Create System Configuration
+  await prisma.systemConfig.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      freelancerCommissionRate: 0.20,
+      internalEmployeeBonusRate: 0.05,
+      internalEmployeeBaseSalary: 30000,
+    },
+  });
+  console.log('✅ Created system configuration');
 
   // Create sample notification
   await prisma.notification.create({

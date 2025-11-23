@@ -159,7 +159,7 @@ export const createWOFromSR = async (req, res, next) => {
     }
 
     const srId = Number(srIdParam);
-    const { technicianId, scheduledAt, notes, estimatedHours } = req.body;
+    const { technicianId, scheduledAt, notes, estimatedDuration } = req.body;
     const dispatcherId = req.user.id;
 
     // Additional validation for technicianId if provided
@@ -201,6 +201,9 @@ export const createWOFromSR = async (req, res, next) => {
         subserviceId: sr.subserviceId,
         serviceId: sr.serviceId,
         address: sr.address,
+        latitude: sr.latitude,
+        longitude: sr.longitude,
+        estimatedDuration: estimatedDuration ? Number(estimatedDuration) : null,
         paymentType: sr.paymentType,
         priority: sr.priority,
         status: technicianId ? 'ASSIGNED' : 'UNASSIGNED',
