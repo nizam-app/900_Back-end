@@ -1,6 +1,6 @@
 // src/controllers/callcenter.controller.js
 import { prisma } from '../prisma.js';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // ✅ Create new customer (Call Center & Admin only)
 export const createCustomer = async (req, res, next) => {
