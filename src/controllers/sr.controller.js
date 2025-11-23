@@ -9,6 +9,8 @@ export const createSR = async (req, res, next) => {
       name,
       phone,
       address,
+      latitude,
+      longitude,
       categoryId,
       subserviceId,
       serviceId,
@@ -26,6 +28,22 @@ export const createSR = async (req, res, next) => {
     // Validate phone format (10 digits)
     if (!/^\d{10,15}$/.test(phone)) {
       return res.status(400).json({ message: 'Phone must be 10-15 digits' });
+    }
+
+    // Validate GPS coordinates if provided
+    if (latitude !== undefined || longitude !== undefined) {
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ message: 'Invalid latitude or longitude values' });
+      }
+
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        return res.status(400).json({ 
+          message: 'Latitude must be between -90 and 90, longitude between -180 and 180' 
+        });
+      }
     }
 
     // Validate paymentType
@@ -113,6 +131,8 @@ export const createSR = async (req, res, next) => {
         description,
         priority: finalPriority,
         address,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
         paymentType: finalPaymentType,
         status: 'NEW',
         source: finalSource,
@@ -123,16 +143,38 @@ export const createSR = async (req, res, next) => {
         subservice: true,
         service: true,
         customer: {
-          select: { name: true, phone: true }
+          select: { 
+            id: true,
+            name: true, 
+            phone: true 
+          }
         }
       },
     });
+
+    // Also save GPS coordinates to customer profile if provided
+    if (latitude && longitude && customerId) {
+      await prisma.user.update({
+        where: { id: customerId },
+        data: {
+          latitude: parseFloat(latitude),
+          longitude: parseFloat(longitude),
+        },
+      });
+    }
+
+    // Return SR with status and srId properties
+    const response = {
+      ...sr,
+      srId: sr.id, // Include srId property
+      status: sr.status, // Explicitly include status
+    };
 
     // Real-time notification for new service request
     const { notifyNewServiceRequest } = await import('../services/notification.service.js');
     await notifyNewServiceRequest(sr);
 
-    return res.status(201).json(sr);
+    return res.status(201).json(response);
   } catch (err) {
     next(err);
   }
