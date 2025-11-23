@@ -10,58 +10,66 @@ import {
 const generateWONumber = () => 'WO-' + Date.now();
 
 // ✅ Dispatcher: Convert SR → WO
-export const createWOFromSR = async (srId, technicianId, scheduledAt, notes, dispatcherId) => {
-  const sr = await prisma.serviceRequest.findUnique({
-    where: { id: srId },
-  });
+export const createWOFromSR = async (req, res, next) => {
+  try {
+    const srId = Number(req.params.srId);
+    const { technicianId, scheduledAt, notes } = req.body;
+    const dispatcherId = req.user.id;
 
-  if (!sr) {
-    throw new Error('Service Request not found');
+    const sr = await prisma.serviceRequest.findUnique({
+      where: { id: srId },
+    });
+
+    if (!sr) {
+      return res.status(404).json({ message: 'Service Request not found' });
+    }
+
+    if (sr.status === 'CONVERTED_TO_WO') {
+      return res.status(400).json({ message: 'SR already converted to WO' });
+    }
+
+    const wo = await prisma.workOrder.create({
+      data: {
+        woNumber: generateWONumber(),
+        srId: sr.id,
+        customerId: sr.customerId,
+        technicianId: technicianId ? Number(technicianId) : null,
+        dispatcherId,
+        categoryId: sr.categoryId,
+        subserviceId: sr.subserviceId,
+        serviceId: sr.serviceId,
+        address: sr.address,
+        paymentType: sr.paymentType,
+        priority: sr.priority,
+        status: technicianId ? 'ASSIGNED' : 'UNASSIGNED',
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+        notes: notes || null,
+      },
+    });
+
+    await prisma.serviceRequest.update({
+      where: { id: sr.id },
+      data: { status: 'CONVERTED_TO_WO' },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: dispatcherId,
+        action: 'WO_CREATED_FROM_SR',
+        entityType: 'WORK_ORDER',
+        entityId: wo.id,
+      },
+    });
+
+    // Send notification to technician if assigned
+    if (technicianId) {
+      await notifyWOAssignment(Number(technicianId), wo);
+    }
+
+    return res.status(201).json(wo);
+  } catch (error) {
+    next(error);
   }
-
-  if (sr.status === 'CONVERTED_TO_WO') {
-    throw new Error('SR already converted to WO');
-  }
-
-  const wo = await prisma.workOrder.create({
-    data: {
-      woNumber: generateWONumber(),
-      srId: sr.id,
-      customerId: sr.customerId,
-      technicianId: technicianId ? Number(technicianId) : null,
-      dispatcherId,
-      categoryId: sr.categoryId,
-      subserviceId: sr.subserviceId,
-      serviceId: sr.serviceId,
-      address: sr.address,
-      paymentType: sr.paymentType,
-      priority: sr.priority,
-      status: technicianId ? 'ASSIGNED' : 'UNASSIGNED',
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-      notes: notes || null,
-    },
-  });
-
-  await prisma.serviceRequest.update({
-    where: { id: sr.id },
-    data: { status: 'CONVERTED_TO_WO' },
-  });
-
-  await prisma.auditLog.create({
-    data: {
-      userId: dispatcherId,
-      action: 'WO_CREATED_FROM_SR',
-      entityType: 'WORK_ORDER',
-      entityId: wo.id,
-    },
-  });
-
-  // Send notification to technician if assigned
-  if (technicianId) {
-    await notifyWOAssignment(Number(technicianId), wo);
-  }
-
-  return wo;
 };
 
 // ✅ Dispatcher: Assign / Reassign technician to WO
@@ -229,9 +237,6 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
     throw new Error('WO is not in IN_PROGRESS status');
   }
 
-  // Handle photo files
-  const photoUrls = files ? files.map(file => `/uploads/wo-completion/${file.filename}`) : [];
-
   // Parse materialsUsed if it's a JSON string
   let parsedMaterials = null;
   if (materialsUsed) {
@@ -240,6 +245,14 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
     } catch (err) {
       throw new Error('Invalid materialsUsed format. Expected JSON array.');
     }
+  }
+
+  // Process uploaded files
+  const photoUrls = [];
+  if (files && files.length > 0) {
+    files.forEach(file => {
+      photoUrls.push(`/uploads/wo-completion/${file.filename}`);
+    });
   }
 
   const updated = await prisma.workOrder.update({

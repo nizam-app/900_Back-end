@@ -32,4 +32,4 @@ router.post('/services', authMiddleware, requireRole('ADMIN'), createService);
 router.patch('/services/:id', authMiddleware, requireRole('ADMIN'), updateService);
 router.delete('/services/:id', authMiddleware, requireRole('ADMIN'), deleteService);
 
-export default router;
+export default router; 

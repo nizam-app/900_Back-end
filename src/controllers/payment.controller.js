@@ -232,13 +232,17 @@ export const verifyPayment = async (req, res, next) => {
         });
       }
 
+      // Initialize commission variables outside the if block
+      let commissionAmount = 0;
+      let bonusAmount = 0;
+
       const techProfile = await prisma.technicianProfile.findUnique({
         where: { userId: wo.technicianId },
       });
 
       if (techProfile) {
-        const commissionAmount = Number(payment.amount) * Number(techProfile.commissionRate);
-        const bonusAmount = Number(payment.amount) * Number(techProfile.bonusRate);
+        commissionAmount = Number(payment.amount) * Number(techProfile.commissionRate);
+        bonusAmount = Number(payment.amount) * Number(techProfile.bonusRate);
         
         // Validate calculated amounts
         if (isNaN(commissionAmount) || isNaN(bonusAmount)) {
@@ -274,43 +278,54 @@ export const verifyPayment = async (req, res, next) => {
           },
         });
 
-        if (techProfile.type === 'FREELANCER') {
-          const wallet = await prisma.wallet.findUnique({
-            where: { technicianId: wo.technicianId },
+        // Update wallet for both INTERNAL and FREELANCER technicians
+        let wallet = await prisma.wallet.findUnique({
+          where: { technicianId: wo.technicianId },
+        });
+
+        // Create wallet if doesn't exist (for TECH_INTERNAL)
+        if (!wallet) {
+          wallet = await prisma.wallet.create({
+            data: {
+              technicianId: wo.technicianId,
+              balance: 0,
+            },
           });
-
-          if (wallet) {
-            await prisma.wallet.update({
-              where: { id: wallet.id },
-              data: {
-                balance: { increment: commissionAmount + bonusAmount },
-              },
-            });
-
-            await prisma.walletTransaction.createMany({
-              data: [
-                {
-                  walletId: wallet.id,
-                  technicianId: wo.technicianId,
-                  type: 'CREDIT',
-                  sourceType: 'COMMISSION',
-                  sourceId: wo.id,
-                  amount: commissionAmount,
-                  description: `Commission for WO ${wo.woNumber}`,
-                },
-                {
-                  walletId: wallet.id,
-                  technicianId: wo.technicianId,
-                  type: 'CREDIT',
-                  sourceType: 'BONUS',
-                  sourceId: wo.id,
-                  amount: bonusAmount,
-                  description: `Bonus for WO ${wo.woNumber}`,
-                },
-              ],
-            });
-          }
         }
+
+        // Update wallet balance
+        await prisma.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            balance: { increment: commissionAmount + bonusAmount },
+          },
+        });
+
+        // Create wallet transactions
+        await prisma.walletTransaction.createMany({
+          data: [
+            {
+              walletId: wallet.id,
+              technicianId: wo.technicianId,
+              type: 'CREDIT',
+              sourceType: 'COMMISSION',
+              sourceId: wo.id,
+              amount: commissionAmount,
+              description: `Commission for WO ${wo.woNumber}`,
+            },
+            {
+              walletId: wallet.id,
+              technicianId: wo.technicianId,
+              type: 'CREDIT',
+              sourceType: 'BONUS',
+              sourceId: wo.id,
+              amount: bonusAmount,
+              description: `Bonus for WO ${wo.woNumber}`,
+            },
+          ],
+        });
+
+        console.log(`💰 Added ₹${commissionAmount + bonusAmount} to ${techProfile.type} technician wallet (ID: ${wo.technicianId})`);
       }
 
       await prisma.auditLog.create({

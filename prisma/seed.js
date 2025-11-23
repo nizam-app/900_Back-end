@@ -76,7 +76,7 @@ async function main() {
     create: {
       userId: techInternal.id,
       type: 'INTERNAL',
-      commissionRate: 0.05,
+      commissionRate: 0.15,  // 15% for internal technicians
       bonusRate: 0.05,
       baseSalary: 30000,
       specialization: 'AC Repair, HVAC',
@@ -109,7 +109,7 @@ async function main() {
     create: {
       userId: techFreelancer.id,
       type: 'FREELANCER',
-      commissionRate: 0.2,
+      commissionRate: 0.40,  // 40% for freelancers (higher than internal)
       bonusRate: 0.05,
       specialization: 'Electrical, Plumbing',
       status: 'ACTIVE',
