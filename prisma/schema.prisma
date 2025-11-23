@@ -24,6 +24,9 @@ model User {
   lastLongitude     Float?
   locationStatus    String? // ONLINE, BUSY, OFFLINE
   locationUpdatedAt DateTime?
+  homeAddress       String? // Home address for technicians
+  latitude          Float? // GPS coordinates for customers/locations
+  longitude         Float? // GPS coordinates for customers/locations
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -51,14 +54,23 @@ model User {
 }
 
 model TechnicianProfile {
-  id             Int      @id @default(autoincrement())
-  userId         Int      @unique
-  type           TechType
-  commissionRate Float // e.g. 0.2
-  bonusRate      Float // e.g. 0.05
-  status         String // ACTIVE, INACTIVE
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                   Int       @id @default(autoincrement())
+  userId               Int       @unique
+  type                 TechType
+  commissionRate       Float // e.g. 0.2
+  bonusRate            Float // e.g. 0.05
+  baseSalary           Float?    @default(0) // For internal employees
+  status               String // ACTIVE, INACTIVE
+  specialization       String? // electrician, plumber, AC repair, etc.
+  academicTitle        String? // BSc, MSc, Diploma, etc.
+  photoUrl             String? // Profile photo
+  idCardUrl            String? // ID card or passport
+  residencePermitUrl   String? // For foreign workers
+  residencePermitFrom  DateTime? // Validity start date
+  residencePermitTo    DateTime? // Validity end date
+  degreesUrl           String? // Degrees/certificates JSON array
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 }
@@ -107,22 +119,24 @@ model Service {
 }
 
 model ServiceRequest {
-  id           Int      @id @default(autoincrement())
-  srNumber     String   @unique
-  customerId   Int
-  createdById  Int?
-  categoryId   Int
-  subserviceId Int
-  serviceId    Int?
-  description  String?
-  priority     String // LOW, MEDIUM, HIGH
-  address      String
-  paymentType  String // CASH, MOBILE_MONEY
-  status       String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
-  source       String // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
-  isGuest      Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  srNumber          String   @unique
+  customerId        Int
+  createdById       Int?
+  categoryId        Int
+  subserviceId      Int
+  serviceId         Int?
+  description       String?
+  priority          String // LOW, MEDIUM, HIGH
+  address           String
+  latitude          Float? // GPS coordinates
+  longitude         Float? // GPS coordinates
+  paymentType       String // CASH, MOBILE_MONEY
+  status            String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
+  source            String // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
+  isGuest           Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   customer   User       @relation("CustomerSR", fields: [customerId], references: [id])
   createdBy  User?      @relation("CreatedBySR", fields: [createdById], references: [id])
@@ -134,32 +148,35 @@ model ServiceRequest {
 }
 
 model WorkOrder {
-  id               Int       @id @default(autoincrement())
-  woNumber         String    @unique
-  srId             Int
-  customerId       Int
-  technicianId     Int?
-  dispatcherId     Int?
-  categoryId       Int
-  subserviceId     Int
-  serviceId        Int?
-  address          String
-  paymentType      String
-  priority         String
-  status           String // UNASSIGNED, ASSIGNED, ACCEPTED, IN_PROGRESS, COMPLETED_PENDING_PAYMENT, PAID_VERIFIED, CANCELLED
-  scheduledAt      DateTime?
-  acceptedAt       DateTime?
-  startedAt        DateTime?
-  completedAt      DateTime?
-  paidVerifiedAt   DateTime?
-  cancelledAt      DateTime?
-  cancelReason     String?
-  notes            String?
-  completionNotes  String?
-  completionPhotos String? // JSON array of photo URLs
-  materialsUsed    String? // JSON array of materials
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                 Int       @id @default(autoincrement())
+  woNumber           String    @unique
+  srId               Int
+  customerId         Int
+  technicianId       Int?
+  dispatcherId       Int?
+  categoryId         Int
+  subserviceId       Int
+  serviceId          Int?
+  address            String
+  latitude           Float? // GPS coordinates
+  longitude          Float? // GPS coordinates
+  estimatedDuration  Int? // Estimated duration in minutes
+  paymentType        String
+  priority           String
+  status             String // UNASSIGNED, ASSIGNED, ACCEPTED, IN_PROGRESS, COMPLETED_PENDING_PAYMENT, PAID_VERIFIED, CANCELLED
+  scheduledAt        DateTime?
+  acceptedAt         DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  paidVerifiedAt     DateTime?
+  cancelledAt        DateTime?
+  cancelReason       String?
+  notes              String?
+  completionNotes    String?
+  completionPhotos   String? // JSON array of photo URLs
+  materialsUsed      String? // JSON array of materials
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   serviceRequest ServiceRequest @relation(fields: [srId], references: [id])
   customer       User           @relation("CustomerWO", fields: [customerId], references: [id])
@@ -333,4 +350,13 @@ model OTP {
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
+}
+
+model SystemConfig {
+  id                        Int      @id @default(autoincrement())
+  freelancerCommissionRate  Float    @default(0.20) // 20% for freelancers
+  internalEmployeeBonusRate Float    @default(0.05) // 5% bonus for internal employees
+  internalEmployeeBaseSalary Float   @default(0) // Base salary for internal employees
+  updatedAt                 DateTime @updatedAt
+  updatedById               Int?
 }
