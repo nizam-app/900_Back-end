@@ -12,8 +12,28 @@ import {
 
 const router = Router();
 
-// store files in /uploads for now
-const upload = multer({ dest: 'uploads/' });
+// Configure multer for payment proof uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/payments/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, 'payment-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, and GIF images are allowed.'));
+    }
+  }
+});
 
 // Get all payments (Admin/Dispatcher)
 router.get(

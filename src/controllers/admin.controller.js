@@ -1,4 +1,5 @@
 // src/controllers/admin.controller.js
+import { prisma } from '../prisma.js';
 import * as adminService from '../services/admin.service.js';
 
 export const getDashboard = async (req, res, next) => {
@@ -79,15 +80,36 @@ export const updateTechnicianProfile = async (req, res, next) => {
     if (userRole === 'DISPATCHER') {
       const restrictedFields = ['photoUrl', 'idCardUrl', 'residencePermitUrl', 'degreesUrl', 'baseSalary'];
       const hasRestrictedField = restrictedFields.some(field => req.body[field] !== undefined);
+      const hasUploadedFiles = req.files && Object.keys(req.files).length > 0;
       
-      if (hasRestrictedField) {
+      if (hasRestrictedField || hasUploadedFiles) {
         return res.status(403).json({ 
           message: 'Dispatcher cannot update profile images, documents, or salary. Admin access required.' 
         });
       }
     }
     
-    const profile = await adminService.updateTechProfile(userId, req.body, req.user.id);
+    // Process uploaded files
+    const updateData = { ...req.body };
+    
+    if (req.files) {
+      if (req.files.photoUrl && req.files.photoUrl[0]) {
+        updateData.photoUrl = `/uploads/${req.files.photoUrl[0].filename}`;
+      }
+      if (req.files.idCardUrl && req.files.idCardUrl[0]) {
+        updateData.idCardUrl = `/uploads/${req.files.idCardUrl[0].filename}`;
+      }
+      if (req.files.residencePermitUrl && req.files.residencePermitUrl[0]) {
+        updateData.residencePermitUrl = `/uploads/${req.files.residencePermitUrl[0].filename}`;
+      }
+      if (req.files.degreesUrl && req.files.degreesUrl.length > 0) {
+        updateData.degreesUrl = JSON.stringify(
+          req.files.degreesUrl.map(file => `/uploads/${file.filename}`)
+        );
+      }
+    }
+    
+    const profile = await adminService.updateTechProfile(userId, updateData, req.user.id);
     return res.json(profile);
   } catch (err) {
     next(err);

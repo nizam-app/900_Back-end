@@ -514,7 +514,12 @@ export const completeWO = async (req, res, next) => {
       return res.status(400).json({ message: 'WO is not in IN_PROGRESS status' });
     }
 
-    const photoUrls = req.files ? req.files.map(file => `/uploads/wo-completion/${file.filename}`) : [];
+    // Validate that photos are uploaded
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'At least one completion photo is required' });
+    }
+    
+    const photoUrls = req.files.map(file => `/uploads/wo-completion/${file.filename}`);
 
     let parsedMaterials = null;
     if (materialsUsed) {

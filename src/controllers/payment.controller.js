@@ -151,7 +151,12 @@ export const uploadPaymentProof = async (req, res, next) => {
       });
     }
 
-    const proofUrl = req.file ? `/uploads/payments/${req.file.filename}` : null;
+    // Validate that payment proof is uploaded
+    if (!req.file) {
+      return res.status(400).json({ message: 'Payment proof image is required' });
+    }
+    
+    const proofUrl = `/uploads/payments/${req.file.filename}`;
 
     const payment = await prisma.payment.create({
       data: {

@@ -213,3 +213,59 @@ export const deleteService = async (req, res, next) => {
     next(err);
   }
 };
+
+// Activate Category
+export const activateCategory = async (req, res, next) => {
+  try {
+    const categoryId = Number(req.params.id);
+
+    const category = await prisma.category.update({
+      where: { id: categoryId },
+      data: { isActive: true },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'CATEGORY_ACTIVATED',
+        entityType: 'CATEGORY',
+        entityId: category.id,
+      },
+    });
+
+    return res.json({ 
+      message: 'Category activated successfully',
+      category 
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Deactivate Category
+export const deactivateCategory = async (req, res, next) => {
+  try {
+    const categoryId = Number(req.params.id);
+
+    const category = await prisma.category.update({
+      where: { id: categoryId },
+      data: { isActive: false },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'CATEGORY_DEACTIVATED',
+        entityType: 'CATEGORY',
+        entityId: category.id,
+      },
+    });
+
+    return res.json({ 
+      message: 'Category deactivated successfully',
+      category 
+    });
+  } catch (err) {
+    next(err);
+  }
+};
