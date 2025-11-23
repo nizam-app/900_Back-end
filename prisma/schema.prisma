@@ -116,28 +116,28 @@ model Service {
 }
 
 model ServiceRequest {
-  id           Int      @id @default(autoincrement())
-  srNumber     String   @unique
-  customerId   Int
-  createdById  Int?
-  categoryId   Int
-  subserviceId Int
-  serviceId    Int?
-  description  String?
-  priority     String
-  address      String
+  id            Int      @id @default(autoincrement())
+  srNumber      String   @unique
+  customerId    Int
+  createdById   Int?
+  categoryId    Int
+  subserviceId  Int
+  serviceId     Int?
+  description   String?
+  priority      String
+  address       String
   streetAddress String? // Street address component
-  city         String? // City component
-  landmark     String? // Optional landmark
-  latitude     Float? // GPS coordinates
-  longitude    Float? // GPS coordinates
-  attachments  String? // JSON array of file URLs
-  paymentType  String // CASH, MOBILE_MONEY
-  status       String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
-  source       String // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
-  isGuest      Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  city          String? // City component
+  landmark      String? // Optional landmark
+  latitude      Float? // GPS coordinates
+  longitude     Float? // GPS coordinates
+  attachments   String? // JSON array of file URLs
+  paymentType   String // CASH, MOBILE_MONEY
+  status        String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
+  source        String // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
+  isGuest       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   customer   User       @relation("CustomerSR", fields: [customerId], references: [id])
   createdBy  User?      @relation("CreatedBySR", fields: [createdById], references: [id])
@@ -353,12 +353,12 @@ enum Specialty {
 }
 
 model SystemConfig {
-  id                         Int      @id @default(autoincrement())
-  freelancerCommissionRate   Float    @default(0.20) // 20% for freelancers
-  internalEmployeeBonusRate  Float    @default(0.05) // 5% bonus for internal employees
-  internalEmployeeBaseSalary Float    @default(0) // Base salary for internal employees
+  id                         Int       @id @default(autoincrement())
+  freelancerCommissionRate   Float     @default(0.20) // 20% for freelancers
+  internalEmployeeBonusRate  Float     @default(0.05) // 5% bonus for internal employees
+  internalEmployeeBaseSalary Float     @default(0) // Base salary for internal employees
   nextPayoutDate             DateTime? // Next scheduled payout date
-  payoutFrequency            String   @default("WEEKLY") // WEEKLY or MONTHLY
-  updatedAt                  DateTime @updatedAt
+  payoutFrequency            String    @default("WEEKLY") // WEEKLY or MONTHLY
+  updatedAt                  DateTime  @updatedAt
   updatedById                Int?
 }
