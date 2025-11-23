@@ -5,58 +5,67 @@ import { prisma } from '../prisma.js';
 export const getWorkOrderReport = async (filters) => {
   const { startDate, endDate, status, technicianId, categoryId } = filters;
 
-    if (status) {
-      where.status = status;
+  const where = {};
+
+  if (startDate || endDate) {
+    where.createdAt = {};
+    if (startDate) {
+      where.createdAt.gte = new Date(startDate);
     }
-
-    if (technicianId) {
-      where.technicianId = Number(technicianId);
+    if (endDate) {
+      where.createdAt.lte = new Date(endDate);
     }
-
-    if (categoryId) {
-      where.categoryId = Number(categoryId);
-    }
-
-    const workOrders = await prisma.workOrder.findMany({
-      where,
-      include: {
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-          },
-        },
-        technician: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-          },
-        },
-        category: true,
-        subservice: true,
-        service: true,
-        payments: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const summary = {
-      total: workOrders.length,
-      completed: workOrders.filter((w) => w.status === 'PAID_VERIFIED').length,
-      inProgress: workOrders.filter((w) => w.status === 'IN_PROGRESS').length,
-      pending: workOrders.filter((w) => w.status === 'COMPLETED_PENDING_PAYMENT').length,
-      cancelled: workOrders.filter((w) => w.status === 'CANCELLED').length,
-    };
-
-    return res.json({
-      workOrders,
-      summary,
-    });
-  } catch (error) {
-    next(error);
   }
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (technicianId) {
+    where.technicianId = Number(technicianId);
+  }
+
+  if (categoryId) {
+    where.categoryId = Number(categoryId);
+  }
+
+  const workOrders = await prisma.workOrder.findMany({
+    where,
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+        },
+      },
+      technician: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+        },
+      },
+      category: true,
+      subservice: true,
+      service: true,
+      payments: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const summary = {
+    total: workOrders.length,
+    completed: workOrders.filter((w) => w.status === 'PAID_VERIFIED').length,
+    inProgress: workOrders.filter((w) => w.status === 'IN_PROGRESS').length,
+    pending: workOrders.filter((w) => w.status === 'COMPLETED_PENDING_PAYMENT').length,
+    cancelled: workOrders.filter((w) => w.status === 'CANCELLED').length,
+  };
+
+  return {
+    workOrders,
+    summary,
+  };
 };
 
 // ✅ Commission Report
