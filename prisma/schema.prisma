@@ -78,6 +78,7 @@ model Category {
   id              Int              @id @default(autoincrement())
   name            String
   description     String?
+  isActive        Boolean          @default(true) // Active/Inactive toggle
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   services        Service[]
@@ -125,8 +126,12 @@ model ServiceRequest {
   description  String?
   priority     String
   address      String
+  streetAddress String? // Street address component
+  city         String? // City component
+  landmark     String? // Optional landmark
   latitude     Float? // GPS coordinates
   longitude    Float? // GPS coordinates
+  attachments  String? // JSON array of file URLs
   paymentType  String // CASH, MOBILE_MONEY
   status       String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
   source       String // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
@@ -352,6 +357,8 @@ model SystemConfig {
   freelancerCommissionRate   Float    @default(0.20) // 20% for freelancers
   internalEmployeeBonusRate  Float    @default(0.05) // 5% bonus for internal employees
   internalEmployeeBaseSalary Float    @default(0) // Base salary for internal employees
+  nextPayoutDate             DateTime? // Next scheduled payout date
+  payoutFrequency            String   @default("WEEKLY") // WEEKLY or MONTHLY
   updatedAt                  DateTime @updatedAt
   updatedById                Int?
 }
