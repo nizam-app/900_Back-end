@@ -23,5 +23,5 @@ router.get(
   requireRole('DISPATCHER', 'ADMIN'),
   getTechnicianWorkload
 );
-
+ 
 export default router;
