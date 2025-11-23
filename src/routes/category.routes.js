@@ -6,6 +6,8 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  activateCategory,
+  deactivateCategory,
   createSubservice,
   updateSubservice,
   deleteSubservice,
@@ -23,6 +25,8 @@ router.get('/', listCategories);
 router.post('/', authMiddleware, requireRole('ADMIN'), createCategory);
 router.patch('/:id', authMiddleware, requireRole('ADMIN'), updateCategory);
 router.delete('/:id', authMiddleware, requireRole('ADMIN'), deleteCategory);
+router.patch('/:id/activate', authMiddleware, requireRole('ADMIN'), activateCategory);
+router.patch('/:id/deactivate', authMiddleware, requireRole('ADMIN'), deactivateCategory);
 
 router.post('/subservices', authMiddleware, requireRole('ADMIN'), createSubservice);
 router.patch('/subservices/:id', authMiddleware, requireRole('ADMIN'), updateSubservice);
