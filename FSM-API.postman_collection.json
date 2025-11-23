@@ -680,7 +680,7 @@
 			"name": "Payments",
 			"item": [
 				{
-					"name": "Upload Payment Proof",
+					"name": "Upload Payment Proof (Technician)",
 					"event": [
 						{
 							"listen": "test",
@@ -707,27 +707,32 @@
 								{
 									"key": "woId",
 									"value": "{{woId}}",
-									"type": "text"
+									"type": "text",
+									"description": "Work Order ID"
 								},
 								{
 									"key": "amount",
-									"value": "500",
-									"type": "text"
+									"value": "5000",
+									"type": "text",
+									"description": "Payment amount received from customer"
 								},
 								{
 									"key": "method",
 									"value": "MOBILE_MONEY",
-									"type": "text"
+									"type": "text",
+									"description": "MOBILE_MONEY or CASH"
 								},
 								{
 									"key": "transactionRef",
-									"value": "TXN123456789",
-									"type": "text"
+									"value": "MPESA-ABC123456",
+									"type": "text",
+									"description": "M-Pesa/Mobile Money transaction reference"
 								},
 								{
 									"key": "proof",
 									"type": "file",
-									"src": []
+									"src": [],
+									"description": "Payment screenshot (M-Pesa) or bank deposit slip (Cash)"
 								}
 							]
 						},
@@ -740,7 +745,8 @@
 								"api",
 								"payments"
 							]
-						}
+						},
+						"description": "Technician uploads payment proof after completing job:\n- Mobile Money: Screenshot of M-Pesa/mobile money transaction\n- Cash: Bank deposit slip or receipt showing cash deposited to company account"
 					}
 				},
 				{
