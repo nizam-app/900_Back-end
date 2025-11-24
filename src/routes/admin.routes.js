@@ -12,7 +12,11 @@ import {
   getAuditLogs,
   getTechnicianLocations,
   getTop5Technicians,
-  createWeeklyPayoutBatch
+  createWeeklyPayoutBatch,
+  getInProgressWorkOrders,
+  getTechnicianStatusSummary,
+  getWorkOrderAuditTrail,
+  getTechnicianStats
 } from '../controllers/admin.controller.js';
 
 const router = Router();
@@ -62,6 +66,12 @@ router.get('/audit-logs', authMiddleware, requireRole('ADMIN'), getAuditLogs);
 router.get('/technician-locations', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getTechnicianLocations);
 router.get('/top-5-technicians', authMiddleware, requireRole('ADMIN'), getTop5Technicians);
 router.post('/payouts/batch', authMiddleware, requireRole('ADMIN'), createWeeklyPayoutBatch);
+
+// New admin endpoints
+router.get('/work-orders/in-progress', authMiddleware, requireRole('ADMIN'), getInProgressWorkOrders);
+router.get('/technicians/status-summary', authMiddleware, requireRole('ADMIN'), getTechnicianStatusSummary);
+router.get('/work-orders/:woId/audit-trail', authMiddleware, requireRole('ADMIN'), getWorkOrderAuditTrail);
+router.get('/technicians/stats', authMiddleware, requireRole('ADMIN'), getTechnicianStats);
 
 export default router;
   
