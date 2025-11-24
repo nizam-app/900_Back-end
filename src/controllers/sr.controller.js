@@ -219,11 +219,39 @@ export const listSR = async (req, res, next) => {
         category: true,
         subservice: true,
         service: true,
+        workOrders: {
+          select: {
+            id: true,
+            woNumber: true,
+            status: true,
+            technician: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1, // Get the latest work order
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return res.json(srs);
+    // Add WO status to each SR
+    const srsWithWOStatus = srs.map(sr => ({
+      ...sr,
+      woStatus: sr.workOrders && sr.workOrders.length > 0 ? sr.workOrders[0].status : null,
+      assignedTechnician: sr.workOrders && sr.workOrders.length > 0 && sr.workOrders[0].technician 
+        ? sr.workOrders[0].technician.name 
+        : 'Unassigned',
+      latestWO: sr.workOrders && sr.workOrders.length > 0 ? sr.workOrders[0] : null,
+    }));
+
+    return res.json(srsWithWOStatus);
   } catch (err) {
     next(err);
   }
