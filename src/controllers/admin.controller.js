@@ -437,3 +437,370 @@ export const createWeeklyPayoutBatch = async (req, res, next) => {
     next(err);
   }
 };
+
+// Get all IN_PROGRESS work orders (Admin only)
+export const getInProgressWorkOrders = async (req, res, next) => {
+  try {
+    const workOrders = await prisma.workOrder.findMany({
+      where: {
+        status: 'IN_PROGRESS'
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true
+          }
+        },
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            locationStatus: true,
+            technicianProfile: {
+              select: {
+                type: true,
+                specialization: true,
+                status: true
+              }
+            }
+          }
+        },
+        category: true,
+        subservice: true,
+        service: true
+      },
+      orderBy: {
+        startedAt: 'desc'
+      }
+    });
+
+    return res.json({
+      total: workOrders.length,
+      workOrders
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get technician status summary (Busy/Active/Blocked) - Admin only
+export const getTechnicianStatusSummary = async (req, res, next) => {
+  try {
+    const technicians = await prisma.user.findMany({
+      where: {
+        role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] }
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        role: true,
+        isBlocked: true,
+        blockedReason: true,
+        blockedAt: true,
+        locationStatus: true,
+        locationUpdatedAt: true,
+        technicianProfile: {
+          select: {
+            type: true,
+            status: true,
+            specialization: true
+          }
+        },
+        technicianWOs: {
+          where: {
+            status: 'IN_PROGRESS'
+          },
+          select: {
+            id: true,
+            woNumber: true,
+            startedAt: true
+          }
+        }
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+
+    // Categorize technicians
+    const summary = {
+      total: technicians.length,
+      blocked: technicians.filter(t => t.isBlocked).length,
+      active: technicians.filter(t => !t.isBlocked && t.technicianProfile?.status === 'ACTIVE').length,
+      inactive: technicians.filter(t => !t.isBlocked && t.technicianProfile?.status === 'INACTIVE').length,
+      busy: technicians.filter(t => t.locationStatus === 'BUSY').length,
+      online: technicians.filter(t => t.locationStatus === 'ONLINE').length,
+      offline: technicians.filter(t => t.locationStatus === 'OFFLINE' || !t.locationStatus).length,
+      technicians: technicians.map(t => ({
+        id: t.id,
+        name: t.name,
+        phone: t.phone,
+        role: t.role,
+        type: t.technicianProfile?.type,
+        specialization: t.technicianProfile?.specialization,
+        profileStatus: t.technicianProfile?.status,
+        locationStatus: t.locationStatus || 'OFFLINE',
+        isBlocked: t.isBlocked,
+        blockedReason: t.blockedReason,
+        blockedAt: t.blockedAt,
+        activeWorkOrders: t.technicianWOs.length,
+        currentWO: t.technicianWOs[0] || null,
+        lastLocationUpdate: t.locationUpdatedAt
+      }))
+    };
+
+    return res.json(summary);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get work order audit trail - Full history (Admin only)
+export const getWorkOrderAuditTrail = async (req, res, next) => {
+  try {
+    const woId = Number(req.params.woId);
+
+    // Get work order details
+    const workOrder = await prisma.workOrder.findUnique({
+      where: { id: woId },
+      include: {
+        customer: {
+          select: { id: true, name: true, phone: true }
+        },
+        technician: {
+          select: { id: true, name: true, phone: true }
+        },
+        dispatcher: {
+          select: { id: true, name: true, phone: true }
+        },
+        category: true,
+        subservice: true,
+        service: true,
+        payments: {
+          include: {
+            verifiedBy: {
+              select: { id: true, name: true, phone: true }
+            }
+          }
+        },
+        commissions: true,
+        review: true
+      }
+    });
+
+    if (!workOrder) {
+      return res.status(404).json({ message: 'Work order not found' });
+    }
+
+    // Get audit logs related to this work order
+    const auditLogs = await prisma.auditLog.findMany({
+      where: {
+        OR: [
+          { entityType: 'WORK_ORDER', entityId: woId },
+          { entityType: 'PAYMENT', entityId: { in: workOrder.payments.map(p => p.id) } },
+          { entityType: 'COMMISSION', entityId: { in: workOrder.commissions.map(c => c.id) } }
+        ]
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, phone: true, role: true }
+        }
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
+
+    // Build timeline of events
+    const timeline = [
+      {
+        event: 'CREATED',
+        timestamp: workOrder.createdAt,
+        status: 'UNASSIGNED',
+        actor: workOrder.dispatcher,
+        description: `Work order ${workOrder.woNumber} created`
+      }
+    ];
+
+    if (workOrder.dispatcherId) {
+      timeline.push({
+        event: 'DISPATCHED',
+        timestamp: workOrder.scheduledAt || workOrder.createdAt,
+        status: 'ASSIGNED',
+        actor: workOrder.dispatcher,
+        description: `Dispatched to ${workOrder.technician?.name || 'technician'}`
+      });
+    }
+
+    if (workOrder.acceptedAt) {
+      timeline.push({
+        event: 'ACCEPTED',
+        timestamp: workOrder.acceptedAt,
+        status: 'ACCEPTED',
+        actor: workOrder.technician,
+        description: `Accepted by ${workOrder.technician?.name}`
+      });
+    }
+
+    if (workOrder.startedAt) {
+      timeline.push({
+        event: 'STARTED',
+        timestamp: workOrder.startedAt,
+        status: 'IN_PROGRESS',
+        actor: workOrder.technician,
+        description: `Work started by ${workOrder.technician?.name}`
+      });
+    }
+
+    if (workOrder.completedAt) {
+      timeline.push({
+        event: 'COMPLETED',
+        timestamp: workOrder.completedAt,
+        status: 'COMPLETED_PENDING_PAYMENT',
+        actor: workOrder.technician,
+        description: `Work completed by ${workOrder.technician?.name}`
+      });
+    }
+
+    workOrder.payments.forEach(payment => {
+      if (payment.createdAt) {
+        timeline.push({
+          event: 'PAYMENT_UPLOADED',
+          timestamp: payment.createdAt,
+          status: payment.status,
+          actor: workOrder.technician,
+          description: `Payment proof uploaded - ${payment.method} ${payment.amount} KES`,
+          paymentId: payment.id
+        });
+      }
+
+      if (payment.verifiedAt && payment.status === 'VERIFIED') {
+        timeline.push({
+          event: 'PAYMENT_VERIFIED',
+          timestamp: payment.verifiedAt,
+          status: 'PAID_VERIFIED',
+          actor: payment.verifiedBy,
+          description: `Payment verified by ${payment.verifiedBy?.name}`,
+          paymentId: payment.id
+        });
+      }
+
+      if (payment.verifiedAt && payment.status === 'REJECTED') {
+        timeline.push({
+          event: 'PAYMENT_REJECTED',
+          timestamp: payment.verifiedAt,
+          status: payment.status,
+          actor: payment.verifiedBy,
+          description: `Payment rejected: ${payment.rejectedReason}`,
+          paymentId: payment.id
+        });
+      }
+    });
+
+    if (workOrder.cancelledAt) {
+      timeline.push({
+        event: 'CANCELLED',
+        timestamp: workOrder.cancelledAt,
+        status: 'CANCELLED',
+        description: `Cancelled: ${workOrder.cancelReason}`
+      });
+    }
+
+    // Sort timeline by timestamp
+    timeline.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    return res.json({
+      workOrder: {
+        id: workOrder.id,
+        woNumber: workOrder.woNumber,
+        status: workOrder.status,
+        customer: workOrder.customer,
+        technician: workOrder.technician,
+        dispatcher: workOrder.dispatcher,
+        category: workOrder.category,
+        address: workOrder.address,
+        createdAt: workOrder.createdAt,
+        completedAt: workOrder.completedAt
+      },
+      timeline,
+      auditLogs,
+      payments: workOrder.payments,
+      commissions: workOrder.commissions,
+      review: workOrder.review
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get technician count by specialization/type - Admin only
+export const getTechnicianStats = async (req, res, next) => {
+  try {
+    const technicians = await prisma.user.findMany({
+      where: {
+        role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
+        isBlocked: false
+      },
+      include: {
+        technicianProfile: {
+          select: {
+            type: true,
+            specialization: true,
+            status: true
+          }
+        }
+      }
+    });
+
+    // Count by specialization
+    const specializationCounts = {};
+    const typeCounts = { INTERNAL: 0, FREELANCER: 0 };
+    const statusCounts = { ACTIVE: 0, INACTIVE: 0 };
+
+    technicians.forEach(tech => {
+      const profile = tech.technicianProfile;
+      
+      if (profile) {
+        // Count by specialization
+        const spec = profile.specialization || 'GENERAL';
+        specializationCounts[spec] = (specializationCounts[spec] || 0) + 1;
+
+        // Count by type
+        if (profile.type) {
+          typeCounts[profile.type] = (typeCounts[profile.type] || 0) + 1;
+        }
+
+        // Count by status
+        if (profile.status) {
+          statusCounts[profile.status] = (statusCounts[profile.status] || 0) + 1;
+        }
+      }
+    });
+
+    return res.json({
+      total: technicians.length,
+      bySpecialization: specializationCounts,
+      byType: typeCounts,
+      byStatus: statusCounts,
+      details: Object.keys(specializationCounts).map(spec => ({
+        specialization: spec,
+        count: specializationCounts[spec],
+        technicians: technicians
+          .filter(t => (t.technicianProfile?.specialization || 'GENERAL') === spec)
+          .map(t => ({
+            id: t.id,
+            name: t.name,
+            phone: t.phone,
+            type: t.technicianProfile?.type,
+            status: t.technicianProfile?.status
+          }))
+      }))
+    });
+  } catch (err) {
+    next(err);
+  }
+};
