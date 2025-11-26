@@ -1,7 +1,9 @@
+/** @format */
+
 // src/services/admin.service.js
-import { prisma } from '../prisma.js';
-import bcrypt from 'bcryptjs';
-import { notifyTechnicianBlocked } from './notification.service.js';
+import { prisma } from "../prisma.js";
+import bcrypt from "bcryptjs";
+import { notifyTechnicianBlocked } from "./notification.service.js";
 
 // ✅ Get dashboard overview stats
 export const getDashboardStats = async () => {
@@ -22,37 +24,37 @@ export const getDashboardStats = async () => {
   ] = await Promise.all([
     prisma.serviceRequest.count(),
     prisma.workOrder.count(),
-    prisma.workOrder.count({ where: { status: 'PAID_VERIFIED' } }),
-    prisma.payment.count({ where: { status: 'PENDING_VERIFICATION' } }),
+    prisma.workOrder.count({ where: { status: "PAID_VERIFIED" } }),
+    prisma.payment.count({ where: { status: "PENDING_VERIFICATION" } }),
     prisma.payment.aggregate({
-      where: { status: 'VERIFIED' },
+      where: { status: "VERIFIED" },
       _sum: { amount: true },
     }),
     prisma.payment.aggregate({
       where: {
-        status: 'VERIFIED',
+        status: "VERIFIED",
         createdAt: { gte: startOfMonth },
       },
       _sum: { amount: true },
     }),
     prisma.commission.aggregate({
-      where: { status: 'PAID' },
+      where: { status: "PAID" },
       _sum: { amount: true },
     }),
     prisma.commission.aggregate({
       where: {
-        status: 'PAID',
+        status: "PAID",
         createdAt: { gte: startOfMonth },
       },
       _sum: { amount: true },
     }),
     prisma.user.count({
       where: {
-        role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
+        role: { in: ["TECH_INTERNAL", "TECH_FREELANCER"] },
         isBlocked: false,
       },
     }),
-    prisma.user.count({ where: { role: 'CUSTOMER' } }),
+    prisma.user.count({ where: { role: "CUSTOMER" } }),
   ]);
 
   return {
@@ -63,7 +65,7 @@ export const getDashboardStats = async () => {
     totalRevenue: totalRevenue._sum.amount || 0,
     monthlyRevenue: monthlyRevenue._sum.amount || 0,
     totalCommissions: totalCommissions._sum.amount || 0,
-    monthlyCommissions: monthlyCommissions._sum.amount || 0, 
+    monthlyCommissions: monthlyCommissions._sum.amount || 0,
     activeTechnicians,
     totalCustomers,
   };
@@ -80,35 +82,125 @@ export const findUsers = async (filters) => {
   }
 
   if (isBlocked !== undefined) {
-    where.isBlocked = isBlocked === 'true';
+    where.isBlocked = isBlocked === "true";
   }
 
   if (search) {
     where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
+      { name: { contains: search, mode: "insensitive" } },
       { phone: { contains: search } },
-      { email: { contains: search, mode: 'insensitive' } },
+      { email: { contains: search, mode: "insensitive" } },
     ];
   }
 
-  return await prisma.user.findMany({
+  const users = await prisma.user.findMany({
     where,
     include: {
       technicianProfile: true,
       wallet: true,
+      technicianWOs: {
+        select: {
+          id: true,
+          status: true,
+        },
+      },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
+
+  // Add work order statistics for technicians
+  const usersWithStats = users.map((user) => {
+    const userData = { ...user };
+
+    // Calculate work order statistics for technicians
+    if (user.role === "TECH_INTERNAL" || user.role === "TECH_FREELANCER") {
+      const activeWOs = user.technicianWOs.filter(
+        (wo) => wo.status === "ASSIGNED" || wo.status === "ACCEPTED"
+      ).length;
+
+      const completedWOs = user.technicianWOs.filter(
+        (wo) =>
+          wo.status === "COMPLETED_PENDING_PAYMENT" ||
+          wo.status === "PAID_VERIFIED"
+      ).length;
+
+      const openWOs = user.technicianWOs.filter(
+        (wo) => wo.status === "IN_PROGRESS"
+      ).length;
+
+      // Add statistics to user object
+      userData.activeWorkOrders = activeWOs;
+      userData.completedJobs = completedWOs;
+      userData.openWorkOrders = openWOs;
+      userData.commissionRate = user.technicianProfile?.commissionRate || 0;
+    }
+
+    // Remove the full technicianWOs array to reduce payload size
+    delete userData.technicianWOs;
+
+    return userData;
+  });
+
+  return usersWithStats;
 };
 
 // ✅ Create user with profile
+/**
+ * Create User with Technician Profile (if applicable)
+ *
+ * ROLES:
+ * - CUSTOMER: Regular customer who requests services
+ * - TECH_INTERNAL: Company employee technician (receives salary + commission)
+ * - TECH_FREELANCER: Independent contractor (commission only, has wallet)
+ * - DISPATCHER: Assigns work orders to technicians
+ * - CALL_CENTER: Creates service requests on behalf of customers
+ * - ADMIN: Full system access
+ *
+ * TECHNICIAN TYPES:
+ * - INTERNAL: Full-time employee (role: TECH_INTERNAL)
+ *   * Receives base salary
+ *   * Gets commission on completed jobs
+ *   * No wallet system
+ *
+ * - FREELANCER: Independent contractor (role: TECH_FREELANCER)
+ *   * Commission only, no salary
+ *   * Has wallet for balance tracking
+ *   * Can request payouts
+ *
+ * TECHNICIAN PROFILE OPTIONAL FIELDS:
+ * - specialization: ELECTRICAL, PLUMBING, HVAC, GENERAL, CARPENTRY, PAINTING
+ * - commissionRate: Percentage (default: 0.2 = 20%)
+ * - bonusRate: Percentage (default: 0.05 = 5%)
+ * - baseSalary: Monthly salary (TECH_INTERNAL only)
+ * - academicTitle: BSc, MSc, Diploma, etc.
+ * - photoUrl: Profile photo URL
+ * - idCardUrl: ID card/passport URL
+ * - residencePermitUrl: For foreign workers
+ * - residencePermitFrom: Validity start date
+ * - residencePermitTo: Validity end date
+ * - degreesUrl: Degrees/certificates JSON array
+ *
+ * TECHNICIAN STATUS:
+ * - ACTIVE: Available for work assignments
+ * - INACTIVE: Temporarily not working
+ */
 export const createUserWithProfile = async (userData, adminId) => {
-  const { name, phone, email, password, role, technicianProfile } = userData;
+  const {
+    name,
+    phone,
+    email,
+    password,
+    role,
+    technicianProfile,
+    homeAddress,
+    latitude,
+    longitude,
+  } = userData;
 
   // Check if user exists
   const existing = await prisma.user.findUnique({ where: { phone } });
   if (existing) {
-    throw new Error('Phone already exists');
+    throw new Error("Phone already exists");
   }
 
   const hash = await bcrypt.hash(password, 10);
@@ -120,31 +212,59 @@ export const createUserWithProfile = async (userData, adminId) => {
       email,
       passwordHash: hash,
       role,
+      homeAddress: homeAddress || null,
+      latitude: latitude ? parseFloat(latitude) : null,
+      longitude: longitude ? parseFloat(longitude) : null,
     },
   });
 
   // Create technician profile if role is technician
-  if (role === 'TECH_INTERNAL' || role === 'TECH_FREELANCER') {
-    const validSpecializations = ['ELECTRICAL', 'PLUMBING', 'HVAC', 'GENERAL', 'CARPENTRY', 'PAINTING'];
-    const specialization = technicianProfile?.specialization || 'GENERAL';
-    
+  if (role === "TECH_INTERNAL" || role === "TECH_FREELANCER") {
+    const validSpecializations = [
+      "ELECTRICAL",
+      "PLUMBING",
+      "HVAC",
+      "GENERAL",
+      "CARPENTRY",
+      "PAINTING",
+    ];
+    const specialization = technicianProfile?.specialization || "GENERAL";
+
     if (!validSpecializations.includes(specialization)) {
-      throw new Error(`Invalid specialization. Must be one of: ${validSpecializations.join(', ')}`);
+      throw new Error(
+        `Invalid specialization. Must be one of: ${validSpecializations.join(
+          ", "
+        )}`
+      );
     }
 
     await prisma.technicianProfile.create({
       data: {
         userId: user.id,
-        type: role === 'TECH_INTERNAL' ? 'INTERNAL' : 'FREELANCER',
+        type: role === "TECH_INTERNAL" ? "INTERNAL" : "FREELANCER",
         specialization: specialization,
         commissionRate: technicianProfile?.commissionRate || 0.2,
         bonusRate: technicianProfile?.bonusRate || 0.05,
-        status: 'ACTIVE',
+        baseSalary:
+          technicianProfile?.baseSalary ||
+          (role === "TECH_INTERNAL" ? 0 : null),
+        status: technicianProfile?.status || "ACTIVE",
+        academicTitle: technicianProfile?.academicTitle || null,
+        photoUrl: technicianProfile?.photoUrl || null,
+        idCardUrl: technicianProfile?.idCardUrl || null,
+        residencePermitUrl: technicianProfile?.residencePermitUrl || null,
+        residencePermitFrom: technicianProfile?.residencePermitFrom
+          ? new Date(technicianProfile.residencePermitFrom)
+          : null,
+        residencePermitTo: technicianProfile?.residencePermitTo
+          ? new Date(technicianProfile.residencePermitTo)
+          : null,
+        degreesUrl: technicianProfile?.degreesUrl || null,
       },
     });
 
     // Create wallet for freelancers
-    if (role === 'TECH_FREELANCER') {
+    if (role === "TECH_FREELANCER") {
       await prisma.wallet.create({
         data: {
           technicianId: user.id,
@@ -158,8 +278,8 @@ export const createUserWithProfile = async (userData, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'USER_CREATED',
-      entityType: 'USER',
+      action: "USER_CREATED",
+      entityType: "USER",
       entityId: user.id,
       metadataJson: JSON.stringify({ role }),
     },
@@ -178,8 +298,8 @@ export const updateUserById = async (userId, updateData, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'USER_UPDATED',
-      entityType: 'USER',
+      action: "USER_UPDATED",
+      entityType: "USER",
       entityId: user.id,
     },
   });
@@ -188,7 +308,12 @@ export const updateUserById = async (userId, updateData, adminId) => {
 };
 
 // ✅ Block/Unblock technician
-export const setTechnicianBlockStatus = async (technicianId, isBlocked, blockedReason, adminId) => {
+export const setTechnicianBlockStatus = async (
+  technicianId,
+  isBlocked,
+  blockedReason,
+  adminId
+) => {
   const user = await prisma.user.update({
     where: { id: technicianId },
     data: {
@@ -202,8 +327,8 @@ export const setTechnicianBlockStatus = async (technicianId, isBlocked, blockedR
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: isBlocked ? 'TECHNICIAN_BLOCKED' : 'TECHNICIAN_UNBLOCKED',
-      entityType: 'USER',
+      action: isBlocked ? "TECHNICIAN_BLOCKED" : "TECHNICIAN_UNBLOCKED",
+      entityType: "USER",
       entityId: user.id,
       metadataJson: JSON.stringify({ reason: blockedReason }),
     },
@@ -223,14 +348,26 @@ export const updateTechProfile = async (userId, profileData, adminId) => {
 
   const updateData = {};
 
-  if (commissionRate !== undefined) updateData.commissionRate = Number(commissionRate);
+  if (commissionRate !== undefined)
+    updateData.commissionRate = Number(commissionRate);
   if (bonusRate !== undefined) updateData.bonusRate = Number(bonusRate);
   if (status) updateData.status = status;
-  
+
   if (specialization) {
-    const validSpecializations = ['ELECTRICAL', 'PLUMBING', 'HVAC', 'GENERAL', 'CARPENTRY', 'PAINTING'];
+    const validSpecializations = [
+      "ELECTRICAL",
+      "PLUMBING",
+      "HVAC",
+      "GENERAL",
+      "CARPENTRY",
+      "PAINTING",
+    ];
     if (!validSpecializations.includes(specialization)) {
-      throw new Error(`Invalid specialization. Must be one of: ${validSpecializations.join(', ')}`);
+      throw new Error(
+        `Invalid specialization. Must be one of: ${validSpecializations.join(
+          ", "
+        )}`
+      );
     }
     updateData.specialization = specialization;
   }
@@ -243,8 +380,8 @@ export const updateTechProfile = async (userId, profileData, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'TECHNICIAN_PROFILE_UPDATED',
-      entityType: 'TECHNICIAN_PROFILE',
+      action: "TECHNICIAN_PROFILE_UPDATED",
+      entityType: "TECHNICIAN_PROFILE",
       entityId: profile.id,
     },
   });
@@ -292,7 +429,7 @@ export const fetchAuditLogs = async (filters) => {
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
     take: 100,
   });
 };
@@ -301,7 +438,7 @@ export const fetchAuditLogs = async (filters) => {
 export const getActiveTechnicianLocations = async () => {
   return await prisma.user.findMany({
     where: {
-      role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
+      role: { in: ["TECH_INTERNAL", "TECH_FREELANCER"] },
       isBlocked: false,
       lastLatitude: { not: null },
       lastLongitude: { not: null },
