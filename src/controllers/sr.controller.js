@@ -24,11 +24,9 @@ export const createSR = async (req, res, next) => {
 
     // Validate required fields
     if (!phone || !address || !categoryId || !subserviceId) {
-      return res
-        .status(400)
-        .json({
-          message: "Phone, address, categoryId, and subserviceId are required",
-        });
+      return res.status(400).json({
+        message: "Phone, address, categoryId, and subserviceId are required",
+      });
     }
 
     // Validate phone format (10 digits)
@@ -373,13 +371,16 @@ export const cancelSR = async (req, res, next) => {
 
     // Check if already cancelled
     if (sr.status === "CANCELLED") {
-      return res.status(400).json({ message: "Service Request is already cancelled" });
+      return res
+        .status(400)
+        .json({ message: "Service Request is already cancelled" });
     }
 
     // Check if already converted to work order
     if (sr.status === "CONVERTED_TO_WO" || sr.workOrders.length > 0) {
       return res.status(400).json({
-        message: "Cannot cancel Service Request that has been converted to Work Order. Please cancel the Work Order instead.",
+        message:
+          "Cannot cancel Service Request that has been converted to Work Order. Please cancel the Work Order instead.",
       });
     }
 
@@ -391,7 +392,9 @@ export const cancelSR = async (req, res, next) => {
       data: {
         status: "CANCELLED",
         description: cancelReason
-          ? `${sr.description || ""}\n\nCancellation Reason: ${cancelReason}`.trim()
+          ? `${
+              sr.description || ""
+            }\n\nCancellation Reason: ${cancelReason}`.trim()
           : sr.description,
         updatedAt: new Date(),
       },
