@@ -105,7 +105,7 @@ router.patch(
 router.patch(
   "/:woId/cancel",
   authMiddleware,
-  requireRole("DISPATCHER", "ADMIN"),
+  requireRole("DISPATCHER", "ADMIN", "CUSTOMER"),
   cancelWO
 );
 

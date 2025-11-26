@@ -23,6 +23,13 @@ export const getWOById = async (req, res, next) => {
     const userId = req.user.id;
     const userRole = req.user.role;
 
+    // Validate work order ID is provided
+    if (!woIdParam) {
+      return res.status(400).json({
+        message: "Work Order ID is required",
+      });
+    }
+
     // Find WO by either numeric ID or woNumber
     const whereClause = isNaN(woIdParam)
       ? { woNumber: woIdParam }
@@ -339,6 +346,13 @@ export const reassignWO = async (req, res, next) => {
     const woIdParam = req.params.woId;
     const { technicianId, scheduledAt, estimatedDuration, notes } = req.body;
 
+    // Validate work order ID is provided
+    if (!woIdParam) {
+      return res.status(400).json({
+        message: "Work Order ID is required",
+      });
+    }
+
     // Find WO by either numeric ID or woNumber
     const whereClause = isNaN(woIdParam)
       ? { woNumber: woIdParam }
@@ -483,6 +497,14 @@ export const reassignWO = async (req, res, next) => {
 export const respondWO = async (req, res, next) => {
   try {
     const woIdParam = req.params.woId;
+
+    // Validate work order ID is provided
+    if (!woIdParam) {
+      return res.status(400).json({
+        message: "Work Order ID is required",
+      });
+    }
+
     const whereClause = isNaN(woIdParam)
       ? { woNumber: woIdParam }
       : { id: Number(woIdParam) };
@@ -600,6 +622,14 @@ export const respondWO = async (req, res, next) => {
 export const startWO = async (req, res, next) => {
   try {
     const woIdParam = req.params.woId;
+
+    // Validate work order ID is provided
+    if (!woIdParam) {
+      return res.status(400).json({
+        message: "Work Order ID is required",
+      });
+    }
+
     const whereClause = isNaN(woIdParam)
       ? { woNumber: woIdParam }
       : { id: Number(woIdParam) };
@@ -628,12 +658,10 @@ export const startWO = async (req, res, next) => {
     }
 
     if (latValue < -90 || latValue > 90 || lngValue < -180 || lngValue > 180) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Latitude must be between -90 and 90, longitude between -180 and 180",
-        });
+      return res.status(400).json({
+        message:
+          "Latitude must be between -90 and 90, longitude between -180 and 180",
+      });
     }
 
     const wo = await prisma.workOrder.findUnique({
@@ -703,6 +731,14 @@ export const startWO = async (req, res, next) => {
 export const completeWO = async (req, res, next) => {
   try {
     const woIdParam = req.params.woId;
+
+    // Validate work order ID is provided
+    if (!woIdParam) {
+      return res.status(400).json({
+        message: "Work Order ID is required",
+      });
+    }
+
     const whereClause = isNaN(woIdParam)
       ? { woNumber: woIdParam }
       : { id: Number(woIdParam) };
@@ -748,11 +784,9 @@ export const completeWO = async (req, res, next) => {
             ? JSON.parse(materialsUsed)
             : materialsUsed;
       } catch (err) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid materialsUsed format. Expected JSON array.",
-          });
+        return res.status(400).json({
+          message: "Invalid materialsUsed format. Expected JSON array.",
+        });
       }
     }
 
@@ -790,10 +824,20 @@ export const completeWO = async (req, res, next) => {
 export const cancelWO = async (req, res, next) => {
   try {
     const woIdParam = req.params.woId;
-    const { cancelReason } = req.body;
+    const { cancelReason, reason } = req.body;
+
+    // Accept both 'reason' and 'cancelReason' for flexibility
+    const cancellationReason = cancelReason || reason;
+
+    // Validate work order ID is provided
+    if (!woIdParam) {
+      return res.status(400).json({
+        message: "Work Order ID is required",
+      });
+    }
 
     // Validate cancel reason is provided
-    if (!cancelReason) {
+    if (!cancellationReason) {
       return res.status(400).json({
         message: "Cancellation reason is required",
       });
@@ -828,6 +872,16 @@ export const cancelWO = async (req, res, next) => {
       return res.status(404).json({ message: "Work Order not found" });
     }
 
+    // Authorization check: Customers can only cancel their own work orders
+    const userRole = req.user.role;
+    const userId = req.user.id;
+
+    if (userRole === "CUSTOMER" && wo.customerId !== userId) {
+      return res.status(403).json({
+        message: "You can only cancel your own work orders",
+      });
+    }
+
     // Prevent canceling already completed or paid work orders
     if (
       wo.status === "COMPLETED_PENDING_PAYMENT" ||
@@ -851,7 +905,7 @@ export const cancelWO = async (req, res, next) => {
       data: {
         status: "CANCELLED",
         cancelledAt: new Date(),
-        cancelReason: cancelReason,
+        cancelReason: cancellationReason,
       },
       include: {
         technician: {
