@@ -1,7 +1,9 @@
+/** @format */
+
 // src/services/auth.service.js
-import bcrypt from 'bcryptjs';
-import { prisma } from '../prisma.js';
-import { signToken } from '../utils/jwt.js';
+import bcrypt from "bcryptjs";
+import { prisma } from "../prisma.js";
+import { signToken } from "../utils/jwt.js";
 
 // ✅ Register new user (phone + password)
 export const registerUser = async (userData) => {
@@ -12,7 +14,7 @@ export const registerUser = async (userData) => {
   });
 
   if (existing) {
-    throw new Error('Phone already registered');
+    throw new Error("Phone already registered");
   }
 
   const hash = await bcrypt.hash(password, 10);
@@ -22,7 +24,7 @@ export const registerUser = async (userData) => {
       phone,
       passwordHash: hash,
       name: name || null,
-      role: role || 'CUSTOMER',
+      role: role || "CUSTOMER",
     },
   });
 
@@ -52,16 +54,20 @@ export const loginUser = async (credentials) => {
   });
 
   if (!user || !user.passwordHash) {
-    throw new Error('Invalid credentials');
+    throw new Error("Invalid credentials");
   }
 
   if (user.isBlocked) {
-    throw new Error(`Your account has been blocked. Reason: ${user.blockedReason || 'No reason provided'}`);
+    throw new Error(
+      `Your account has been blocked. Reason: ${
+        user.blockedReason || "No reason provided"
+      }`
+    );
   }
 
   const isMatch = await bcrypt.compare(password, user.passwordHash);
   if (!isMatch) {
-    throw new Error('Invalid credentials');
+    throw new Error("Invalid credentials");
   }
 
   const token = signToken({
@@ -92,12 +98,12 @@ export const changeUserPassword = async (userId, oldPassword, newPassword) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
 
   if (!user || !user.passwordHash) {
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 
   const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
   if (!isMatch) {
-    throw new Error('Invalid old password');
+    throw new Error("Invalid old password");
   }
 
   const hash = await bcrypt.hash(newPassword, 10);
@@ -107,7 +113,22 @@ export const changeUserPassword = async (userId, oldPassword, newPassword) => {
     data: { passwordHash: hash },
   });
 
-  return { message: 'Password changed successfully' };
+  return { message: "Password changed successfully" };
+};
+
+// ✅ Logout user
+export const logoutUser = async (userId) => {
+  // Create audit log for logout action
+  await prisma.auditLog.create({
+    data: {
+      userId,
+      action: 'USER_LOGOUT',
+      entityType: 'USER',
+      entityId: userId,
+    },
+  });
+
+  return { success: true };
 };
 
 // ✅ Get user profile
@@ -128,7 +149,7 @@ export const getUserProfile = async (userId) => {
   });
 
   if (!user) {
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
 
   return user;
@@ -146,7 +167,7 @@ export const updateUserProfile = async (userId, updates) => {
     });
 
     if (existingEmail) {
-      throw new Error('Email already in use');
+      throw new Error("Email already in use");
     }
   }
 

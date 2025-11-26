@@ -1,12 +1,13 @@
 // src/routes/auth.routes.js
 import { Router } from 'express';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
-import { register, login, changePassword, getProfile, updateProfile, updateCustomerProfile } from '../controllers/auth.controller.js';
+import { register, login, logout, changePassword, getProfile, updateProfile, updateCustomerProfile } from '../controllers/auth.controller.js';
 
 const router = Router();
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/logout', authMiddleware, logout);
 router.post('/change-password', authMiddleware, changePassword);
 
 // Profile management routes

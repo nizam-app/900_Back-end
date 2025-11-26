@@ -120,3 +120,21 @@ export const updateCustomerProfile = async (req, res, next) => {
     next(err);
   }
 };
+
+export const logout = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.phone;
+
+    // Log the logout action
+    await authService.logoutUser(userId);
+
+    return res.json({ 
+      message: 'Logout successful',
+      user: userName,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    next(err);
+  }
+};
