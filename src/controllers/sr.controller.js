@@ -344,3 +344,95 @@ export const getSRById = async (req, res, next) => {
     next(err);
   }
 };
+
+export const cancelSR = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { cancelReason } = req.body;
+    const userRole = req.user.role;
+    const userId = req.user.id;
+
+    // Find the service request
+    const sr = await prisma.serviceRequest.findUnique({
+      where: {
+        srNumber: id,
+      },
+      include: {
+        workOrders: true,
+      },
+    });
+
+    if (!sr) {
+      return res.status(404).json({ message: "Service Request not found" });
+    }
+
+    // Authorization: Customers can only cancel their own SRs
+    if (userRole === "CUSTOMER" && sr.customerId !== userId) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Check if already cancelled
+    if (sr.status === "CANCELLED") {
+      return res.status(400).json({ message: "Service Request is already cancelled" });
+    }
+
+    // Check if already converted to work order
+    if (sr.status === "CONVERTED_TO_WO" || sr.workOrders.length > 0) {
+      return res.status(400).json({
+        message: "Cannot cancel Service Request that has been converted to Work Order. Please cancel the Work Order instead.",
+      });
+    }
+
+    // Update service request status to CANCELLED
+    const updatedSR = await prisma.serviceRequest.update({
+      where: {
+        srNumber: id,
+      },
+      data: {
+        status: "CANCELLED",
+        description: cancelReason
+          ? `${sr.description || ""}\n\nCancellation Reason: ${cancelReason}`.trim()
+          : sr.description,
+        updatedAt: new Date(),
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
+        category: true,
+        subservice: true,
+        service: true,
+      },
+    });
+
+    // Create audit log for cancellation
+    await prisma.auditLog.create({
+      data: {
+        userId: userId,
+        action: "SR_CANCELLED",
+        resource: "ServiceRequest",
+        resourceId: sr.id,
+        details: JSON.stringify({
+          srNumber: sr.srNumber,
+          cancelReason: cancelReason || "No reason provided",
+          cancelledBy: userRole,
+        }),
+      },
+    });
+
+    return res.json({
+      message: "Service Request cancelled successfully",
+      serviceRequest: {
+        ...updatedSR,
+        srId: updatedSR.id,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
