@@ -8,9 +8,11 @@ import {
   getWOById,
   createWOFromSR,
   assignWO,
+  reassignWO,
   respondWO,
   startWO,
   completeWO,
+  cancelWO,
 } from '../controllers/wo.controller.js';
 import { 
   getRemainingTime, 
@@ -76,6 +78,13 @@ router.patch(
 );
 
 router.patch(
+  '/:woId/reassign',
+  authMiddleware,
+  requireRole('DISPATCHER', 'ADMIN'),
+  reassignWO
+);
+
+router.patch(
   '/:woId/respond',
   authMiddleware,
   requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
@@ -95,6 +104,13 @@ router.patch(
   requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
   upload.array('photos', 5), // Max 5 photos
   completeWO
+);
+
+router.patch(
+  '/:woId/cancel',
+  authMiddleware,
+  requireRole('DISPATCHER', 'ADMIN'),
+  cancelWO
 );
 
 // Time limit management routes

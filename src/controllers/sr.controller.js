@@ -9,6 +9,7 @@ export const createSR = async (req, res, next) => {
   try {
     const {
       name,
+      email,
       phone,
       address,
       latitude,
@@ -20,6 +21,7 @@ export const createSR = async (req, res, next) => {
       paymentType,
       priority,
       source,
+      homeAddress,
     } = req.body;
 
     // Validate required fields
@@ -32,6 +34,18 @@ export const createSR = async (req, res, next) => {
     // Validate phone format (10 digits)
     if (!/^\d{10,15}$/.test(phone)) {
       return res.status(400).json({ message: "Phone must be 10-15 digits" });
+    }
+
+    // For call center: Check if user exists by phone
+    if (req.user?.role === "CALL_CENTER") {
+      const existingUser = await prisma.user.findUnique({ where: { phone } });
+
+      // If user doesn't exist, name and email are required
+      if (!existingUser && (!name || !email)) {
+        return res.status(400).json({
+          message: "Name and email are required for new customer registration",
+        });
+      }
     }
 
     // Validate GPS coordinates if provided
@@ -112,8 +126,35 @@ export const createSR = async (req, res, next) => {
     let isGuest = false;
     let finalSource = source || "CUSTOMER_APP";
 
-    if (!customerId) {
-      // Guest user
+    // Handle Call Center SR creation
+    if (req.user?.role === "CALL_CENTER") {
+      finalSource = "CALL_CENTER";
+      createdById = req.user.id;
+
+      // Check if customer exists by phone
+      let customer = await prisma.user.findUnique({ where: { phone } });
+
+      if (!customer) {
+        // Create new customer with provided name and email
+        customer = await prisma.user.create({
+          data: {
+            phone,
+            name,
+            email,
+            passwordHash: "",
+            role: "CUSTOMER",
+            homeAddress: homeAddress || address,
+            latitude: latitude ? parseFloat(latitude) : null,
+            longitude: longitude ? parseFloat(longitude) : null,
+          },
+        });
+      }
+
+      customerId = customer.id;
+      isGuest = false;
+    }
+    // Handle guest/web portal SR creation
+    else if (!customerId) {
       let guestUser = await prisma.user.findUnique({ where: { phone } });
 
       if (!guestUser) {
@@ -121,6 +162,7 @@ export const createSR = async (req, res, next) => {
           data: {
             phone,
             name,
+            email,
             passwordHash: "",
             role: "CUSTOMER",
           },
@@ -130,11 +172,6 @@ export const createSR = async (req, res, next) => {
       customerId = guestUser.id;
       isGuest = true;
       finalSource = "WEB_PORTAL";
-    }
-
-    if (req.user?.role === "CALL_CENTER") {
-      finalSource = "CALL_CENTER";
-      createdById = req.user.id;
     }
 
     const sr = await prisma.serviceRequest.create({
@@ -291,10 +328,13 @@ export const getSRById = async (req, res, next) => {
     const userRole = req.user.role;
     const userId = req.user.id;
 
+    // Find SR by either numeric ID or srNumber
+    const whereClause = isNaN(id) 
+      ? { srNumber: id } 
+      : { id: Number(id) };
+
     const sr = await prisma.serviceRequest.findUnique({
-      where: {
-        srNumber: id,
-      },
+      where: whereClause,
       include: {
         customer: {
           select: {
@@ -434,6 +474,59 @@ export const cancelSR = async (req, res, next) => {
         ...updatedSR,
         srId: updatedSR.id,
       },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const searchCustomer = async (req, res, next) => {
+  try {
+    const { phone } = req.query;
+
+    if (!phone) {
+      return res.status(400).json({ message: "Phone number is required" });
+    }
+
+    // Validate phone format
+    if (!/^\d{10,15}$/.test(phone)) {
+      return res.status(400).json({ message: "Phone must be 10-15 digits" });
+    }
+
+    // Search for customer by phone
+    const customer = await prisma.user.findUnique({
+      where: { phone },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        homeAddress: true,
+        latitude: true,
+        longitude: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    if (!customer) {
+      return res.json({
+        exists: false,
+        message: "Customer not found. New customer registration required.",
+      });
+    }
+
+    // Only return if it's a customer role
+    if (customer.role !== "CUSTOMER") {
+      return res.json({
+        exists: false,
+        message: "User exists but is not a customer.",
+      });
+    }
+
+    return res.json({
+      exists: true,
+      customer,
     });
   } catch (err) {
     next(err);

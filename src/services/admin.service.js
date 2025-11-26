@@ -91,19 +91,107 @@ export const findUsers = async (filters) => {
     ];
   }
 
-  return await prisma.user.findMany({
+  const users = await prisma.user.findMany({
     where,
     include: {
       technicianProfile: true,
       wallet: true,
+      technicianWOs: {
+        select: {
+          id: true,
+          status: true,
+        },
+      },
     },
     orderBy: { createdAt: 'desc' },
   });
+
+  // Add work order statistics for technicians
+  const usersWithStats = users.map((user) => {
+    const userData = { ...user };
+
+    // Calculate work order statistics for technicians
+    if (user.role === 'TECH_INTERNAL' || user.role === 'TECH_FREELANCER') {
+      const activeWOs = user.technicianWOs.filter(
+        (wo) => wo.status === 'ASSIGNED' || wo.status === 'ACCEPTED'
+      ).length;
+
+      const completedWOs = user.technicianWOs.filter(
+        (wo) => wo.status === 'COMPLETED_PENDING_PAYMENT' || wo.status === 'PAID_VERIFIED'
+      ).length;
+
+      const openWOs = user.technicianWOs.filter(
+        (wo) => wo.status === 'IN_PROGRESS'
+      ).length;
+
+      // Add statistics to user object
+      userData.activeWorkOrders = activeWOs;
+      userData.completedJobs = completedWOs;
+      userData.openWorkOrders = openWOs;
+      userData.commissionRate = user.technicianProfile?.commissionRate || 0;
+    }
+
+    // Remove the full technicianWOs array to reduce payload size
+    delete userData.technicianWOs;
+
+    return userData;
+  });
+
+  return usersWithStats;
 };
 
 // ✅ Create user with profile
+/**
+ * Create User with Technician Profile (if applicable)
+ * 
+ * ROLES:
+ * - CUSTOMER: Regular customer who requests services
+ * - TECH_INTERNAL: Company employee technician (receives salary + commission)
+ * - TECH_FREELANCER: Independent contractor (commission only, has wallet)
+ * - DISPATCHER: Assigns work orders to technicians
+ * - CALL_CENTER: Creates service requests on behalf of customers
+ * - ADMIN: Full system access
+ * 
+ * TECHNICIAN TYPES:
+ * - INTERNAL: Full-time employee (role: TECH_INTERNAL)
+ *   * Receives base salary
+ *   * Gets commission on completed jobs
+ *   * No wallet system
+ * 
+ * - FREELANCER: Independent contractor (role: TECH_FREELANCER)
+ *   * Commission only, no salary
+ *   * Has wallet for balance tracking
+ *   * Can request payouts
+ * 
+ * TECHNICIAN PROFILE OPTIONAL FIELDS:
+ * - specialization: ELECTRICAL, PLUMBING, HVAC, GENERAL, CARPENTRY, PAINTING
+ * - commissionRate: Percentage (default: 0.2 = 20%)
+ * - bonusRate: Percentage (default: 0.05 = 5%)
+ * - baseSalary: Monthly salary (TECH_INTERNAL only)
+ * - academicTitle: BSc, MSc, Diploma, etc.
+ * - photoUrl: Profile photo URL
+ * - idCardUrl: ID card/passport URL
+ * - residencePermitUrl: For foreign workers
+ * - residencePermitFrom: Validity start date
+ * - residencePermitTo: Validity end date
+ * - degreesUrl: Degrees/certificates JSON array
+ * 
+ * TECHNICIAN STATUS:
+ * - ACTIVE: Available for work assignments
+ * - INACTIVE: Temporarily not working
+ */
 export const createUserWithProfile = async (userData, adminId) => {
-  const { name, phone, email, password, role, technicianProfile } = userData;
+  const { 
+    name, 
+    phone, 
+    email, 
+    password, 
+    role, 
+    technicianProfile,
+    homeAddress,
+    latitude,
+    longitude
+  } = userData;
 
   // Check if user exists
   const existing = await prisma.user.findUnique({ where: { phone } });
@@ -120,6 +208,9 @@ export const createUserWithProfile = async (userData, adminId) => {
       email,
       passwordHash: hash,
       role,
+      homeAddress: homeAddress || null,
+      latitude: latitude ? parseFloat(latitude) : null,
+      longitude: longitude ? parseFloat(longitude) : null,
     },
   });
 
@@ -139,7 +230,15 @@ export const createUserWithProfile = async (userData, adminId) => {
         specialization: specialization,
         commissionRate: technicianProfile?.commissionRate || 0.2,
         bonusRate: technicianProfile?.bonusRate || 0.05,
-        status: 'ACTIVE',
+        baseSalary: technicianProfile?.baseSalary || (role === 'TECH_INTERNAL' ? 0 : null),
+        status: technicianProfile?.status || 'ACTIVE',
+        academicTitle: technicianProfile?.academicTitle || null,
+        photoUrl: technicianProfile?.photoUrl || null,
+        idCardUrl: technicianProfile?.idCardUrl || null,
+        residencePermitUrl: technicianProfile?.residencePermitUrl || null,
+        residencePermitFrom: technicianProfile?.residencePermitFrom ? new Date(technicianProfile.residencePermitFrom) : null,
+        residencePermitTo: technicianProfile?.residencePermitTo ? new Date(technicianProfile.residencePermitTo) : null,
+        degreesUrl: technicianProfile?.degreesUrl || null,
       },
     });
 

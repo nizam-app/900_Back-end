@@ -124,6 +124,24 @@ export const getAllWorkOrders = async (req, res, next) => {
           },
           serviceRequest: {
             select: { id: true, srNumber: true }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              method: true,
+              status: true,
+              proofUrl: true,
+              createdAt: true
+            }
+          },
+          commissions: {
+            select: {
+              id: true,
+              type: true,
+              amount: true,
+              status: true
+            }
           }
         },
         orderBy: { createdAt: 'desc' },
@@ -296,13 +314,154 @@ export const assignWO = async (req, res, next) => {
   }
 };
 
+export const reassignWO = async (req, res, next) => {
+  try {
+    const woIdParam = req.params.woId;
+    const { technicianId, scheduledAt, estimatedDuration, notes } = req.body;
+
+    // Find WO by either numeric ID or woNumber
+    const whereClause = isNaN(woIdParam) 
+      ? { woNumber: woIdParam } 
+      : { id: Number(woIdParam) };
+
+    const existingWO = await prisma.workOrder.findUnique({
+      where: whereClause,
+      include: {
+        technician: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!existingWO) {
+      return res.status(404).json({ message: 'Work Order not found' });
+    }
+
+    // Validate technician if provided
+    if (technicianId) {
+      const tech = await prisma.user.findUnique({
+        where: { id: Number(technicianId) },
+      });
+
+      if (!tech) {
+        return res.status(404).json({ message: 'Technician not found' });
+      }
+
+      if (tech.isBlocked) {
+        return res.status(400).json({ message: 'Technician is blocked' });
+      }
+
+      if (!['TECH_INTERNAL', 'TECH_FREELANCER'].includes(tech.role)) {
+        return res.status(400).json({ message: 'User is not a technician' });
+      }
+    }
+
+    // Prepare update data
+    const updateData = {};
+    
+    if (technicianId !== undefined) {
+      updateData.technicianId = technicianId ? Number(technicianId) : null;
+      // If reassigning to a different technician or removing technician
+      if (technicianId && existingWO.technicianId !== Number(technicianId)) {
+        updateData.status = 'ASSIGNED';
+        // Clear response deadline if reassigning
+        await clearResponseDeadline(existingWO.id);
+      } else if (!technicianId) {
+        updateData.status = 'UNASSIGNED';
+        await clearResponseDeadline(existingWO.id);
+      }
+    }
+    
+    if (scheduledAt !== undefined) {
+      updateData.scheduledAt = scheduledAt ? new Date(scheduledAt) : null;
+    }
+    
+    if (estimatedDuration !== undefined) {
+      updateData.estimatedDuration = estimatedDuration ? Number(estimatedDuration) : null;
+    }
+    
+    if (notes !== undefined) {
+      updateData.notes = notes || null;
+    }
+
+    // Update work order
+    const wo = await prisma.workOrder.update({
+      where: whereClause,
+      data: updateData,
+      include: {
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        category: true,
+        subservice: true,
+      },
+    });
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'WO_REASSIGNED',
+        entityType: 'WORK_ORDER',
+        entityId: wo.id,
+        metadataJson: JSON.stringify({
+          previousTechnicianId: existingWO.technicianId,
+          newTechnicianId: technicianId ? Number(technicianId) : null,
+          scheduledAt,
+          estimatedDuration,
+          notes,
+        }),
+      },
+    });
+
+    // Send notification if technician changed
+    if (technicianId && existingWO.technicianId !== Number(technicianId)) {
+      await notifyWOAssignment(Number(technicianId), wo);
+      // Set new response deadline
+      const deadline = await setResponseDeadline(wo.id, TIME_CONFIG.RESPONSE_TIME_MINUTES);
+      
+      return res.json({
+        ...wo,
+        message: 'Work order reassigned successfully',
+        responseDeadline: deadline,
+        timeLimit: {
+          responseTimeMinutes: TIME_CONFIG.RESPONSE_TIME_MINUTES,
+          warningTimeMinutes: TIME_CONFIG.WARNING_TIME_MINUTES,
+          deadline: deadline,
+        }
+      });
+    }
+
+    return res.json({
+      ...wo,
+      message: 'Work order updated successfully',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const respondWO = async (req, res, next) => { 
   try {
     const woIdParam = req.params.woId;
     const whereClause = isNaN(woIdParam) 
       ? { woNumber: woIdParam } 
       : { id: Number(woIdParam) };
-    const { action } = req.body;
+    const { action, declineReason } = req.body;
     const techId = req.user.id;
 
     // Validate action
@@ -314,6 +473,13 @@ export const respondWO = async (req, res, next) => {
     if (!validActions.includes(action)) {
       return res.status(400).json({ 
         message: `Invalid action. Must be one of: ${validActions.join(', ')}` 
+      });
+    }
+
+    // Require reason when declining
+    if (action === 'DECLINE' && !declineReason) {
+      return res.status(400).json({ 
+        message: 'Decline reason is required when declining a work order' 
       });
     }
 
@@ -359,6 +525,7 @@ export const respondWO = async (req, res, next) => {
         data: {
           status: 'UNASSIGNED',
           technicianId: null,
+          cancelReason: declineReason, // Store the decline reason
         },
       });
     } else {
@@ -371,7 +538,7 @@ export const respondWO = async (req, res, next) => {
         action: 'WO_RESPOND',
         entityType: 'WORK_ORDER',
         entityId: wo.id,
-        metadataJson: JSON.stringify({ action }),
+        metadataJson: JSON.stringify({ action, declineReason }),
       },
     });
 
@@ -555,6 +722,118 @@ export const completeWO = async (req, res, next) => {
     }
 
     return res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const cancelWO = async (req, res, next) => {
+  try {
+    const woIdParam = req.params.woId;
+    const { cancelReason } = req.body;
+
+    // Validate cancel reason is provided
+    if (!cancelReason) {
+      return res.status(400).json({ 
+        message: 'Cancellation reason is required' 
+      });
+    }
+
+    // Find WO by either numeric ID or woNumber
+    const whereClause = isNaN(woIdParam) 
+      ? { woNumber: woIdParam } 
+      : { id: Number(woIdParam) };
+
+    const wo = await prisma.workOrder.findUnique({
+      where: whereClause,
+      include: {
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    if (!wo) {
+      return res.status(404).json({ message: 'Work Order not found' });
+    }
+
+    // Prevent canceling already completed or paid work orders
+    if (wo.status === 'COMPLETED_PENDING_PAYMENT' || wo.status === 'PAID_VERIFIED') {
+      return res.status(400).json({ 
+        message: 'Cannot cancel completed or paid work orders' 
+      });
+    }
+
+    // Already cancelled
+    if (wo.status === 'CANCELLED') {
+      return res.status(400).json({ 
+        message: 'Work order is already cancelled' 
+      });
+    }
+
+    // Update work order to cancelled status
+    const updated = await prisma.workOrder.update({
+      where: whereClause,
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+        cancelReason: cancelReason,
+      },
+      include: {
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        category: true,
+        subservice: true,
+      },
+    });
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'WO_CANCELLED',
+        entityType: 'WORK_ORDER',
+        entityId: wo.id,
+        metadataJson: JSON.stringify({ 
+          cancelReason,
+          cancelledBy: req.user.role 
+        }),
+      },
+    });
+
+    // Clear response deadline if exists
+    clearResponseDeadline(wo.id);
+
+    // Send notification to technician and customer
+    // TODO: Implement notification service for cancellation
+
+    return res.json({
+      ...updated,
+      message: 'Work order cancelled successfully',
+    });
   } catch (err) {
     next(err);
   }

@@ -384,3 +384,65 @@ export const verifyPayment = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getPaymentStats = async (req, res, next) => {
+  try {
+    const [
+      pendingUpload,
+      awaitingVerification,
+      verified,
+      rejected,
+      totalCommissions,
+    ] = await Promise.all([
+      // Pending Upload - payments without proof
+      prisma.payment.count({
+        where: {
+          proofUrl: null,
+          status: { in: ['PENDING_UPLOAD', 'PENDING'] },
+        },
+      }),
+
+      // Awaiting Verification - proof uploaded but not verified
+      prisma.payment.count({
+        where: {
+          proofUrl: { not: null },
+          status: 'PENDING_VERIFICATION',
+        },
+      }),
+
+      // Verified - payments that are verified
+      prisma.payment.count({
+        where: {
+          status: 'VERIFIED',
+        },
+      }),
+
+      // Rejected - payments that are rejected
+      prisma.payment.count({
+        where: {
+          status: 'REJECTED',
+        },
+      }),
+
+      // Total Commissions (from verified payments)
+      prisma.commission.aggregate({
+        where: {
+          status: 'PAID',
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+    ]);
+
+    return res.json({
+      pendingUpload,
+      awaitingVerification,
+      verified,
+      rejected,
+      totalCommissions: totalCommissions._sum.amount || 0,
+    });
+  } catch (err) {
+    next(err);
+  }
+};

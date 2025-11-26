@@ -8,9 +8,18 @@ import {
   listSR,
   getSRById,
   cancelSR,
+  searchCustomer,
 } from "../controllers/sr.controller.js";
 
 const router = Router();
+
+// Search customer by phone (Call Center only)
+router.get(
+  "/search-customer",
+  authMiddleware,
+  requireRole("CALL_CENTER", "DISPATCHER", "ADMIN"),
+  searchCustomer
+);
 
 // Customer / Guest create SR (no auth required for guests)
 router.post("/", createSR);

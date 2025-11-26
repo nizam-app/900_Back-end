@@ -7,7 +7,8 @@ import {
   getAllPayments, 
   getPaymentById, 
   uploadPaymentProof, 
-  verifyPayment 
+  verifyPayment,
+  getPaymentStats,
 } from '../controllers/payment.controller.js';
 
 const router = Router();
@@ -41,6 +42,14 @@ router.get(
   authMiddleware,
   requireRole('ADMIN', 'DISPATCHER'),
   getAllPayments
+);
+
+// Get payment statistics
+router.get(
+  '/stats/overview',
+  authMiddleware,
+  requireRole('ADMIN', 'DISPATCHER'),
+  getPaymentStats
 );
 
 // Get payment by ID
