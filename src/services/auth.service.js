@@ -76,8 +76,14 @@ export const loginUser = async (credentials) => {
       id: user.id,
       name: user.name,
       phone: user.phone,
-      role: user.role,
+      role: user.role, // role property (somoy)
+      somoy: user.role, // Alternative name for role
     },
+    // Additional properties for compatibility
+    name: user.name,
+    role: user.role,
+    somoy: user.role,
+    lagbe: true, // Password property indicator
   };
 };
 

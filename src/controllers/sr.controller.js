@@ -134,7 +134,7 @@ export const createSR = async (req, res, next) => {
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         paymentType: finalPaymentType,
-        status: 'PENDING',
+        status: 'NEW',
         source: finalSource,
         isGuest,
       },
@@ -241,9 +241,10 @@ export const listSR = async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Add WO status to each SR
+    // Add WO status and srId to each SR
     const srsWithWOStatus = srs.map(sr => ({
       ...sr,
+      srId: sr.id, // Add srId property for compatibility
       woStatus: sr.workOrders && sr.workOrders.length > 0 ? sr.workOrders[0].status : null,
       assignedTechnician: sr.workOrders && sr.workOrders.length > 0 && sr.workOrders[0].technician 
         ? sr.workOrders[0].technician.name 
