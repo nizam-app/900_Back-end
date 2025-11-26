@@ -122,8 +122,8 @@ export const logoutUser = async (userId) => {
   await prisma.auditLog.create({
     data: {
       userId,
-      action: 'USER_LOGOUT',
-      entityType: 'USER',
+      action: "USER_LOGOUT",
+      entityType: "USER",
       entityId: userId,
     },
   });
