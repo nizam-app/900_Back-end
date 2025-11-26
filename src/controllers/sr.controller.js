@@ -329,9 +329,7 @@ export const getSRById = async (req, res, next) => {
     const userId = req.user.id;
 
     // Find SR by either numeric ID or srNumber
-    const whereClause = isNaN(id) 
-      ? { srNumber: id } 
-      : { id: Number(id) };
+    const whereClause = isNaN(id) ? { srNumber: id } : { id: Number(id) };
 
     const sr = await prisma.serviceRequest.findUnique({
       where: whereClause,

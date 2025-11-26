@@ -1,6 +1,9 @@
+<!-- @format -->
+
 # System Status Documentation
 
 ## User Roles
+
 ```javascript
 {
   "role": "TECH_INTERNAL", // Company employee technician
@@ -15,12 +18,14 @@
 ### Role Descriptions:
 
 **TECH_INTERNAL (Internal Technician)**
+
 - Company employee with salary
 - Receives base salary + commission
 - No wallet system
 - Example: Full-time electrician employee
 
 **TECH_FREELANCER (Freelance Technician)**
+
 - Independent contractor
 - Commission only, no salary
 - Has wallet for balance tracking
@@ -28,21 +33,25 @@
 - Example: Contract plumber
 
 **CUSTOMER**
+
 - Regular service requester
 - Can create service requests
 - Track their work orders
 
 **DISPATCHER**
+
 - Assigns work orders to technicians
 - Manages scheduling and assignments
 - Cannot modify technician documents
 
 **CALL_CENTER**
+
 - Creates service requests for customers
 - First point of contact
 - Customer service representative
 
 **ADMIN**
+
 - Full system access
 - Can manage all users and settings
 - Upload technician documents
@@ -50,6 +59,7 @@
 ---
 
 ## Service Request (SR) Status
+
 ```javascript
 {
   "status": "NEW", // Just created, not yet processed
@@ -60,6 +70,7 @@
 ```
 
 ### SR Status Flow:
+
 ```
 NEW → OPEN → CONVERTED_TO_WO
   ↓
@@ -69,6 +80,7 @@ CANCELLED (can happen at any stage)
 ---
 
 ## Work Order (WO) Status
+
 ```javascript
 {
   "status": "UNASSIGNED", // No technician assigned yet
@@ -82,6 +94,7 @@ CANCELLED (can happen at any stage)
 ```
 
 ### WO Status Flow:
+
 ```
 UNASSIGNED → ASSIGNED → ACCEPTED → IN_PROGRESS → COMPLETED_PENDING_PAYMENT → PAID_VERIFIED
     ↓           ↓          ↓            ↓
@@ -91,38 +104,46 @@ CANCELLED (can happen at multiple stages)
 ### Status Details:
 
 **UNASSIGNED**
+
 - Work order created but no technician assigned
 - Dispatcher needs to assign a technician
 
 **ASSIGNED**
+
 - Technician assigned, has 30 minutes to respond
 - Waiting for technician to accept or decline
 
 **ACCEPTED**
+
 - Technician accepted the job
 - Scheduled to start work
 
 **IN_PROGRESS**
+
 - Technician checked in and started work
 - Active on site
 
 **COMPLETED_PENDING_PAYMENT**
+
 - Job completed by technician
 - Completion photos uploaded
 - Waiting for customer payment proof
 
 **PAID_VERIFIED**
+
 - Payment proof verified by dispatcher/admin
 - Commission calculated and credited
 - Job fully closed
 
 **CANCELLED**
+
 - Work order cancelled
 - Requires cancellation reason
 
 ---
 
 ## Payment Status
+
 ```javascript
 {
   "status": "PENDING_UPLOAD", // No payment proof uploaded yet
@@ -133,6 +154,7 @@ CANCELLED (can happen at multiple stages)
 ```
 
 ### Payment Status Flow:
+
 ```
 PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
                         ↓
@@ -142,19 +164,23 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ### Status Details:
 
 **PENDING_UPLOAD**
+
 - Work order completed
 - Customer hasn't uploaded payment proof yet
 
 **PENDING_VERIFICATION**
+
 - Payment proof uploaded by customer
 - Awaiting admin/dispatcher verification
 
 **VERIFIED**
+
 - Payment verified
 - Commission calculated
 - Amount credited to technician
 
 **REJECTED**
+
 - Payment proof rejected
 - Requires rejection reason
 - Customer must upload new proof
@@ -162,6 +188,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## Commission Status
+
 ```javascript
 {
   "status": "PENDING", // Commission calculated, not yet paid
@@ -173,6 +200,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## Technician Profile Status
+
 ```javascript
 {
   "status": "ACTIVE", // Available for work assignments
@@ -183,6 +211,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## Technician Location Status
+
 ```javascript
 {
   "locationStatus": "ONLINE", // Available and ready for assignments
@@ -194,6 +223,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## Payout Request Status
+
 ```javascript
 {
   "status": "PENDING", // Payout requested, awaiting review
@@ -206,6 +236,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## Technician Specializations
+
 ```javascript
 {
   "specialization": "ELECTRICAL", // Electrician
@@ -220,6 +251,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## Priority Levels
+
 ```javascript
 {
   "priority": "LOW", // Can wait, non-urgent
@@ -231,6 +263,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## Payment Methods
+
 ```javascript
 {
   "method": "CASH", // Cash payment
@@ -241,6 +274,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## Service Request Source
+
 ```javascript
 {
   "source": "CUSTOMER_APP", // Created by customer via mobile app
@@ -252,6 +286,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## User Block Status
+
 ```javascript
 {
   "isBlocked": false, // User is active
@@ -265,6 +300,7 @@ PENDING_UPLOAD → PENDING_VERIFICATION → VERIFIED
 ---
 
 ## Example: Complete Technician Creation Request
+
 ```json
 POST /api/admin/users
 {
@@ -294,6 +330,7 @@ POST /api/admin/users
 ```
 
 **Response:**
+
 ```json
 {
   "id": 5,
@@ -321,7 +358,9 @@ POST /api/admin/users
 ---
 
 ## Audit Log Actions
+
 Track all important system actions:
+
 - USER_LOGIN
 - USER_LOGOUT
 - SR_CREATED

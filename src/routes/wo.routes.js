@@ -1,8 +1,10 @@
+/** @format */
+
 // src/routes/wo.routes.js
-import { Router } from 'express';
-import multer from 'multer';
-import path from 'path';
-import { authMiddleware, requireRole } from '../middleware/auth.js';
+import { Router } from "express";
+import multer from "multer";
+import path from "path";
+import { authMiddleware, requireRole } from "../middleware/auth.js";
 import {
   getAllWorkOrders,
   getWOById,
@@ -13,24 +15,24 @@ import {
   startWO,
   completeWO,
   cancelWO,
-} from '../controllers/wo.controller.js';
-import { 
-  getRemainingTime, 
-  getActiveDeadlines, 
+} from "../controllers/wo.controller.js";
+import {
+  getRemainingTime,
+  getActiveDeadlines,
   checkAndCleanupExpiredWorkOrders,
-  TIME_CONFIG 
-} from '../services/timeLimit.service.js';
+  TIME_CONFIG,
+} from "../services/timeLimit.service.js";
 
 const router = Router();
 
 // Configure multer for completion photos
-const storage = multer.diskStorage({ 
+const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/wo-completion');
+    cb(null, "uploads/wo-completion");
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'wo-' + uniqueSuffix + path.extname(file.originalname));
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "wo-" + uniqueSuffix + path.extname(file.originalname));
   },
 });
 
@@ -39,135 +41,129 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max per file
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|pdf/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = allowedTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
     const mimetype = allowedTypes.test(file.mimetype);
     if (extname && mimetype) {
       cb(null, true);
     } else {
-      cb(new Error('Only images (JPEG, PNG) and PDFs are allowed'));
+      cb(new Error("Only images (JPEG, PNG) and PDFs are allowed"));
     }
   },
 });
 
 // Get all work orders with filtering and pagination - MUST come before /:woId
-router.get(
-  '/',
-  authMiddleware,
-  getAllWorkOrders
-);
+router.get("/", authMiddleware, getAllWorkOrders);
 
 // Get work order by ID (woNumber)
-router.get(
-  '/:woId',
-  authMiddleware,
-  getWOById
-);
+router.get("/:woId", authMiddleware, getWOById);
 
 router.post(
-  '/from-sr/:srId',
+  "/from-sr/:srId",
   authMiddleware,
-  requireRole('DISPATCHER', 'ADMIN'),
+  requireRole("DISPATCHER", "ADMIN"),
   createWOFromSR
 );
 
 router.patch(
-  '/:woId/assign',
+  "/:woId/assign",
   authMiddleware,
-  requireRole('DISPATCHER', 'ADMIN'),
+  requireRole("DISPATCHER", "ADMIN"),
   assignWO
 );
 
 router.patch(
-  '/:woId/reassign',
+  "/:woId/reassign",
   authMiddleware,
-  requireRole('DISPATCHER', 'ADMIN'),
+  requireRole("DISPATCHER", "ADMIN"),
   reassignWO
 );
 
 router.patch(
-  '/:woId/respond',
+  "/:woId/respond",
   authMiddleware,
-  requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
+  requireRole("TECH_INTERNAL", "TECH_FREELANCER"),
   respondWO
 );
 
 router.patch(
-  '/:woId/start',
+  "/:woId/start",
   authMiddleware,
-  requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
+  requireRole("TECH_INTERNAL", "TECH_FREELANCER"),
   startWO
 );
 
 router.patch(
-  '/:woId/complete',
+  "/:woId/complete",
   authMiddleware,
-  requireRole('TECH_INTERNAL', 'TECH_FREELANCER'),
-  upload.array('photos', 5), // Max 5 photos
+  requireRole("TECH_INTERNAL", "TECH_FREELANCER"),
+  upload.array("photos", 5), // Max 5 photos
   completeWO
 );
 
 router.patch(
-  '/:woId/cancel',
+  "/:woId/cancel",
   authMiddleware,
-  requireRole('DISPATCHER', 'ADMIN'),
+  requireRole("DISPATCHER", "ADMIN"),
   cancelWO
 );
 
 // Time limit management routes
 router.get(
-  '/:woId/time-remaining',
+  "/:woId/time-remaining",
   authMiddleware,
-  requireRole('TECH_INTERNAL', 'TECH_FREELANCER', 'DISPATCHER', 'ADMIN'),
+  requireRole("TECH_INTERNAL", "TECH_FREELANCER", "DISPATCHER", "ADMIN"),
   (req, res) => {
     const woId = Number(req.params.woId);
     const remaining = getRemainingTime(woId);
-    
+
     if (!remaining) {
-      return res.json({ 
-        message: 'No active deadline for this work order',
-        hasDeadline: false
+      return res.json({
+        message: "No active deadline for this work order",
+        hasDeadline: false,
       });
     }
-    
+
     res.json({
       woId,
       hasDeadline: true,
       ...remaining,
-      timeConfig: TIME_CONFIG
+      timeConfig: TIME_CONFIG,
     });
   }
 );
 
 // Admin route to view all active deadlines
 router.get(
-  '/admin/active-deadlines',
+  "/admin/active-deadlines",
   authMiddleware,
-  requireRole('ADMIN', 'DISPATCHER'),
+  requireRole("ADMIN", "DISPATCHER"),
   (req, res) => {
     const deadlines = getActiveDeadlines();
     res.json({
       totalActive: deadlines.length,
-      deadlines: deadlines.map(d => ({
+      deadlines: deadlines.map((d) => ({
         ...d,
-        remainingMinutes: Math.ceil(d.remainingMs / (60 * 1000))
+        remainingMinutes: Math.ceil(d.remainingMs / (60 * 1000)),
       })),
-      timeConfig: TIME_CONFIG
+      timeConfig: TIME_CONFIG,
     });
   }
 );
 
 // Admin route to manually cleanup expired work orders
 router.post(
-  '/admin/cleanup-expired',
+  "/admin/cleanup-expired",
   authMiddleware,
-  requireRole('ADMIN'),
+  requireRole("ADMIN"),
   async (req, res, next) => {
     try {
       const expired = await checkAndCleanupExpiredWorkOrders();
       res.json({
         message: `Processed ${expired.length} expired work orders`,
         expiredWorkOrders: expired,
-        processedAt: new Date()
+        processedAt: new Date(),
       });
     } catch (error) {
       next(error);

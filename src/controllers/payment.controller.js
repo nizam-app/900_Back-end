@@ -1,10 +1,19 @@
+/** @format */
+
 // src/controllers/payment.controller.js
-import { prisma } from '../prisma.js';
-import { notifyPaymentVerified } from '../services/notification.service.js';
+import { prisma } from "../prisma.js";
+import { notifyPaymentVerified } from "../services/notification.service.js";
 
 export const getAllPayments = async (req, res, next) => {
   try {
-    const { status, woId, technicianId, method, page = 1, limit = 10 } = req.query;
+    const {
+      status,
+      woId,
+      technicianId,
+      method,
+      page = 1,
+      limit = 10,
+    } = req.query;
     const offset = (page - 1) * limit;
 
     const where = {};
@@ -23,22 +32,22 @@ export const getAllPayments = async (req, res, next) => {
               woNumber: true,
               status: true,
               customer: {
-                select: { id: true, name: true, phone: true }
-              }
-            }
+                select: { id: true, name: true, phone: true },
+              },
+            },
           },
           technician: {
-            select: { id: true, name: true, phone: true }
+            select: { id: true, name: true, phone: true },
           },
           verifiedBy: {
-            select: { id: true, name: true }
-          }
+            select: { id: true, name: true },
+          },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: Number(offset),
         take: Number(limit),
       }),
-      prisma.payment.count({ where })
+      prisma.payment.count({ where }),
     ]);
 
     return res.json({
@@ -47,8 +56,8 @@ export const getAllPayments = async (req, res, next) => {
         page: Number(page),
         limit: Number(limit),
         total,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (err) {
     next(err);
@@ -65,35 +74,35 @@ export const getPaymentById = async (req, res, next) => {
         workOrder: {
           include: {
             customer: {
-              select: { id: true, name: true, phone: true, email: true }
+              select: { id: true, name: true, phone: true, email: true },
             },
             technician: {
-              select: { id: true, name: true, phone: true }
+              select: { id: true, name: true, phone: true },
             },
             category: true,
             service: true,
-            subservice: true
-          }
+            subservice: true,
+          },
         },
         technician: {
-          select: { id: true, name: true, phone: true }
+          select: { id: true, name: true, phone: true },
         },
         verifiedBy: {
-          select: { id: true, name: true, phone: true }
+          select: { id: true, name: true, phone: true },
         },
         commissions: {
           select: {
             id: true,
             type: true,
             amount: true,
-            status: true
-          }
-        }
-      }
+            status: true,
+          },
+        },
+      },
     });
 
     if (!payment) {
-      return res.status(404).json({ message: 'Payment not found' });
+      return res.status(404).json({ message: "Payment not found" });
     }
 
     return res.json(payment);
@@ -108,7 +117,7 @@ export const uploadPaymentProof = async (req, res, next) => {
     const technicianId = req.user.id;
 
     if (!woId || !method) {
-      return res.status(400).json({ message: 'woId and method are required' });
+      return res.status(400).json({ message: "woId and method are required" });
     }
 
     // Fetch work order with service pricing details
@@ -117,45 +126,53 @@ export const uploadPaymentProof = async (req, res, next) => {
       include: {
         service: true, // Get service pricing
         category: true,
-        subservice: true
-      }
+        subservice: true,
+      },
     });
 
     if (!wo) {
-      return res.status(404).json({ message: 'Work Order not found' });
+      return res.status(404).json({ message: "Work Order not found" });
     }
 
-    if (wo.status !== 'COMPLETED_PENDING_PAYMENT') {
-      return res.status(400).json({ message: 'Work Order is not completed yet' });
+    if (wo.status !== "COMPLETED_PENDING_PAYMENT") {
+      return res
+        .status(400)
+        .json({ message: "Work Order is not completed yet" });
     }
 
     // Auto-fetch amount from service pricing or use manual override
     let finalAmount;
-    
+
     if (manualAmount) {
       // Manual amount provided (for custom pricing)
       finalAmount = Number(manualAmount);
-      console.log(`💰 Using manual amount: ₹${finalAmount} for WO ${wo.woNumber}`);
+      console.log(
+        `💰 Using manual amount: ₹${finalAmount} for WO ${wo.woNumber}`
+      );
     } else if (wo.service?.baseRate) {
       // Auto-fetch from service base rate
       finalAmount = wo.service.baseRate;
-      console.log(`💰 Auto-fetched amount from service: ₹${finalAmount} for ${wo.service.name}`);
+      console.log(
+        `💰 Auto-fetched amount from service: ₹${finalAmount} for ${wo.service.name}`
+      );
     } else {
-      return res.status(400).json({ 
-        message: 'No service pricing found. Please provide amount manually.',
+      return res.status(400).json({
+        message: "No service pricing found. Please provide amount manually.",
         serviceInfo: {
           category: wo.category?.name,
           subservice: wo.subservice?.name,
-          service: wo.service?.name
-        }
+          service: wo.service?.name,
+        },
       });
     }
 
     // Validate that payment proof is uploaded
     if (!req.file) {
-      return res.status(400).json({ message: 'Payment proof image is required' });
+      return res
+        .status(400)
+        .json({ message: "Payment proof image is required" });
     }
-    
+
     const proofUrl = `/uploads/payments/${req.file.filename}`;
 
     const payment = await prisma.payment.create({
@@ -166,15 +183,15 @@ export const uploadPaymentProof = async (req, res, next) => {
         method,
         transactionRef,
         proofUrl,
-        status: 'PENDING_VERIFICATION',
+        status: "PENDING_VERIFICATION",
       },
     });
 
     await prisma.auditLog.create({
       data: {
         userId: technicianId,
-        action: 'PAYMENT_UPLOADED',
-        entityType: 'PAYMENT',
+        action: "PAYMENT_UPLOADED",
+        entityType: "PAYMENT",
         entityId: payment.id,
       },
     });
@@ -191,8 +208,10 @@ export const verifyPayment = async (req, res, next) => {
     const { action, reason } = req.body;
     const verifierId = req.user.id;
 
-    if (!action || !['APPROVE', 'REJECT'].includes(action)) {
-      return res.status(400).json({ message: 'Action must be APPROVE or REJECT' });
+    if (!action || !["APPROVE", "REJECT"].includes(action)) {
+      return res
+        .status(400)
+        .json({ message: "Action must be APPROVE or REJECT" });
     }
 
     const payment = await prisma.payment.findUnique({
@@ -201,39 +220,39 @@ export const verifyPayment = async (req, res, next) => {
     });
 
     if (!payment) {
-      return res.status(404).json({ message: 'Payment not found' });
+      return res.status(404).json({ message: "Payment not found" });
     }
 
-    if (payment.status !== 'PENDING_VERIFICATION') {
-      return res.status(400).json({ message: 'Payment already verified' });
+    if (payment.status !== "PENDING_VERIFICATION") {
+      return res.status(400).json({ message: "Payment already verified" });
     }
 
-    if (action === 'APPROVE') {
+    if (action === "APPROVE") {
       const updatedPayment = await prisma.payment.update({
         where: { id: paymentId },
         data: {
-          status: 'VERIFIED',
+          status: "VERIFIED",
           verifiedById: verifierId,
           verifiedAt: new Date(),
-        }, 
+        },
       });
 
       await prisma.workOrder.update({
         where: { id: payment.woId },
         data: {
-          status: 'PAID_VERIFIED',
+          status: "PAID_VERIFIED",
           paidVerifiedAt: new Date(),
         },
       });
 
       const wo = payment.workOrder;
-      
+
       // Validate payment amount exists
       if (!payment.amount || payment.amount <= 0) {
-        return res.status(400).json({ 
-          message: 'Payment amount is invalid or missing',
+        return res.status(400).json({
+          message: "Payment amount is invalid or missing",
           paymentId: payment.id,
-          amount: payment.amount
+          amount: payment.amount,
         });
       }
 
@@ -246,16 +265,17 @@ export const verifyPayment = async (req, res, next) => {
       });
 
       if (techProfile) {
-        commissionAmount = Number(payment.amount) * Number(techProfile.commissionRate);
+        commissionAmount =
+          Number(payment.amount) * Number(techProfile.commissionRate);
         bonusAmount = Number(payment.amount) * Number(techProfile.bonusRate);
-        
+
         // Validate calculated amounts
         if (isNaN(commissionAmount) || isNaN(bonusAmount)) {
           return res.status(400).json({
-            message: 'Error calculating commission amounts',
+            message: "Error calculating commission amounts",
             paymentAmount: payment.amount,
             commissionRate: techProfile.commissionRate,
-            bonusRate: techProfile.bonusRate
+            bonusRate: techProfile.bonusRate,
           });
         }
 
@@ -263,10 +283,10 @@ export const verifyPayment = async (req, res, next) => {
           data: {
             woId: wo.id,
             technicianId: wo.technicianId,
-            type: 'COMMISSION',
+            type: "COMMISSION",
             rate: techProfile.commissionRate,
             amount: commissionAmount,
-            status: 'EARNED',
+            status: "EARNED",
             paymentId: payment.id,
           },
         });
@@ -275,10 +295,10 @@ export const verifyPayment = async (req, res, next) => {
           data: {
             woId: wo.id,
             technicianId: wo.technicianId,
-            type: 'BONUS',
+            type: "BONUS",
             rate: techProfile.bonusRate,
             amount: bonusAmount,
-            status: 'EARNED',
+            status: "EARNED",
             paymentId: payment.id,
           },
         });
@@ -312,8 +332,8 @@ export const verifyPayment = async (req, res, next) => {
             {
               walletId: wallet.id,
               technicianId: wo.technicianId,
-              type: 'CREDIT',
-              sourceType: 'COMMISSION',
+              type: "CREDIT",
+              sourceType: "COMMISSION",
               sourceId: wo.id,
               amount: commissionAmount,
               description: `Commission for WO ${wo.woNumber}`,
@@ -321,8 +341,8 @@ export const verifyPayment = async (req, res, next) => {
             {
               walletId: wallet.id,
               technicianId: wo.technicianId,
-              type: 'CREDIT',
-              sourceType: 'BONUS',
+              type: "CREDIT",
+              sourceType: "BONUS",
               sourceId: wo.id,
               amount: bonusAmount,
               description: `Bonus for WO ${wo.woNumber}`,
@@ -330,14 +350,18 @@ export const verifyPayment = async (req, res, next) => {
           ],
         });
 
-        console.log(`💰 Added ₹${commissionAmount + bonusAmount} to ${techProfile.type} technician wallet (ID: ${wo.technicianId})`);
+        console.log(
+          `💰 Added ₹${commissionAmount + bonusAmount} to ${
+            techProfile.type
+          } technician wallet (ID: ${wo.technicianId})`
+        );
       }
 
       await prisma.auditLog.create({
         data: {
           userId: verifierId,
-          action: 'PAYMENT_VERIFIED',
-          entityType: 'PAYMENT',
+          action: "PAYMENT_VERIFIED",
+          entityType: "PAYMENT",
           entityId: payment.id,
         },
       });
@@ -346,24 +370,27 @@ export const verifyPayment = async (req, res, next) => {
       try {
         await notifyPaymentVerified(wo.technicianId, wo, updatedPayment);
       } catch (notificationError) {
-        console.log('Notification failed (non-critical):', notificationError.message);
+        console.log(
+          "Notification failed (non-critical):",
+          notificationError.message
+        );
       }
 
       return res.json({
         success: true,
-        message: 'Payment verified successfully',
+        message: "Payment verified successfully",
         payment: updatedPayment,
         commissions: {
           commissionAmount,
           bonusAmount,
-          total: commissionAmount + bonusAmount
-        }
+          total: commissionAmount + bonusAmount,
+        },
       });
     } else {
       const updatedPayment = await prisma.payment.update({
         where: { id: paymentId },
         data: {
-          status: 'REJECTED',
+          status: "REJECTED",
           rejectedReason: reason,
         },
       });
@@ -371,8 +398,8 @@ export const verifyPayment = async (req, res, next) => {
       await prisma.auditLog.create({
         data: {
           userId: verifierId,
-          action: 'PAYMENT_REJECTED',
-          entityType: 'PAYMENT',
+          action: "PAYMENT_REJECTED",
+          entityType: "PAYMENT",
           entityId: payment.id,
           metadataJson: JSON.stringify({ reason }),
         },
@@ -398,7 +425,7 @@ export const getPaymentStats = async (req, res, next) => {
       prisma.payment.count({
         where: {
           proofUrl: null,
-          status: { in: ['PENDING_UPLOAD', 'PENDING'] },
+          status: { in: ["PENDING_UPLOAD", "PENDING"] },
         },
       }),
 
@@ -406,28 +433,28 @@ export const getPaymentStats = async (req, res, next) => {
       prisma.payment.count({
         where: {
           proofUrl: { not: null },
-          status: 'PENDING_VERIFICATION',
+          status: "PENDING_VERIFICATION",
         },
       }),
 
       // Verified - payments that are verified
       prisma.payment.count({
         where: {
-          status: 'VERIFIED',
+          status: "VERIFIED",
         },
       }),
 
       // Rejected - payments that are rejected
       prisma.payment.count({
         where: {
-          status: 'REJECTED',
+          status: "REJECTED",
         },
       }),
 
       // Total Commissions (from verified payments)
       prisma.commission.aggregate({
         where: {
-          status: 'PAID',
+          status: "PAID",
         },
         _sum: {
           amount: true,
