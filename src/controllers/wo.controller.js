@@ -1,19 +1,21 @@
+/** @format */
+
 // src/controllers/wo.controller.js
-import { prisma } from '../prisma.js';
+import { prisma } from "../prisma.js";
 import {
   notifyWOAssignment,
   notifyWOAccepted,
   notifyWOCompleted,
-} from '../services/notification.service.js';
+} from "../services/notification.service.js";
 import {
   setResponseDeadline,
   clearResponseDeadline,
   isWorkOrderExpired,
   getRemainingTime,
-  TIME_CONFIG
-} from '../services/timeLimit.service.js';
+  TIME_CONFIG,
+} from "../services/timeLimit.service.js";
 
-const generateWONumber = () => 'WO-' + Date.now();
+const generateWONumber = () => "WO-" + Date.now();
 
 export const getWOById = async (req, res, next) => {
   try {
@@ -22,33 +24,38 @@ export const getWOById = async (req, res, next) => {
     const userRole = req.user.role;
 
     // Find WO by either numeric ID or woNumber
-    const whereClause = isNaN(woIdParam) 
-      ? { woNumber: woIdParam } 
+    const whereClause = isNaN(woIdParam)
+      ? { woNumber: woIdParam }
       : { id: Number(woIdParam) };
 
     const workOrder = await prisma.workOrder.findFirst({
       where: whereClause,
       include: {
         customer: {
-          select: { id: true, name: true, phone: true, email: true }
+          select: { id: true, name: true, phone: true, email: true },
         },
         technician: {
-          select: { id: true, name: true, phone: true, role: true }
+          select: { id: true, name: true, phone: true, role: true },
         },
         dispatcher: {
-          select: { id: true, name: true, phone: true }
+          select: { id: true, name: true, phone: true },
         },
         category: {
-          select: { id: true, name: true, description: true }
+          select: { id: true, name: true, description: true },
         },
         service: {
-          select: { id: true, name: true, description: true, baseRate: true }
+          select: { id: true, name: true, description: true, baseRate: true },
         },
         subservice: {
-          select: { id: true, name: true, description: true }
+          select: { id: true, name: true, description: true },
         },
         serviceRequest: {
-          select: { id: true, srNumber: true, description: true, priority: true }
+          select: {
+            id: true,
+            srNumber: true,
+            description: true,
+            priority: true,
+          },
         },
         payments: {
           select: {
@@ -56,31 +63,34 @@ export const getWOById = async (req, res, next) => {
             amount: true,
             method: true,
             status: true,
-            createdAt: true
-          }
+            createdAt: true,
+          },
         },
         commissions: {
           select: {
             id: true,
             type: true,
             amount: true,
-            status: true
-          }
-        }
-      }
+            status: true,
+          },
+        },
+      },
     });
 
     if (!workOrder) {
-      return res.status(404).json({ message: 'Work Order not found' });
+      return res.status(404).json({ message: "Work Order not found" });
     }
 
     // Check access permissions
-    if (userRole === 'CUSTOMER' && workOrder.customerId !== userId) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (userRole === "CUSTOMER" && workOrder.customerId !== userId) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
-    if ((userRole === 'TECH_INTERNAL' || userRole === 'TECH_FREELANCER') && workOrder.technicianId !== userId) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (
+      (userRole === "TECH_INTERNAL" || userRole === "TECH_FREELANCER") &&
+      workOrder.technicianId !== userId
+    ) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
     return res.json(workOrder);
@@ -91,7 +101,14 @@ export const getWOById = async (req, res, next) => {
 
 export const getAllWorkOrders = async (req, res, next) => {
   try {
-    const { status, technicianId, customerId, priority, page = 1, limit = 10 } = req.query;
+    const {
+      status,
+      technicianId,
+      customerId,
+      priority,
+      page = 1,
+      limit = 10,
+    } = req.query;
     const offset = (page - 1) * limit;
 
     const where = {};
@@ -114,23 +131,41 @@ export const getAllWorkOrders = async (req, res, next) => {
             // select: { id: true, firstName: true, lastName: true }
           },
           category: {
-            select: { id: true, name: true }
+            select: { id: true, name: true },
           },
           service: {
-            select: { id: true, name: true }
+            select: { id: true, name: true },
           },
           subservice: {
-            select: { id: true, name: true }
+            select: { id: true, name: true },
           },
           serviceRequest: {
-            select: { id: true, srNumber: true }
-          }
+            select: { id: true, srNumber: true },
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              method: true,
+              status: true,
+              proofUrl: true,
+              createdAt: true,
+            },
+          },
+          commissions: {
+            select: {
+              id: true,
+              type: true,
+              amount: true,
+              status: true,
+            },
+          },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: Number(offset),
         take: Number(limit),
       }),
-      prisma.workOrder.count({ where })
+      prisma.workOrder.count({ where }),
     ]);
 
     return res.json({
@@ -139,8 +174,8 @@ export const getAllWorkOrders = async (req, res, next) => {
         page: Number(page),
         limit: Number(limit),
         total,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (err) {
     next(err);
@@ -152,9 +187,9 @@ export const createWOFromSR = async (req, res, next) => {
     // Validate srId parameter
     const srIdParam = req.params.srId;
     if (!srIdParam || isNaN(srIdParam)) {
-      return res.status(400).json({ 
-        message: 'Valid Service Request ID is required',
-        error: 'INVALID_SR_ID' 
+      return res.status(400).json({
+        message: "Valid Service Request ID is required",
+        error: "INVALID_SR_ID",
       });
     }
 
@@ -164,9 +199,9 @@ export const createWOFromSR = async (req, res, next) => {
 
     // Additional validation for technicianId if provided
     if (technicianId && isNaN(technicianId)) {
-      return res.status(400).json({ 
-        message: 'Valid Technician ID is required',
-        error: 'INVALID_TECHNICIAN_ID' 
+      return res.status(400).json({
+        message: "Valid Technician ID is required",
+        error: "INVALID_TECHNICIAN_ID",
       });
     }
 
@@ -175,11 +210,11 @@ export const createWOFromSR = async (req, res, next) => {
     });
 
     if (!sr) {
-      return res.status(404).json({ message: 'Service Request not found' });
+      return res.status(404).json({ message: "Service Request not found" });
     }
 
-    if (sr.status === 'CONVERTED_TO_WO') {
-      return res.status(400).json({ message: 'SR already converted to WO' });
+    if (sr.status === "CONVERTED_TO_WO") {
+      return res.status(400).json({ message: "SR already converted to WO" });
     }
 
     const wo = await prisma.workOrder.create({
@@ -198,7 +233,7 @@ export const createWOFromSR = async (req, res, next) => {
         estimatedDuration: estimatedDuration ? Number(estimatedDuration) : null,
         paymentType: sr.paymentType,
         priority: sr.priority,
-        status: technicianId ? 'ASSIGNED' : 'UNASSIGNED',
+        status: technicianId ? "ASSIGNED" : "UNASSIGNED",
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         notes: notes || null,
       },
@@ -206,14 +241,14 @@ export const createWOFromSR = async (req, res, next) => {
 
     await prisma.serviceRequest.update({
       where: { id: sr.id },
-      data: { status: 'CONVERTED_TO_WO' },
+      data: { status: "CONVERTED_TO_WO" },
     });
 
     await prisma.auditLog.create({
       data: {
         userId: dispatcherId,
-        action: 'WO_CREATED_FROM_SR',
-        entityType: 'WORK_ORDER',
+        action: "WO_CREATED_FROM_SR",
+        entityType: "WORK_ORDER",
         entityId: wo.id,
       },
     });
@@ -238,7 +273,7 @@ export const assignWO = async (req, res, next) => {
     const { technicianId } = req.body;
 
     if (!technicianId) {
-      return res.status(400).json({ message: 'technicianId is required' });
+      return res.status(400).json({ message: "technicianId is required" });
     }
 
     const tech = await prisma.user.findUnique({
@@ -246,31 +281,31 @@ export const assignWO = async (req, res, next) => {
     });
 
     if (!tech) {
-      return res.status(404).json({ message: 'Technician not found' });
+      return res.status(404).json({ message: "Technician not found" });
     }
 
     if (tech.isBlocked) {
-      return res.status(400).json({ message: 'Technician is blocked' });
+      return res.status(400).json({ message: "Technician is blocked" });
     }
 
     // Find WO by either numeric ID or woNumber
-    const whereClause = isNaN(woIdParam) 
-      ? { woNumber: woIdParam } 
+    const whereClause = isNaN(woIdParam)
+      ? { woNumber: woIdParam }
       : { id: Number(woIdParam) };
 
     const wo = await prisma.workOrder.update({
       where: whereClause,
       data: {
         technicianId: Number(technicianId),
-        status: 'ASSIGNED',
+        status: "ASSIGNED",
       },
     });
 
     await prisma.auditLog.create({
       data: {
         userId: req.user.id,
-        action: 'WO_ASSIGNED',
-        entityType: 'WORK_ORDER',
+        action: "WO_ASSIGNED",
+        entityType: "WORK_ORDER",
         entityId: wo.id,
         metadataJson: JSON.stringify({ technicianId }),
       },
@@ -279,7 +314,10 @@ export const assignWO = async (req, res, next) => {
     await notifyWOAssignment(Number(technicianId), wo);
 
     // Set response deadline for technician
-    const deadline = await setResponseDeadline(wo.id, TIME_CONFIG.RESPONSE_TIME_MINUTES);
+    const deadline = await setResponseDeadline(
+      wo.id,
+      TIME_CONFIG.RESPONSE_TIME_MINUTES
+    );
 
     return res.json({
       ...wo,
@@ -288,32 +326,185 @@ export const assignWO = async (req, res, next) => {
         responseTimeMinutes: TIME_CONFIG.RESPONSE_TIME_MINUTES,
         warningTimeMinutes: TIME_CONFIG.WARNING_TIME_MINUTES,
         deadline: deadline,
-        message: `You have ${TIME_CONFIG.RESPONSE_TIME_MINUTES} minutes to accept or decline this work order`
-      }
+        message: `You have ${TIME_CONFIG.RESPONSE_TIME_MINUTES} minutes to accept or decline this work order`,
+      },
     });
   } catch (err) {
     next(err);
   }
 };
 
-export const respondWO = async (req, res, next) => { 
+export const reassignWO = async (req, res, next) => {
   try {
     const woIdParam = req.params.woId;
-    const whereClause = isNaN(woIdParam) 
-      ? { woNumber: woIdParam } 
+    const { technicianId, scheduledAt, estimatedDuration, notes } = req.body;
+
+    // Find WO by either numeric ID or woNumber
+    const whereClause = isNaN(woIdParam)
+      ? { woNumber: woIdParam }
       : { id: Number(woIdParam) };
-    const { action } = req.body;
+
+    const existingWO = await prisma.workOrder.findUnique({
+      where: whereClause,
+      include: {
+        technician: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!existingWO) {
+      return res.status(404).json({ message: "Work Order not found" });
+    }
+
+    // Validate technician if provided
+    if (technicianId) {
+      const tech = await prisma.user.findUnique({
+        where: { id: Number(technicianId) },
+      });
+
+      if (!tech) {
+        return res.status(404).json({ message: "Technician not found" });
+      }
+
+      if (tech.isBlocked) {
+        return res.status(400).json({ message: "Technician is blocked" });
+      }
+
+      if (!["TECH_INTERNAL", "TECH_FREELANCER"].includes(tech.role)) {
+        return res.status(400).json({ message: "User is not a technician" });
+      }
+    }
+
+    // Prepare update data
+    const updateData = {};
+
+    if (technicianId !== undefined) {
+      updateData.technicianId = technicianId ? Number(technicianId) : null;
+      // If reassigning to a different technician or removing technician
+      if (technicianId && existingWO.technicianId !== Number(technicianId)) {
+        updateData.status = "ASSIGNED";
+        // Clear response deadline if reassigning
+        await clearResponseDeadline(existingWO.id);
+      } else if (!technicianId) {
+        updateData.status = "UNASSIGNED";
+        await clearResponseDeadline(existingWO.id);
+      }
+    }
+
+    if (scheduledAt !== undefined) {
+      updateData.scheduledAt = scheduledAt ? new Date(scheduledAt) : null;
+    }
+
+    if (estimatedDuration !== undefined) {
+      updateData.estimatedDuration = estimatedDuration
+        ? Number(estimatedDuration)
+        : null;
+    }
+
+    if (notes !== undefined) {
+      updateData.notes = notes || null;
+    }
+
+    // Update work order
+    const wo = await prisma.workOrder.update({
+      where: whereClause,
+      data: updateData,
+      include: {
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        category: true,
+        subservice: true,
+      },
+    });
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: "WO_REASSIGNED",
+        entityType: "WORK_ORDER",
+        entityId: wo.id,
+        metadataJson: JSON.stringify({
+          previousTechnicianId: existingWO.technicianId,
+          newTechnicianId: technicianId ? Number(technicianId) : null,
+          scheduledAt,
+          estimatedDuration,
+          notes,
+        }),
+      },
+    });
+
+    // Send notification if technician changed
+    if (technicianId && existingWO.technicianId !== Number(technicianId)) {
+      await notifyWOAssignment(Number(technicianId), wo);
+      // Set new response deadline
+      const deadline = await setResponseDeadline(
+        wo.id,
+        TIME_CONFIG.RESPONSE_TIME_MINUTES
+      );
+
+      return res.json({
+        ...wo,
+        message: "Work order reassigned successfully",
+        responseDeadline: deadline,
+        timeLimit: {
+          responseTimeMinutes: TIME_CONFIG.RESPONSE_TIME_MINUTES,
+          warningTimeMinutes: TIME_CONFIG.WARNING_TIME_MINUTES,
+          deadline: deadline,
+        },
+      });
+    }
+
+    return res.json({
+      ...wo,
+      message: "Work order updated successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const respondWO = async (req, res, next) => {
+  try {
+    const woIdParam = req.params.woId;
+    const whereClause = isNaN(woIdParam)
+      ? { woNumber: woIdParam }
+      : { id: Number(woIdParam) };
+    const { action, declineReason } = req.body;
     const techId = req.user.id;
 
     // Validate action
     if (!action) {
-      return res.status(400).json({ message: 'Action is required' });
+      return res.status(400).json({ message: "Action is required" });
     }
 
-    const validActions = ['ACCEPT', 'DECLINE'];
+    const validActions = ["ACCEPT", "DECLINE"];
     if (!validActions.includes(action)) {
-      return res.status(400).json({ 
-        message: `Invalid action. Must be one of: ${validActions.join(', ')}` 
+      return res.status(400).json({
+        message: `Invalid action. Must be one of: ${validActions.join(", ")}`,
+      });
+    }
+
+    // Require reason when declining
+    if (action === "DECLINE" && !declineReason) {
+      return res.status(400).json({
+        message: "Decline reason is required when declining a work order",
       });
     }
 
@@ -322,22 +513,25 @@ export const respondWO = async (req, res, next) => {
     });
 
     if (!wo) {
-      return res.status(404).json({ message: 'Work Order not found' });
+      return res.status(404).json({ message: "Work Order not found" });
     }
 
     if (wo.technicianId !== techId) {
-      return res.status(403).json({ message: 'This WO does not belong to you' });
+      return res
+        .status(403)
+        .json({ message: "This WO does not belong to you" });
     }
 
-    if (wo.status !== 'ASSIGNED') {
-      return res.status(400).json({ message: 'WO is not in ASSIGNED status' });
+    if (wo.status !== "ASSIGNED") {
+      return res.status(400).json({ message: "WO is not in ASSIGNED status" });
     }
 
     // Check if response time has expired
     if (isWorkOrderExpired(wo.id)) {
-      return res.status(410).json({ 
-        message: 'Response time expired. This work order has been automatically unassigned.',
-        code: 'RESPONSE_TIMEOUT'
+      return res.status(410).json({
+        message:
+          "Response time expired. This work order has been automatically unassigned.",
+        code: "RESPONSE_TIMEOUT",
       });
     }
 
@@ -345,52 +539,58 @@ export const respondWO = async (req, res, next) => {
 
     let updated;
 
-    if (action === 'ACCEPT') {
+    if (action === "ACCEPT") {
       updated = await prisma.workOrder.update({
         where: whereClause,
         data: {
-          status: 'ACCEPTED',
+          status: "ACCEPTED",
           acceptedAt: new Date(),
         },
       });
-    } else if (action === 'DECLINE') {
+    } else if (action === "DECLINE") {
       updated = await prisma.workOrder.update({
         where: whereClause,
         data: {
-          status: 'UNASSIGNED',
+          status: "UNASSIGNED",
           technicianId: null,
+          cancelReason: declineReason, // Store the decline reason
         },
       });
     } else {
-      return res.status(400).json({ message: 'Invalid action, use ACCEPT or DECLINE' });
+      return res
+        .status(400)
+        .json({ message: "Invalid action, use ACCEPT or DECLINE" });
     }
 
     await prisma.auditLog.create({
       data: {
         userId: techId,
-        action: 'WO_RESPOND',
-        entityType: 'WORK_ORDER',
+        action: "WO_RESPOND",
+        entityType: "WORK_ORDER",
         entityId: wo.id,
-        metadataJson: JSON.stringify({ action }),
+        metadataJson: JSON.stringify({ action, declineReason }),
       },
     });
 
     // Clear response deadline since technician responded
     clearResponseDeadline(wo.id);
 
-    if (action === 'ACCEPT' && wo.dispatcherId) {
+    if (action === "ACCEPT" && wo.dispatcherId) {
       await notifyWOAccepted(wo.dispatcherId, updated);
     }
 
     return res.json({
       ...updated,
-      responseTime: remainingTime ? {
-        respondedWithMinutesRemaining: remainingTime.minutes,
-        respondedInTime: !remainingTime.expired
-      } : null,
-      message: action === 'ACCEPT' ? 
-        'Work order accepted successfully' : 
-        'Work order declined successfully'
+      responseTime: remainingTime
+        ? {
+            respondedWithMinutesRemaining: remainingTime.minutes,
+            respondedInTime: !remainingTime.expired,
+          }
+        : null,
+      message:
+        action === "ACCEPT"
+          ? "Work order accepted successfully"
+          : "Work order declined successfully",
     });
   } catch (err) {
     next(err);
@@ -400,8 +600,8 @@ export const respondWO = async (req, res, next) => {
 export const startWO = async (req, res, next) => {
   try {
     const woIdParam = req.params.woId;
-    const whereClause = isNaN(woIdParam) 
-      ? { woNumber: woIdParam } 
+    const whereClause = isNaN(woIdParam)
+      ? { woNumber: woIdParam }
       : { id: Number(woIdParam) };
     const techId = req.user.id;
     const { latitude, longitude, lat, lng } = req.body;
@@ -412,19 +612,28 @@ export const startWO = async (req, res, next) => {
 
     // Validate required fields
     if (!finalLat || !finalLng) {
-      return res.status(400).json({ message: 'Latitude and longitude are required' });
+      return res
+        .status(400)
+        .json({ message: "Latitude and longitude are required" });
     }
 
     // Validate coordinates
     const latValue = parseFloat(finalLat);
     const lngValue = parseFloat(finalLng);
-    
+
     if (isNaN(latValue) || isNaN(lngValue)) {
-      return res.status(400).json({ message: 'Invalid latitude or longitude values' });
+      return res
+        .status(400)
+        .json({ message: "Invalid latitude or longitude values" });
     }
 
     if (latValue < -90 || latValue > 90 || lngValue < -180 || lngValue > 180) {
-      return res.status(400).json({ message: 'Latitude must be between -90 and 90, longitude between -180 and 180' });
+      return res
+        .status(400)
+        .json({
+          message:
+            "Latitude must be between -90 and 90, longitude between -180 and 180",
+        });
     }
 
     const wo = await prisma.workOrder.findUnique({
@@ -432,33 +641,33 @@ export const startWO = async (req, res, next) => {
     });
 
     if (!wo) {
-      return res.status(404).json({ message: 'Work Order not found' });
+      return res.status(404).json({ message: "Work Order not found" });
     }
 
     if (wo.technicianId !== techId) {
-      return res.status(403).json({ message: 'Not assigned to you' });
+      return res.status(403).json({ message: "Not assigned to you" });
     }
 
-    if (wo.status !== 'ACCEPTED') {
-      return res.status(400).json({ message: 'WO is not in ACCEPTED status' });
+    if (wo.status !== "ACCEPTED") {
+      return res.status(400).json({ message: "WO is not in ACCEPTED status" });
     }
 
     // Update technician status to BUSY
     await prisma.user.update({
       where: { id: techId },
-      data: { locationStatus: 'BUSY' }
+      data: { locationStatus: "BUSY" },
     });
 
     const updatedWO = await prisma.workOrder.update({
       where: whereClause,
       data: {
-        status: 'IN_PROGRESS',
+        status: "IN_PROGRESS",
         startedAt: new Date(),
       },
       include: {
         customer: true,
-        technician: true
-      }
+        technician: true,
+      },
     });
 
     await prisma.technicianCheckin.create({
@@ -473,17 +682,19 @@ export const startWO = async (req, res, next) => {
     await prisma.auditLog.create({
       data: {
         userId: techId,
-        action: 'WO_START',
-        entityType: 'WORK_ORDER',
+        action: "WO_START",
+        entityType: "WORK_ORDER",
         entityId: wo.id,
       },
     });
 
     // Real-time notification for work started
-    const { notifyWorkStarted } = await import('../services/notification.service.js');
+    const { notifyWorkStarted } = await import(
+      "../services/notification.service.js"
+    );
     await notifyWorkStarted(updatedWO);
 
-    return res.json({ message: 'Work started', wo: updatedWO });
+    return res.json({ message: "Work started", wo: updatedWO });
   } catch (err) {
     next(err);
   }
@@ -492,8 +703,8 @@ export const startWO = async (req, res, next) => {
 export const completeWO = async (req, res, next) => {
   try {
     const woIdParam = req.params.woId;
-    const whereClause = isNaN(woIdParam) 
-      ? { woNumber: woIdParam } 
+    const whereClause = isNaN(woIdParam)
+      ? { woNumber: woIdParam }
       : { id: Number(woIdParam) };
     const techId = req.user.id;
     const { completionNotes, materialsUsed } = req.body;
@@ -503,40 +714,56 @@ export const completeWO = async (req, res, next) => {
     });
 
     if (!wo) {
-      return res.status(404).json({ message: 'Work Order not found' });
+      return res.status(404).json({ message: "Work Order not found" });
     }
 
     if (wo.technicianId !== techId) {
-      return res.status(403).json({ message: 'This WO does not belong to you' });
+      return res
+        .status(403)
+        .json({ message: "This WO does not belong to you" });
     }
 
-    if (wo.status !== 'IN_PROGRESS') {
-      return res.status(400).json({ message: 'WO is not in IN_PROGRESS status' });
+    if (wo.status !== "IN_PROGRESS") {
+      return res
+        .status(400)
+        .json({ message: "WO is not in IN_PROGRESS status" });
     }
 
     // Validate that photos are uploaded
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: 'At least one completion photo is required' });
+      return res
+        .status(400)
+        .json({ message: "At least one completion photo is required" });
     }
-    
-    const photoUrls = req.files.map(file => `/uploads/wo-completion/${file.filename}`);
+
+    const photoUrls = req.files.map(
+      (file) => `/uploads/wo-completion/${file.filename}`
+    );
 
     let parsedMaterials = null;
     if (materialsUsed) {
       try {
-        parsedMaterials = typeof materialsUsed === 'string' ? JSON.parse(materialsUsed) : materialsUsed;
+        parsedMaterials =
+          typeof materialsUsed === "string"
+            ? JSON.parse(materialsUsed)
+            : materialsUsed;
       } catch (err) {
-        return res.status(400).json({ message: 'Invalid materialsUsed format. Expected JSON array.' });
+        return res
+          .status(400)
+          .json({
+            message: "Invalid materialsUsed format. Expected JSON array.",
+          });
       }
     }
 
     const updated = await prisma.workOrder.update({
       where: whereClause,
       data: {
-        status: 'COMPLETED_PENDING_PAYMENT',
+        status: "COMPLETED_PENDING_PAYMENT",
         completedAt: new Date(),
         completionNotes: completionNotes || null,
-        completionPhotos: photoUrls.length > 0 ? JSON.stringify(photoUrls) : null,
+        completionPhotos:
+          photoUrls.length > 0 ? JSON.stringify(photoUrls) : null,
         materialsUsed: parsedMaterials ? JSON.stringify(parsedMaterials) : null,
       },
     });
@@ -544,8 +771,8 @@ export const completeWO = async (req, res, next) => {
     await prisma.auditLog.create({
       data: {
         userId: techId,
-        action: 'WO_COMPLETE',
-        entityType: 'WORK_ORDER',
+        action: "WO_COMPLETE",
+        entityType: "WORK_ORDER",
         entityId: wo.id,
       },
     });
@@ -555,6 +782,121 @@ export const completeWO = async (req, res, next) => {
     }
 
     return res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const cancelWO = async (req, res, next) => {
+  try {
+    const woIdParam = req.params.woId;
+    const { cancelReason } = req.body;
+
+    // Validate cancel reason is provided
+    if (!cancelReason) {
+      return res.status(400).json({
+        message: "Cancellation reason is required",
+      });
+    }
+
+    // Find WO by either numeric ID or woNumber
+    const whereClause = isNaN(woIdParam)
+      ? { woNumber: woIdParam }
+      : { id: Number(woIdParam) };
+
+    const wo = await prisma.workOrder.findUnique({
+      where: whereClause,
+      include: {
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    if (!wo) {
+      return res.status(404).json({ message: "Work Order not found" });
+    }
+
+    // Prevent canceling already completed or paid work orders
+    if (
+      wo.status === "COMPLETED_PENDING_PAYMENT" ||
+      wo.status === "PAID_VERIFIED"
+    ) {
+      return res.status(400).json({
+        message: "Cannot cancel completed or paid work orders",
+      });
+    }
+
+    // Already cancelled
+    if (wo.status === "CANCELLED") {
+      return res.status(400).json({
+        message: "Work order is already cancelled",
+      });
+    }
+
+    // Update work order to cancelled status
+    const updated = await prisma.workOrder.update({
+      where: whereClause,
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        cancelReason: cancelReason,
+      },
+      include: {
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        category: true,
+        subservice: true,
+      },
+    });
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: "WO_CANCELLED",
+        entityType: "WORK_ORDER",
+        entityId: wo.id,
+        metadataJson: JSON.stringify({
+          cancelReason,
+          cancelledBy: req.user.role,
+        }),
+      },
+    });
+
+    // Clear response deadline if exists
+    clearResponseDeadline(wo.id);
+
+    // Send notification to technician and customer
+    // TODO: Implement notification service for cancellation
+
+    return res.json({
+      ...updated,
+      message: "Work order cancelled successfully",
+    });
   } catch (err) {
     next(err);
   }
