@@ -1,7 +1,7 @@
 /** @format */
 
 // src/services/sms.service.js
-import fetch from 'node-fetch';
+import fetch from "node-fetch";
 
 // ========================================
 // 🔑 BulkGate API Credentials
@@ -9,16 +9,16 @@ import fetch from 'node-fetch';
 
 // HTTP API - For normal SMS (notifications, alerts, updates)
 const HTTP_SMS_CONFIG = {
-  APPLICATION_ID: '36014',
-  APPLICATION_TOKEN: 'mS6UavzDJQ8KoJ2NZlSGmFaiPSNhsdBML1wq2ngi8rXvoTw0Qv',
-  BASE_URL: 'https://portal.bulkgate.com/api/1.0/simple',
+  APPLICATION_ID: "36014",
+  APPLICATION_TOKEN: "mS6UavzDJQ8KoJ2NZlSGmFaiPSNhsdBML1wq2ngi8rXvoTw0Qv",
+  BASE_URL: "https://portal.bulkgate.com/api/1.0/simple",
 };
 
 // OTP API - For verification codes only
 const OTP_API_CONFIG = {
-  APPLICATION_ID: '36013',
-  APPLICATION_TOKEN: '7ohN0WzblPga1tugpwCXiHiQweVB3GImpmCanFNZSLsyhL87yR',
-  BASE_URL: 'https://portal.bulkgate.com/api/1.0/otp',
+  APPLICATION_ID: "36013",
+  APPLICATION_TOKEN: "7ohN0WzblPga1tugpwCXiHiQweVB3GImpmCanFNZSLsyhL87yR",
+  BASE_URL: "https://portal.bulkgate.com/api/1.0/otp",
 };
 
 // ========================================
@@ -28,7 +28,7 @@ const OTP_API_CONFIG = {
 /**
  * Send normal SMS using HTTP API
  * Use cases: Notifications, alerts, order updates, promotional messages
- * 
+ *
  * @param {string} phone - Phone number (with country code, e.g., +8801712345678)
  * @param {string} text - Message text
  * @param {object} options - Additional options
@@ -37,18 +37,19 @@ const OTP_API_CONFIG = {
 export const sendSMS = async (phone, text, options = {}) => {
   try {
     const {
-      senderId = 'FSM-System', // Sender ID (max 11 characters)
+      senderId = "FSM-System", // Sender ID (max 11 characters)
       unicode = 1, // 1 if message contains special characters/Bengali
-      messageType = 'transactional', // 'transactional' or 'promotional'
+      messageType = "transactional", // 'transactional' or 'promotional'
     } = options;
 
     // Format phone number (remove spaces and special characters)
-    const formattedPhone = phone.replace(/[\s\-\(\)]/g, '');
+    const formattedPhone = phone.replace(/[\s\-\(\)]/g, "");
 
     // Determine endpoint based on message type
-    const endpoint = messageType === 'promotional' 
-      ? `${HTTP_SMS_CONFIG.BASE_URL}/promotional`
-      : `${HTTP_SMS_CONFIG.BASE_URL}/transactional`;
+    const endpoint =
+      messageType === "promotional"
+        ? `${HTTP_SMS_CONFIG.BASE_URL}/promotional`
+        : `${HTTP_SMS_CONFIG.BASE_URL}/transactional`;
 
     // Prepare request payload
     const payload = {
@@ -64,16 +65,16 @@ export const sendSMS = async (phone, text, options = {}) => {
     console.log(`📤 Sending SMS to ${formattedPhone} via BulkGate HTTP API...`);
 
     const response = await fetch(endpoint, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
 
     const result = await response.json();
 
-    if (response.ok && result.data && result.data.status === 'sent') {
+    if (response.ok && result.data && result.data.status === "sent") {
       console.log(`✅ SMS sent successfully to ${formattedPhone}`);
       return {
         success: true,
@@ -81,22 +82,22 @@ export const sendSMS = async (phone, text, options = {}) => {
         status: result.data.status,
         price: result.data.price,
         credit: result.data.credit,
-        message: 'SMS sent successfully',
+        message: "SMS sent successfully",
       };
     } else {
       console.error(`❌ Failed to send SMS to ${formattedPhone}:`, result);
       return {
         success: false,
-        error: result.error || 'Failed to send SMS',
-        message: result.error || 'SMS sending failed',
+        error: result.error || "Failed to send SMS",
+        message: result.error || "SMS sending failed",
       };
     }
   } catch (error) {
-    console.error('❌ Error sending SMS via BulkGate:', error);
+    console.error("❌ Error sending SMS via BulkGate:", error);
     return {
       success: false,
       error: error.message,
-      message: 'SMS service error',
+      message: "SMS service error",
     };
   }
 };
@@ -111,11 +112,11 @@ export const sendSMS = async (phone, text, options = {}) => {
 export const sendBulkSMS = async (phoneNumbers, text, options = {}) => {
   try {
     const results = await Promise.all(
-      phoneNumbers.map(phone => sendSMS(phone, text, options))
+      phoneNumbers.map((phone) => sendSMS(phone, text, options))
     );
 
-    const successful = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
 
     return {
       success: true,
@@ -125,7 +126,7 @@ export const sendBulkSMS = async (phoneNumbers, text, options = {}) => {
       results,
     };
   } catch (error) {
-    console.error('❌ Error sending bulk SMS:', error);
+    console.error("❌ Error sending bulk SMS:", error);
     return {
       success: false,
       error: error.message,
@@ -140,7 +141,7 @@ export const sendBulkSMS = async (phoneNumbers, text, options = {}) => {
 /**
  * Send OTP code using BulkGate OTP API
  * Use cases: Login, signup, password reset, 2FA
- * 
+ *
  * @param {string} phone - Phone number (with country code)
  * @param {object} options - OTP configuration options
  * @returns {Promise<object>} API response
@@ -150,13 +151,13 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
     const {
       length = 6, // OTP length (4, 6, 8 digits)
       expire = 5, // Expiration time in minutes (default 5 minutes)
-      channel = 'sms', // 'sms', 'voice', 'whatsapp'
-      senderId = 'FSM-OTP', // Sender ID
+      channel = "sms", // 'sms', 'voice', 'whatsapp'
+      senderId = "FSM-OTP", // Sender ID
       template = null, // Custom template (optional)
     } = options;
 
     // Format phone number
-    const formattedPhone = phone.replace(/[\s\-\(\)]/g, '');
+    const formattedPhone = phone.replace(/[\s\-\(\)]/g, "");
 
     // Prepare request payload
     const payload = {
@@ -178,9 +179,9 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
     console.log(`🔐 Sending OTP to ${formattedPhone} via BulkGate OTP API...`);
 
     const response = await fetch(`${OTP_API_CONFIG.BASE_URL}/send`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
@@ -196,29 +197,29 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
         price: result.data.price,
         credit: result.data.credit,
         expire: expire,
-        message: 'OTP sent successfully',
+        message: "OTP sent successfully",
       };
     } else {
       console.error(`❌ Failed to send OTP to ${formattedPhone}:`, result);
       return {
         success: false,
-        error: result.error || 'Failed to send OTP',
-        message: result.error || 'OTP sending failed',
+        error: result.error || "Failed to send OTP",
+        message: result.error || "OTP sending failed",
       };
     }
   } catch (error) {
-    console.error('❌ Error sending OTP via BulkGate:', error);
+    console.error("❌ Error sending OTP via BulkGate:", error);
     return {
       success: false,
       error: error.message,
-      message: 'OTP service error',
+      message: "OTP service error",
     };
   }
 };
 
 /**
  * Verify OTP code using BulkGate OTP API
- * 
+ *
  * @param {string} otpId - OTP ID received from sendOTPViaBulkGate
  * @param {string} code - OTP code entered by user
  * @returns {Promise<object>} Verification result
@@ -235,39 +236,39 @@ export const verifyOTPViaBulkGate = async (otpId, code) => {
     console.log(`🔍 Verifying OTP code...`);
 
     const response = await fetch(`${OTP_API_CONFIG.BASE_URL}/verify`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
 
     const result = await response.json();
 
-    if (response.ok && result.data && result.data.status === 'valid') {
+    if (response.ok && result.data && result.data.status === "valid") {
       console.log(`✅ OTP verified successfully`);
       return {
         success: true,
         verified: true,
         status: result.data.status,
-        message: 'OTP verified successfully',
+        message: "OTP verified successfully",
       };
     } else {
       console.error(`❌ OTP verification failed:`, result);
       return {
         success: false,
         verified: false,
-        error: result.error || 'Invalid or expired OTP',
-        message: result.error || 'OTP verification failed',
+        error: result.error || "Invalid or expired OTP",
+        message: result.error || "OTP verification failed",
       };
     }
   } catch (error) {
-    console.error('❌ Error verifying OTP via BulkGate:', error);
+    console.error("❌ Error verifying OTP via BulkGate:", error);
     return {
       success: false,
       verified: false,
       error: error.message,
-      message: 'OTP verification service error',
+      message: "OTP verification service error",
     };
   }
 };
@@ -350,9 +351,9 @@ export const checkSMSStatus = async (messageId) => {
     };
 
     const response = await fetch(`${HTTP_SMS_CONFIG.BASE_URL}/info`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
@@ -369,11 +370,11 @@ export const checkSMSStatus = async (messageId) => {
     } else {
       return {
         success: false,
-        error: result.error || 'Failed to get status',
+        error: result.error || "Failed to get status",
       };
     }
   } catch (error) {
-    console.error('❌ Error checking SMS status:', error);
+    console.error("❌ Error checking SMS status:", error);
     return {
       success: false,
       error: error.message,
@@ -389,13 +390,13 @@ export const checkSMSStatus = async (messageId) => {
  * Test BulkGate HTTP SMS API
  */
 export const testHTTPSMS = async (phone) => {
-  console.log('🧪 Testing BulkGate HTTP SMS API...');
+  console.log("🧪 Testing BulkGate HTTP SMS API...");
   const result = await sendSMS(
     phone,
-    'Test message from FSM System. HTTP SMS API is working!',
+    "Test message from FSM System. HTTP SMS API is working!",
     { unicode: 1 }
   );
-  console.log('📊 Test Result:', result);
+  console.log("📊 Test Result:", result);
   return result;
 };
 
@@ -403,13 +404,13 @@ export const testHTTPSMS = async (phone) => {
  * Test BulkGate OTP API
  */
 export const testOTPAPI = async (phone) => {
-  console.log('🧪 Testing BulkGate OTP API...');
+  console.log("🧪 Testing BulkGate OTP API...");
   const result = await sendOTPViaBulkGate(phone, {
     length: 6,
     expire: 5,
-    channel: 'sms',
+    channel: "sms",
   });
-  console.log('📊 Test Result:', result);
+  console.log("📊 Test Result:", result);
   return result;
 };
 

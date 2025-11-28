@@ -1,8 +1,8 @@
 /** @format */
 
 // src/services/otp.service.js
-import { prisma } from '../prisma.js';
-import { sendOTPViaBulkGate } from './sms.service.js';
+import { prisma } from "../prisma.js";
+import { sendOTPViaBulkGate } from "./sms.service.js";
 
 // Generate a random 6-digit OTP
 const generateOTPCode = () => {
@@ -25,13 +25,15 @@ export const sendOTP = async (phone, type) => {
     const smsResult = await sendOTPViaBulkGate(phone, {
       length: 6,
       expire: 5,
-      channel: 'sms',
-      senderId: 'FSM-OTP',
+      channel: "sms",
+      senderId: "FSM-OTP",
     });
 
     // If BulkGate API fails, we still save to database for backup verification
     if (!smsResult.success) {
-      console.warn(`⚠️ BulkGate OTP API failed, using database OTP as fallback`);
+      console.warn(
+        `⚠️ BulkGate OTP API failed, using database OTP as fallback`
+      );
     }
 
     // Save OTP to database (for backup verification and tracking)
@@ -46,19 +48,19 @@ export const sendOTP = async (phone, type) => {
     });
 
     // Log OTP in development mode
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.log(`📱 OTP for ${phone}: ${code}`);
     }
 
     return {
-      message: 'OTP sent successfully',
+      message: "OTP sent successfully",
       otpId: smsResult.otpId || null, // BulkGate OTP ID for verification
-      smsStatus: smsResult.success ? 'sent' : 'failed',
+      smsStatus: smsResult.success ? "sent" : "failed",
       // Return OTP code only in development mode
-      debug: process.env.NODE_ENV === 'development' ? { code } : undefined,
+      debug: process.env.NODE_ENV === "development" ? { code } : undefined,
     };
   } catch (error) {
-    console.error('❌ Error in sendOTP service:', error);
+    console.error("❌ Error in sendOTP service:", error);
     throw error;
   }
 };
@@ -78,12 +80,12 @@ export const verifyOTP = async (phone, code, type) => {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
     if (!otp) {
-      throw new Error('Invalid or expired OTP');
+      throw new Error("Invalid or expired OTP");
     }
 
     // Mark OTP as used
@@ -95,11 +97,11 @@ export const verifyOTP = async (phone, code, type) => {
     console.log(`✅ OTP verified successfully for ${phone}`);
 
     return {
-      message: 'OTP verified successfully',
+      message: "OTP verified successfully",
       verified: true,
     };
   } catch (error) {
-    console.error('❌ Error verifying OTP:', error);
+    console.error("❌ Error verifying OTP:", error);
     throw error;
   }
 };

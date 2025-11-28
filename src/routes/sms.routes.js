@@ -1,8 +1,8 @@
 /** @format */
 
 // src/routes/sms.routes.js
-import { Router } from 'express';
-import { authMiddleware, requireRole } from '../middleware/auth.js';
+import { Router } from "express";
+import { authMiddleware, requireRole } from "../middleware/auth.js";
 import {
   sendSMS,
   sendOTPViaBulkGate,
@@ -18,7 +18,7 @@ import {
   sendPayoutApprovedSMS,
   sendAccountBlockedSMS,
   sendWelcomeSMS,
-} from '../services/sms.service.js';
+} from "../services/sms.service.js";
 
 const router = Router();
 
@@ -31,21 +31,21 @@ const router = Router();
  * POST /api/sms/test/http
  */
 router.post(
-  '/test/http',
+  "/test/http",
   authMiddleware,
-  requireRole('ADMIN'),
+  requireRole("ADMIN"),
   async (req, res, next) => {
     try {
       const { phone } = req.body;
 
       if (!phone) {
-        return res.status(400).json({ message: 'Phone number is required' });
+        return res.status(400).json({ message: "Phone number is required" });
       }
 
       const result = await testHTTPSMS(phone);
 
       return res.json({
-        message: 'HTTP SMS API test completed',
+        message: "HTTP SMS API test completed",
         result,
       });
     } catch (error) {
@@ -59,23 +59,23 @@ router.post(
  * POST /api/sms/test/otp
  */
 router.post(
-  '/test/otp',
+  "/test/otp",
   authMiddleware,
-  requireRole('ADMIN'),
+  requireRole("ADMIN"),
   async (req, res, next) => {
     try {
       const { phone } = req.body;
 
       if (!phone) {
-        return res.status(400).json({ message: 'Phone number is required' });
+        return res.status(400).json({ message: "Phone number is required" });
       }
 
       const result = await testOTPAPI(phone);
 
       return res.json({
-        message: 'OTP API test completed',
+        message: "OTP API test completed",
         result,
-        note: 'Check your phone for OTP code',
+        note: "Check your phone for OTP code",
       });
     } catch (error) {
       next(error);
@@ -92,23 +92,23 @@ router.post(
  * POST /api/sms/send
  */
 router.post(
-  '/send',
+  "/send",
   authMiddleware,
-  requireRole('ADMIN', 'DISPATCHER'),
+  requireRole("ADMIN", "DISPATCHER"),
   async (req, res, next) => {
     try {
       const { phone, text, unicode, messageType, senderId } = req.body;
 
       if (!phone || !text) {
-        return res.status(400).json({ 
-          message: 'Phone and text are required' 
+        return res.status(400).json({
+          message: "Phone and text are required",
         });
       }
 
       const result = await sendSMS(phone, text, {
         unicode: unicode || 1,
-        messageType: messageType || 'transactional',
-        senderId: senderId || 'FSM-System',
+        messageType: messageType || "transactional",
+        senderId: senderId || "FSM-System",
       });
 
       return res.json(result);
@@ -123,27 +123,27 @@ router.post(
  * POST /api/sms/send-bulk
  */
 router.post(
-  '/send-bulk',
+  "/send-bulk",
   authMiddleware,
-  requireRole('ADMIN', 'DISPATCHER'),
+  requireRole("ADMIN", "DISPATCHER"),
   async (req, res, next) => {
     try {
       const { phones, text, unicode, messageType, senderId } = req.body;
 
       if (!phones || !Array.isArray(phones) || phones.length === 0) {
-        return res.status(400).json({ 
-          message: 'Phones array is required and must not be empty' 
+        return res.status(400).json({
+          message: "Phones array is required and must not be empty",
         });
       }
 
       if (!text) {
-        return res.status(400).json({ message: 'Text is required' });
+        return res.status(400).json({ message: "Text is required" });
       }
 
       const result = await sendBulkSMS(phones, text, {
         unicode: unicode || 1,
-        messageType: messageType || 'transactional',
-        senderId: senderId || 'FSM-System',
+        messageType: messageType || "transactional",
+        senderId: senderId || "FSM-System",
       });
 
       return res.json(result);
@@ -158,15 +158,15 @@ router.post(
  * GET /api/sms/status/:messageId
  */
 router.get(
-  '/status/:messageId',
+  "/status/:messageId",
   authMiddleware,
-  requireRole('ADMIN', 'DISPATCHER'),
+  requireRole("ADMIN", "DISPATCHER"),
   async (req, res, next) => {
     try {
       const { messageId } = req.params;
 
       if (!messageId) {
-        return res.status(400).json({ message: 'Message ID is required' });
+        return res.status(400).json({ message: "Message ID is required" });
       }
 
       const result = await checkSMSStatus(messageId);
@@ -187,21 +187,21 @@ router.get(
  * POST /api/sms/otp/send
  */
 router.post(
-  '/otp/send',
+  "/otp/send",
   authMiddleware,
-  requireRole('ADMIN'),
+  requireRole("ADMIN"),
   async (req, res, next) => {
     try {
       const { phone, length, expire, channel } = req.body;
 
       if (!phone) {
-        return res.status(400).json({ message: 'Phone number is required' });
+        return res.status(400).json({ message: "Phone number is required" });
       }
 
       const result = await sendOTPViaBulkGate(phone, {
         length: length || 6,
         expire: expire || 5,
-        channel: channel || 'sms',
+        channel: channel || "sms",
       });
 
       return res.json(result);
@@ -216,16 +216,16 @@ router.post(
  * POST /api/sms/otp/verify
  */
 router.post(
-  '/otp/verify',
+  "/otp/verify",
   authMiddleware,
-  requireRole('ADMIN'),
+  requireRole("ADMIN"),
   async (req, res, next) => {
     try {
       const { otpId, code } = req.body;
 
       if (!otpId || !code) {
-        return res.status(400).json({ 
-          message: 'OTP ID and code are required' 
+        return res.status(400).json({
+          message: "OTP ID and code are required",
         });
       }
 
@@ -247,16 +247,16 @@ router.post(
  * POST /api/sms/notify/wo-assignment
  */
 router.post(
-  '/notify/wo-assignment',
+  "/notify/wo-assignment",
   authMiddleware,
-  requireRole('ADMIN', 'DISPATCHER'),
+  requireRole("ADMIN", "DISPATCHER"),
   async (req, res, next) => {
     try {
       const { phone, woNumber, customerName } = req.body;
 
       if (!phone || !woNumber || !customerName) {
-        return res.status(400).json({ 
-          message: 'Phone, woNumber, and customerName are required' 
+        return res.status(400).json({
+          message: "Phone, woNumber, and customerName are required",
         });
       }
 
@@ -274,16 +274,16 @@ router.post(
  * POST /api/sms/notify/wo-accepted
  */
 router.post(
-  '/notify/wo-accepted',
+  "/notify/wo-accepted",
   authMiddleware,
-  requireRole('ADMIN', 'DISPATCHER'),
+  requireRole("ADMIN", "DISPATCHER"),
   async (req, res, next) => {
     try {
       const { phone, woNumber, technicianName } = req.body;
 
       if (!phone || !woNumber || !technicianName) {
-        return res.status(400).json({ 
-          message: 'Phone, woNumber, and technicianName are required' 
+        return res.status(400).json({
+          message: "Phone, woNumber, and technicianName are required",
         });
       }
 
@@ -301,16 +301,16 @@ router.post(
  * POST /api/sms/notify/wo-completed
  */
 router.post(
-  '/notify/wo-completed',
+  "/notify/wo-completed",
   authMiddleware,
-  requireRole('ADMIN', 'DISPATCHER'),
+  requireRole("ADMIN", "DISPATCHER"),
   async (req, res, next) => {
     try {
       const { phone, woNumber } = req.body;
 
       if (!phone || !woNumber) {
-        return res.status(400).json({ 
-          message: 'Phone and woNumber are required' 
+        return res.status(400).json({
+          message: "Phone and woNumber are required",
         });
       }
 
@@ -328,16 +328,16 @@ router.post(
  * POST /api/sms/notify/payment-verified
  */
 router.post(
-  '/notify/payment-verified',
+  "/notify/payment-verified",
   authMiddleware,
-  requireRole('ADMIN', 'DISPATCHER'),
+  requireRole("ADMIN", "DISPATCHER"),
   async (req, res, next) => {
     try {
       const { phone, amount, woNumber } = req.body;
 
       if (!phone || !amount || !woNumber) {
-        return res.status(400).json({ 
-          message: 'Phone, amount, and woNumber are required' 
+        return res.status(400).json({
+          message: "Phone, amount, and woNumber are required",
         });
       }
 
@@ -355,16 +355,16 @@ router.post(
  * POST /api/sms/notify/payout-approved
  */
 router.post(
-  '/notify/payout-approved',
+  "/notify/payout-approved",
   authMiddleware,
-  requireRole('ADMIN'),
+  requireRole("ADMIN"),
   async (req, res, next) => {
     try {
       const { phone, amount } = req.body;
 
       if (!phone || !amount) {
-        return res.status(400).json({ 
-          message: 'Phone and amount are required' 
+        return res.status(400).json({
+          message: "Phone and amount are required",
         });
       }
 
@@ -382,16 +382,16 @@ router.post(
  * POST /api/sms/notify/account-blocked
  */
 router.post(
-  '/notify/account-blocked',
+  "/notify/account-blocked",
   authMiddleware,
-  requireRole('ADMIN'),
+  requireRole("ADMIN"),
   async (req, res, next) => {
     try {
       const { phone, reason } = req.body;
 
       if (!phone || !reason) {
-        return res.status(400).json({ 
-          message: 'Phone and reason are required' 
+        return res.status(400).json({
+          message: "Phone and reason are required",
         });
       }
 
@@ -409,16 +409,16 @@ router.post(
  * POST /api/sms/notify/welcome
  */
 router.post(
-  '/notify/welcome',
+  "/notify/welcome",
   authMiddleware,
-  requireRole('ADMIN', 'CALL_CENTER'),
+  requireRole("ADMIN", "CALL_CENTER"),
   async (req, res, next) => {
     try {
       const { phone, name } = req.body;
 
       if (!phone || !name) {
-        return res.status(400).json({ 
-          message: 'Phone and name are required' 
+        return res.status(400).json({
+          message: "Phone and name are required",
         });
       }
 
