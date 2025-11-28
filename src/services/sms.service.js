@@ -1,7 +1,7 @@
 /** @format */
 
 // src/services/sms.service.js
-import fetch from "node-fetch";
+// Using built-in fetch API (Node.js 18+)
 
 // ========================================
 // 🔑 BulkGate API Credentials

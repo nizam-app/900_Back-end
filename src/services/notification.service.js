@@ -26,33 +26,6 @@ export const createNotification = async (userId, type, title, message, data = nu
       },
     });
 
-    // Send SMS notification for important events
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { phone: true, name: true },
-      });
-
-      if (user && user.phone) {
-        // Send SMS based on notification type
-        switch (type) {
-          case 'WO_ASSIGNED':
-          case 'WO_ACCEPTED':
-          case 'WO_COMPLETED':
-          case 'PAYMENT_VERIFIED':
-          case 'COMMISSION_PAID':
-          case 'TECHNICIAN_BLOCKED':
-            // SMS already sent by specific functions
-            console.log(`📱 SMS notification handled by specific function for ${type}`);
-            break;
-          default:
-            console.log(`🔔 Notification created (no SMS): ${title}`);
-        }
-      }
-    } catch (smsError) {
-      console.error('⚠️ SMS notification failed, but database notification saved:', smsError);
-    }
-
     console.log(`🔔 Notification created for user ${userId}: ${title}`);
 
     return notification;
@@ -137,6 +110,27 @@ export const notifyWOAssignment = async (technicianId, wo) => {
 
     // Send SMS notification
     if (technician && technician.phone) {
+      await sendWOAssignmentSMS(
+        technician.phone,
+        wo.woNumber,
+        customer?.name || 'Customer'
+      );
+    }
+
+    // Create database notification
+    return createNotification(
+      technicianId,
+      'WO_ASSIGNED',
+      'New Work Order Assigned',
+      `You have been assigned work order ${wo.woNumber}`,
+      { woId: wo.id, woNumber: wo.woNumber }
+    );
+  } catch (error) {
+    console.error('Error in notifyWOAssignment:', error);
+    throw error;
+  }
+};
+
 // ✅ Send notification for WO acceptance
 export const notifyWOAccepted = async (dispatcherId, wo) => {
   try {
@@ -184,6 +178,23 @@ export const notifyWOCompleted = async (dispatcherId, wo) => {
     });
 
     // Send SMS notification
+    if (dispatcher && dispatcher.phone) {
+      await sendWOCompletedSMS(dispatcher.phone, wo.woNumber);
+    }
+
+    return createNotification(
+      dispatcherId,
+      'WO_COMPLETED',
+      'Work Order Completed',
+      `Work order ${wo.woNumber} has been completed`,
+      { woId: wo.id, woNumber: wo.woNumber }
+    );
+  } catch (error) {
+    console.error('Error in notifyWOCompleted:', error);
+    throw error;
+  }
+};
+
 // ✅ Send notification for payment verification
 export const notifyPaymentVerified = async (technicianId, wo, payment) => {
   try {
@@ -271,70 +282,24 @@ export const notifyTechnicianBlocked = async (technicianId, reason) => {
     console.error('Error in notifyTechnicianBlocked:', error);
     throw error;
   }
-};  'Work Order Completed',
-    `Work order ${wo.woNumber} has been completed`,
-    { woId: wo.id, woNumber: wo.woNumber }
-  );
-};
-
-// ✅ Send notification for payment verification
-export const notifyPaymentVerified = async (technicianId, wo, payment) => {
-  return createNotification(
-    technicianId,
-    'PAYMENT_VERIFIED',
-    'Payment Verified',
-    `Payment for work order ${wo.woNumber} has been verified`,
-    { woId: wo.id, woNumber: wo.woNumber, amount: payment.amount } 
-  );
-};
-
-// ✅ Send notification for commission paid alert for each service payout
-export const notifyCommissionPaid = async (technicianId, payout) => {
-  return createNotification(
-    technicianId,
-    'COMMISSION_PAID',
-    'Commission Paid',
-    `Your commission of ${payout.totalAmount} has been paid`,
-    { payoutId: payout.id, amount: payout.totalAmount }
-  );
-};
-
-// ✅ Send notification for technician blocked
-export const notifyTechnicianBlocked = async (technicianId, reason) => {
-  const notification = await createNotification(
-    technicianId,
-    'TECHNICIAN_BLOCKED',
-    'Account Blocked',
-    `Your account has been blocked. Reason: ${reason}`,
-    { reason }
-  );
-
-  // Real-time delivery removed - notifications stored in database only
-  console.log(`🚫 Account blocked notification created for technician ${technicianId}`);
-
-  return notification;
 };
 
 // ✅ Send notification for new Service Request
 export const notifyNewServiceRequest = async (sr) => {
-  // Real-time delivery removed - notifications stored in database only
   console.log(`📝 New service request notification created: ${sr.srNumber}`);
 };
 
 // ✅ Send notification when technician starts work
 export const notifyWorkStarted = async (wo) => {
-  // Real-time delivery removed - notifications stored in database only
   console.log(`🛠️ Work started notification created for WO: ${wo.woNumber}`);
 };
 
 // ✅ Emergency/urgent notifications
 export const notifyEmergency = async (message, data = {}) => {
-  // Real-time delivery removed - notifications stored in database only
   console.log(`🚨 Emergency alert notification created: ${message}`);
 };
 
 // ✅ New: System-wide announcements
 export const sendSystemAnnouncement = async (title, message, targetRoles = []) => {
-  // Real-time broadcast removed - notifications stored in database only
   console.log(`📢 System announcement created: ${title}`);
 };
