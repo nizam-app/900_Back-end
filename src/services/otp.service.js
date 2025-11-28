@@ -2,11 +2,32 @@
 
 // src/services/otp.service.js
 import { prisma } from "../prisma.js";
-import { sendOTPViaBulkGate } from "./sms.service.js";
+import { sendSMS } from "./sms.service.js";
 
 // Generate a random 6-digit OTP
 const generateOTPCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// Format phone number - keep as is if already has country code
+const formatPhoneNumber = (phone) => {
+  // Remove spaces, dashes, parentheses, but keep the + if present
+  let cleaned = phone.replace(/[\s\-\(\)]/g, "");
+
+  // Remove the + sign to get just digits
+  cleaned = cleaned.replace(/^\+/, "");
+
+  // If starts with 0, replace with 88 (Bangladesh country code)
+  if (cleaned.startsWith("0")) {
+    cleaned = "88" + cleaned.substring(1);
+  }
+
+  // If doesn't start with 88, add it
+  if (!cleaned.startsWith("88")) {
+    cleaned = "88" + cleaned;
+  }
+
+  return cleaned;
 };
 
 // ✅ Send OTP to phone number
@@ -16,27 +37,36 @@ export const sendOTP = async (phone, type) => {
     const code = generateOTPCode();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
+    // Format phone number with country code
+    const formattedPhone = formatPhoneNumber(phone);
+
+    console.log(`📱 Original phone: ${phone}`);
+    console.log(`📱 Formatted phone: ${formattedPhone}`);
+
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { phone },
     });
 
-    // Send OTP via BulkGate OTP API
-    const smsResult = await sendOTPViaBulkGate(phone, {
-      length: 6,
-      expire: 5,
-      channel: "sms",
-      senderId: "FSM-OTP",
+    // Create OTP message
+    const otpMessage = `Your FSM verification code is: ${code}. Valid for 5 minutes. Do not share this code with anyone.`;
+
+    // Send OTP via BulkGate SMS API
+    console.log(`📤 Sending OTP SMS to ${formattedPhone}...`);
+    const smsResult = await sendSMS(formattedPhone, otpMessage, {
+      unicode: 0,
+      messageType: "transactional",
     });
 
-    // If BulkGate API fails, we still save to database for backup verification
+    console.log(`📊 SMS Result:`, JSON.stringify(smsResult, null, 2));
+
     if (!smsResult.success) {
-      console.warn(
-        `⚠️ BulkGate OTP API failed, using database OTP as fallback`
-      );
+      console.warn(`⚠️ SMS sending failed: ${smsResult.error}`);
+    } else {
+      console.log(`✅ OTP SMS sent successfully to ${formattedPhone}`);
     }
 
-    // Save OTP to database (for backup verification and tracking)
+    // Save OTP to database
     const otpRecord = await prisma.oTP.create({
       data: {
         phone,
@@ -54,10 +84,8 @@ export const sendOTP = async (phone, type) => {
 
     return {
       message: "OTP sent successfully",
-      otpId: smsResult.otpId || null, // BulkGate OTP ID for verification
-      smsStatus: smsResult.success ? "sent" : "failed",
-      // Return OTP code only in development mode
-      debug: process.env.NODE_ENV === "development" ? { code } : undefined,
+      // Return OTP code in development mode for testing
+      ...(process.env.NODE_ENV === "development" && { code }),
     };
   } catch (error) {
     console.error("❌ Error in sendOTP service:", error);
