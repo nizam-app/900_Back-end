@@ -13,20 +13,20 @@ const generateOTPCode = () => {
 const formatPhoneNumber = (phone) => {
   // Remove spaces, dashes, parentheses, but keep the + if present
   let cleaned = phone.replace(/[\s\-\(\)]/g, "");
-  
+
   // Remove the + sign to get just digits
   cleaned = cleaned.replace(/^\+/, "");
-  
+
   // If starts with 0, replace with 88 (Bangladesh country code)
   if (cleaned.startsWith("0")) {
     cleaned = "88" + cleaned.substring(1);
   }
-  
+
   // If doesn't start with 88, add it
   if (!cleaned.startsWith("88")) {
     cleaned = "88" + cleaned;
   }
-  
+
   return cleaned;
 };
 
@@ -39,7 +39,7 @@ export const sendOTP = async (phone, type) => {
 
     // Format phone number with country code
     const formattedPhone = formatPhoneNumber(phone);
-    
+
     console.log(`📱 Original phone: ${phone}`);
     console.log(`📱 Formatted phone: ${formattedPhone}`);
 
