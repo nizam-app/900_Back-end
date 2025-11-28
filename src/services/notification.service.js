@@ -1,9 +1,21 @@
+/** @format */
+
 // src/services/notification.service.js
 import { prisma } from '../prisma.js';
+import {
+  sendWOAssignmentSMS,
+  sendWOAcceptedSMS,
+  sendWOCompletedSMS,
+  sendPaymentVerifiedSMS,
+  sendPayoutApprovedSMS,
+  sendAccountBlockedSMS,
+  sendWelcomeSMS,
+} from './sms.service.js';
 
-// ✅ Create and send notification (database storage only)
+// ✅ Create and send notification (database storage + SMS)
 export const createNotification = async (userId, type, title, message, data = null) => {
   try {
+    // Create database notification
     const notification = await prisma.notification.create({
       data: {
         userId,
@@ -14,7 +26,33 @@ export const createNotification = async (userId, type, title, message, data = nu
       },
     });
 
-    // Notification stored in database only (real-time delivery removed)
+    // Send SMS notification for important events
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { phone: true, name: true },
+      });
+
+      if (user && user.phone) {
+        // Send SMS based on notification type
+        switch (type) {
+          case 'WO_ASSIGNED':
+          case 'WO_ACCEPTED':
+          case 'WO_COMPLETED':
+          case 'PAYMENT_VERIFIED':
+          case 'COMMISSION_PAID':
+          case 'TECHNICIAN_BLOCKED':
+            // SMS already sent by specific functions
+            console.log(`📱 SMS notification handled by specific function for ${type}`);
+            break;
+          default:
+            console.log(`🔔 Notification created (no SMS): ${title}`);
+        }
+      }
+    } catch (smsError) {
+      console.error('⚠️ SMS notification failed, but database notification saved:', smsError);
+    }
+
     console.log(`🔔 Notification created for user ${userId}: ${title}`);
 
     return notification;
@@ -84,38 +122,156 @@ export const markAllNotificationsRead = async (userId) => {
 
 // ✅ Send notification for WO assignment
 export const notifyWOAssignment = async (technicianId, wo) => {
-  // Create database notification
-  const notification = await createNotification(
-    technicianId,
-    'WO_ASSIGNED',
-    'New Work Order Assigned',
-    `You have been assigned work order ${wo.woNumber}`,
-    { woId: wo.id, woNumber: wo.woNumber }
-  );
+  try {
+    // Get technician details
+    const technician = await prisma.user.findUnique({
+      where: { id: technicianId },
+      select: { phone: true, name: true },
+    });
 
-  // Real-time broadcast removed - notifications stored in database only
-  console.log(`📋 Work Order ${wo.woNumber} assignment notification created for technician ${technicianId}`);
+    // Get customer details
+    const customer = await prisma.user.findUnique({
+      where: { id: wo.customerId },
+      select: { name: true },
+    });
 
-  return notification;
-};
-
+    // Send SMS notification
+    if (technician && technician.phone) {
 // ✅ Send notification for WO acceptance
 export const notifyWOAccepted = async (dispatcherId, wo) => {
-  return createNotification(
-    dispatcherId,
-    'WO_ACCEPTED',
-    'Work Order Accepted',
-    `Technician accepted work order ${wo.woNumber}`,
-    { woId: wo.id, woNumber: wo.woNumber }
-  );
+  try {
+    // Get dispatcher details
+    const dispatcher = await prisma.user.findUnique({
+      where: { id: dispatcherId },
+      select: { phone: true },
+    });
+
+    // Get technician details
+    const technician = await prisma.user.findUnique({
+      where: { id: wo.technicianId },
+      select: { name: true },
+    });
+
+    // Send SMS notification
+    if (dispatcher && dispatcher.phone) {
+      await sendWOAcceptedSMS(
+        dispatcher.phone,
+        wo.woNumber,
+        technician?.name || 'Technician'
+      );
+    }
+
+    return createNotification(
+      dispatcherId,
+      'WO_ACCEPTED',
+      'Work Order Accepted',
+      `Technician accepted work order ${wo.woNumber}`,
+      { woId: wo.id, woNumber: wo.woNumber }
+    );
+  } catch (error) {
+    console.error('Error in notifyWOAccepted:', error);
+    throw error;
+  }
 };
 
 // ✅ Send notification for WO completion
 export const notifyWOCompleted = async (dispatcherId, wo) => {
-  return createNotification(
-    dispatcherId,
-    'WO_COMPLETED',
-    'Work Order Completed',
+  try {
+    // Get dispatcher details
+    const dispatcher = await prisma.user.findUnique({
+      where: { id: dispatcherId },
+      select: { phone: true },
+    });
+
+    // Send SMS notification
+// ✅ Send notification for payment verification
+export const notifyPaymentVerified = async (technicianId, wo, payment) => {
+  try {
+    // Get technician details
+    const technician = await prisma.user.findUnique({
+      where: { id: technicianId },
+      select: { phone: true },
+    });
+
+    // Send SMS notification
+    if (technician && technician.phone) {
+      await sendPaymentVerifiedSMS(
+        technician.phone,
+        payment.amount,
+        wo.woNumber
+      );
+    }
+
+    return createNotification(
+      technicianId,
+      'PAYMENT_VERIFIED',
+      'Payment Verified',
+      `Payment for work order ${wo.woNumber} has been verified`,
+      { woId: wo.id, woNumber: wo.woNumber, amount: payment.amount } 
+    );
+  } catch (error) {
+    console.error('Error in notifyPaymentVerified:', error);
+    throw error;
+  }
+};
+
+// ✅ Send notification for commission paid alert for each service payout
+export const notifyCommissionPaid = async (technicianId, payout) => {
+  try {
+    // Get technician details
+    const technician = await prisma.user.findUnique({
+      where: { id: technicianId },
+      select: { phone: true },
+    });
+
+    // Send SMS notification
+    if (technician && technician.phone) {
+      await sendPayoutApprovedSMS(technician.phone, payout.totalAmount);
+    }
+
+    return createNotification(
+      technicianId,
+      'COMMISSION_PAID',
+      'Commission Paid',
+      `Your commission of ${payout.totalAmount} has been paid`,
+      { payoutId: payout.id, amount: payout.totalAmount }
+    );
+  } catch (error) {
+    console.error('Error in notifyCommissionPaid:', error);
+    throw error;
+  }
+};
+
+// ✅ Send notification for technician blocked
+export const notifyTechnicianBlocked = async (technicianId, reason) => {
+  try {
+    // Get technician details
+    const technician = await prisma.user.findUnique({
+      where: { id: technicianId },
+      select: { phone: true },
+    });
+
+    // Send SMS notification
+    if (technician && technician.phone) {
+      await sendAccountBlockedSMS(technician.phone, reason);
+    }
+
+    const notification = await createNotification(
+      technicianId,
+      'TECHNICIAN_BLOCKED',
+      'Account Blocked',
+      `Your account has been blocked. Reason: ${reason}`,
+      { reason }
+    );
+
+    console.log(`🚫 Account blocked notification sent to technician ${technicianId}`);
+
+    return notification;
+  } catch (error) {
+    console.error('Error in notifyTechnicianBlocked:', error);
+    throw error;
+  }
+};  'Work Order Completed',
     `Work order ${wo.woNumber} has been completed`,
     { woId: wo.id, woNumber: wo.woNumber }
   );
