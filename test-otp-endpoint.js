@@ -31,31 +31,37 @@ const testOTPEndpoint = async () => {
 
     if (sendResponse.ok) {
       console.log("\n✅ OTP sent successfully!");
-      
+
       if (sendResult.code) {
         console.log("🔢 OTP Code:", sendResult.code);
         console.log("\n📱 Please check your phone for the SMS!");
-        
+
         // Wait a bit then test verification
         console.log("\n⏳ Waiting 3 seconds before testing verification...");
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
         console.log("\n📤 2. Testing OTP verification...");
-        const verifyResponse = await fetch("http://localhost:4000/api/otp/verify", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            phone: phone,
-            code: sendResult.code,
-            type: type,
-          }),
-        });
+        const verifyResponse = await fetch(
+          "http://localhost:4000/api/otp/verify",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              phone: phone,
+              code: sendResult.code,
+              type: type,
+            }),
+          }
+        );
 
         const verifyResult = await verifyResponse.json();
         console.log("📊 Verify Response Status:", verifyResponse.status);
-        console.log("📊 Verify Response:", JSON.stringify(verifyResult, null, 2));
+        console.log(
+          "📊 Verify Response:",
+          JSON.stringify(verifyResult, null, 2)
+        );
 
         if (verifyResponse.ok && verifyResult.verified) {
           console.log("\n✅ OTP verification successful!");
