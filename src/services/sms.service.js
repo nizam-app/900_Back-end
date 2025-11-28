@@ -149,32 +149,37 @@ export const sendBulkSMS = async (phoneNumbers, text, options = {}) => {
 export const sendOTPViaBulkGate = async (phone, options = {}) => {
   try {
     const {
-      length = 6, // OTP length (4, 6, 8 digits)
-      expire = 5, // Expiration time in minutes (default 5 minutes)
-      channel = "sms", // 'sms', 'voice', 'whatsapp'
+      codeLength = 6, // OTP length (4-100 digits)
+      expiration = 300, // Expiration time in seconds (default 5 minutes)
+      country = "bd", // Country code (ISO 3166-1 alpha-2)
+      language = "en", // Language for OTP message
+      codeType = "int", // 'int', 'string', or 'combined'
+      clientIp = "127.0.0.1", // Client IP for rate limiting
       senderId = "FSM-OTP", // Sender ID
-      template = null, // Custom template (optional)
     } = options;
 
     // Format phone number
-    const formattedPhone = phone.replace(/[\s\-\(\)]/g, "");
+    const formattedPhone = phone.replace(/[\s\-\(\)\+]/g, "");
 
-    // Prepare request payload
+    // Prepare request payload according to BulkGate OTP API v1.0
     const payload = {
       application_id: OTP_API_CONFIG.APPLICATION_ID,
       application_token: OTP_API_CONFIG.APPLICATION_TOKEN,
       number: formattedPhone,
-      channel: channel,
-      length: length,
-      expire: expire,
-      sender_id: senderId,
-      sender_id_value: senderId,
+      country: country,
+      language: language,
+      code_type: codeType,
+      code_length: codeLength,
+      request_quota_number: 1,
+      request_quota_identification: clientIp, // Required for rate limiting
+      expiration: expiration,
+      channel: {
+        sms: {
+          sender_id: "gText",
+          sender_id_value: senderId,
+        },
+      },
     };
-
-    // Add template if provided
-    if (template) {
-      payload.template = template;
-    }
 
     console.log(`🔐 Sending OTP to ${formattedPhone} via BulkGate OTP API...`);
 
@@ -192,18 +197,18 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
       console.log(`✅ OTP sent successfully to ${formattedPhone}`);
       return {
         success: true,
-        otpId: result.data.otp_id, // Important: Save this to verify OTP later
-        status: result.data.status,
-        price: result.data.price,
-        credit: result.data.credit,
-        expire: expire,
+        otpId: result.data.id, // Important: Save this to verify OTP later
+        messageId: result.data.message?.message_id,
+        status: result.data.message?.status,
+        channel: result.data.message?.channel,
+        expiration: expiration,
         message: "OTP sent successfully",
       };
     } else {
       console.error(`❌ Failed to send OTP to ${formattedPhone}:`, result);
       return {
         success: false,
-        error: result.error || "Failed to send OTP",
+        error: result.error || result.type || "Failed to send OTP",
         message: result.error || "OTP sending failed",
       };
     }
@@ -220,7 +225,7 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
 /**
  * Verify OTP code using BulkGate OTP API
  *
- * @param {string} otpId - OTP ID received from sendOTPViaBulkGate
+ * @param {string} otpId - OTP ID received from sendOTPViaBulkGate (e.g., "opt-xxxxx")
  * @param {string} code - OTP code entered by user
  * @returns {Promise<object>} Verification result
  */
@@ -229,11 +234,11 @@ export const verifyOTPViaBulkGate = async (otpId, code) => {
     const payload = {
       application_id: OTP_API_CONFIG.APPLICATION_ID,
       application_token: OTP_API_CONFIG.APPLICATION_TOKEN,
-      otp_id: otpId,
-      code: code,
+      id: otpId, // The ID received from send OTP response
+      code: String(code), // OTP code as string
     };
 
-    console.log(`🔍 Verifying OTP code...`);
+    console.log(`🔍 Verifying OTP code for ID: ${otpId}...`);
 
     const response = await fetch(`${OTP_API_CONFIG.BASE_URL}/verify`, {
       method: "POST",
@@ -245,20 +250,25 @@ export const verifyOTPViaBulkGate = async (otpId, code) => {
 
     const result = await response.json();
 
-    if (response.ok && result.data && result.data.status === "valid") {
-      console.log(`✅ OTP verified successfully`);
+    if (response.ok && result.data) {
+      const isVerified = result.data.verified === true;
+      console.log(
+        `${isVerified ? "✅" : "❌"} OTP verification: ${
+          isVerified ? "SUCCESS" : "FAILED"
+        }`
+      );
       return {
         success: true,
-        verified: true,
-        status: result.data.status,
-        message: "OTP verified successfully",
+        verified: isVerified,
+        otpId: result.data.id,
+        message: isVerified ? "OTP verified successfully" : "Invalid OTP code",
       };
     } else {
-      console.error(`❌ OTP verification failed:`, result);
+      console.error(`❌ OTP verification error:`, result);
       return {
         success: false,
         verified: false,
-        error: result.error || "Invalid or expired OTP",
+        error: result.error || result.type || "Verification failed",
         message: result.error || "OTP verification failed",
       };
     }
