@@ -1,7 +1,7 @@
 /** @format */
 
 // src/services/notification.service.js
-import { prisma } from '../prisma.js';
+import { prisma } from "../prisma.js";
 import {
   sendWOAssignmentSMS,
   sendWOAcceptedSMS,
@@ -10,10 +10,16 @@ import {
   sendPayoutApprovedSMS,
   sendAccountBlockedSMS,
   sendWelcomeSMS,
-} from './sms.service.js';
+} from "./sms.service.js";
 
 // ✅ Create and send notification (database storage + SMS)
-export const createNotification = async (userId, type, title, message, data = null) => {
+export const createNotification = async (
+  userId,
+  type,
+  title,
+  message,
+  data = null
+) => {
   try {
     // Create database notification
     const notification = await prisma.notification.create({
@@ -30,9 +36,9 @@ export const createNotification = async (userId, type, title, message, data = nu
 
     return notification;
   } catch (err) {
-    console.error('Error creating notification:', err);
+    console.error("Error creating notification:", err);
     throw err;
-  } 
+  }
 };
 
 // ✅ Get user notifications
@@ -40,13 +46,13 @@ export const findUserNotifications = async (userId, filters) => {
   const { unreadOnly } = filters;
 
   const where = { userId };
-  if (unreadOnly === 'true') {
+  if (unreadOnly === "true") {
     where.isRead = false;
   }
 
   const notifications = await prisma.notification.findMany({
     where,
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
     take: 50,
   });
 
@@ -63,7 +69,7 @@ export const markNotificationRead = async (notificationId, userId) => {
   });
 
   if (!notification) {
-    throw new Error('Notification not found');
+    throw new Error("Notification not found");
   }
 
   const updated = await prisma.notification.update({
@@ -90,7 +96,7 @@ export const markAllNotificationsRead = async (userId) => {
     },
   });
 
-  return { message: 'All notifications marked as read' };
+  return { message: "All notifications marked as read" };
 };
 
 // ✅ Send notification for WO assignment
@@ -113,20 +119,20 @@ export const notifyWOAssignment = async (technicianId, wo) => {
       await sendWOAssignmentSMS(
         technician.phone,
         wo.woNumber,
-        customer?.name || 'Customer'
+        customer?.name || "Customer"
       );
     }
 
     // Create database notification
     return createNotification(
       technicianId,
-      'WO_ASSIGNED',
-      'New Work Order Assigned',
+      "WO_ASSIGNED",
+      "New Work Order Assigned",
       `You have been assigned work order ${wo.woNumber}`,
       { woId: wo.id, woNumber: wo.woNumber }
     );
   } catch (error) {
-    console.error('Error in notifyWOAssignment:', error);
+    console.error("Error in notifyWOAssignment:", error);
     throw error;
   }
 };
@@ -151,19 +157,19 @@ export const notifyWOAccepted = async (dispatcherId, wo) => {
       await sendWOAcceptedSMS(
         dispatcher.phone,
         wo.woNumber,
-        technician?.name || 'Technician'
+        technician?.name || "Technician"
       );
     }
 
     return createNotification(
       dispatcherId,
-      'WO_ACCEPTED',
-      'Work Order Accepted',
+      "WO_ACCEPTED",
+      "Work Order Accepted",
       `Technician accepted work order ${wo.woNumber}`,
       { woId: wo.id, woNumber: wo.woNumber }
     );
   } catch (error) {
-    console.error('Error in notifyWOAccepted:', error);
+    console.error("Error in notifyWOAccepted:", error);
     throw error;
   }
 };
@@ -184,13 +190,13 @@ export const notifyWOCompleted = async (dispatcherId, wo) => {
 
     return createNotification(
       dispatcherId,
-      'WO_COMPLETED',
-      'Work Order Completed',
+      "WO_COMPLETED",
+      "Work Order Completed",
       `Work order ${wo.woNumber} has been completed`,
       { woId: wo.id, woNumber: wo.woNumber }
     );
   } catch (error) {
-    console.error('Error in notifyWOCompleted:', error);
+    console.error("Error in notifyWOCompleted:", error);
     throw error;
   }
 };
@@ -215,13 +221,13 @@ export const notifyPaymentVerified = async (technicianId, wo, payment) => {
 
     return createNotification(
       technicianId,
-      'PAYMENT_VERIFIED',
-      'Payment Verified',
+      "PAYMENT_VERIFIED",
+      "Payment Verified",
       `Payment for work order ${wo.woNumber} has been verified`,
-      { woId: wo.id, woNumber: wo.woNumber, amount: payment.amount } 
+      { woId: wo.id, woNumber: wo.woNumber, amount: payment.amount }
     );
   } catch (error) {
-    console.error('Error in notifyPaymentVerified:', error);
+    console.error("Error in notifyPaymentVerified:", error);
     throw error;
   }
 };
@@ -242,13 +248,13 @@ export const notifyCommissionPaid = async (technicianId, payout) => {
 
     return createNotification(
       technicianId,
-      'COMMISSION_PAID',
-      'Commission Paid',
+      "COMMISSION_PAID",
+      "Commission Paid",
       `Your commission of ${payout.totalAmount} has been paid`,
       { payoutId: payout.id, amount: payout.totalAmount }
     );
   } catch (error) {
-    console.error('Error in notifyCommissionPaid:', error);
+    console.error("Error in notifyCommissionPaid:", error);
     throw error;
   }
 };
@@ -269,17 +275,19 @@ export const notifyTechnicianBlocked = async (technicianId, reason) => {
 
     const notification = await createNotification(
       technicianId,
-      'TECHNICIAN_BLOCKED',
-      'Account Blocked',
+      "TECHNICIAN_BLOCKED",
+      "Account Blocked",
       `Your account has been blocked. Reason: ${reason}`,
       { reason }
     );
 
-    console.log(`🚫 Account blocked notification sent to technician ${technicianId}`);
+    console.log(
+      `🚫 Account blocked notification sent to technician ${technicianId}`
+    );
 
     return notification;
   } catch (error) {
-    console.error('Error in notifyTechnicianBlocked:', error);
+    console.error("Error in notifyTechnicianBlocked:", error);
     throw error;
   }
 };
@@ -300,6 +308,10 @@ export const notifyEmergency = async (message, data = {}) => {
 };
 
 // ✅ New: System-wide announcements
-export const sendSystemAnnouncement = async (title, message, targetRoles = []) => {
+export const sendSystemAnnouncement = async (
+  title,
+  message,
+  targetRoles = []
+) => {
   console.log(`📢 System announcement created: ${title}`);
 };
