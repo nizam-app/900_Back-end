@@ -1,32 +1,43 @@
+/** @format */
+
 // src/controllers/otp.controller.js
-import { prisma } from '../prisma.js';
+import * as otpService from "../services/otp.service.js";
 
 export const sendOTP = async (req, res, next) => {
   try {
     const { phone, type } = req.body;
 
     if (!phone || !type) {
-      return res.status(400).json({ message: 'Phone and type are required' });
+      return res.status(400).json({ message: "Phone and type are required" });
     }
 
-    // Generate 6-digit OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    // Validate phone format (10-15 digits)
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({
+        message:
+          "Invalid phone format. Use format: +8801712345678 or 8801712345678",
+      });
+    }
 
-    await prisma.oTP.create({
-      data: {
-        phone,
-        code,
-        type,
-        expiresAt,
-      },
-    });
+    // Validate type
+    const validTypes = [
+      "LOGIN",
+      "REGISTRATION",
+      "PASSWORD_RESET",
+      "VERIFICATION",
+    ];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({
+        message: `Invalid type. Must be one of: ${validTypes.join(", ")}`,
+      });
+    }
 
-    // TODO: Send SMS via Twilio/Africa's Talking
-    console.log(`OTP for ${phone}: ${code}`);
+    const result = await otpService.sendOTP(phone, type);
 
-    return res.json({ message: 'OTP sent successfully', code }); // Remove code in production
+    return res.json(result);
   } catch (err) {
+    console.error("Error in sendOTP controller:", err);
     next(err);
   }
 };
@@ -34,33 +45,38 @@ export const sendOTP = async (req, res, next) => {
 export const verifyOTP = async (req, res, next) => {
   try {
     const { phone, code, type } = req.body;
- 
+
     if (!phone || !code || !type) {
-      return res.status(400).json({ message: 'Phone, code, and type are required' });
+      return res
+        .status(400)
+        .json({ message: "Phone, code, and type are required" });
     }
 
-    const otp = await prisma.oTP.findFirst({
-      where: {
-        phone,
-        code,
-        type,
-        isUsed: false,
-        expiresAt: { gte: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!otp) {
-      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    // Validate phone format
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({
+        message:
+          "Invalid phone format. Use format: +8801712345678 or 8801712345678",
+      });
     }
 
-    await prisma.oTP.update({
-      where: { id: otp.id },
-      data: { isUsed: true },
-    });
+    // Validate OTP code format (6 digits)
+    const codeRegex = /^[0-9]{6}$/;
+    if (!codeRegex.test(code)) {
+      return res.status(400).json({
+        message: "Invalid OTP format. OTP must be 6 digits",
+      });
+    }
 
-    return res.json({ message: 'OTP verified successfully' });
+    const result = await otpService.verifyOTP(phone, code, type);
+
+    return res.json(result);
   } catch (err) {
+    if (err.message === "Invalid or expired OTP") {
+      return res.status(400).json({ message: err.message });
+    }
+    console.error("Error in verifyOTP controller:", err);
     next(err);
   }
 };
