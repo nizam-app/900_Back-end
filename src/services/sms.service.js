@@ -81,24 +81,35 @@ export const sendSMS = async (phone, text, options = {}) => {
     const result = await response.json();
 
     // BulkGate returns status "accepted" or "sent"
-    if (response.ok && result.data && (result.data.status === "sent" || result.data.status === "accepted")) {
+    if (
+      response.ok &&
+      result.data &&
+      (result.data.status === "sent" || result.data.status === "accepted")
+    ) {
       // Check if account has credits
       if (result.data.price === 0 && result.data.credit === 0) {
-        console.warn(`⚠️ SMS accepted but NO CREDITS! Add credits at https://portal.bulkgate.com`);
+        console.warn(
+          `⚠️ SMS accepted but NO CREDITS! Add credits at https://portal.bulkgate.com`
+        );
         console.log(`   Message ID: ${result.data.sms_id}`);
         console.log(`   Status: ${result.data.status}`);
       } else {
         console.log(`✅ SMS sent successfully to ${formattedPhone}`);
-        console.log(`   Price: ${result.data.price}, Credit remaining: ${result.data.credit}`);
+        console.log(
+          `   Price: ${result.data.price}, Credit remaining: ${result.data.credit}`
+        );
       }
-      
+
       return {
         success: true,
         messageId: result.data.sms_id,
         status: result.data.status,
         price: result.data.price,
         credit: result.data.credit,
-        message: result.data.price === 0 ? "SMS accepted but account has no credits. Please add credits." : "SMS sent successfully",
+        message:
+          result.data.price === 0
+            ? "SMS accepted but account has no credits. Please add credits."
+            : "SMS sent successfully",
       };
     } else {
       console.error(`❌ Failed to send SMS to ${formattedPhone}:`, result);
