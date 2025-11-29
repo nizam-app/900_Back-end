@@ -384,15 +384,19 @@ export const getSRById = async (req, res, next) => {
 export const cancelSR = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { cancelReason } = req.body;
+    const { reason, cancelReason } = req.body; // Accept both field names
     const userRole = req.user.role;
     const userId = req.user.id;
+    
+    // Use either 'reason' or 'cancelReason' for backwards compatibility
+    const finalReason = reason || cancelReason;
+
+    // Find SR by either numeric ID or srNumber
+    const whereClause = isNaN(id) ? { srNumber: id } : { id: Number(id) };
 
     // Find the service request
     const sr = await prisma.serviceRequest.findUnique({
-      where: {
-        srNumber: id,
-      },
+      where: whereClause,
       include: {
         workOrders: true,
       },
@@ -425,14 +429,14 @@ export const cancelSR = async (req, res, next) => {
     // Update service request status to CANCELLED
     const updatedSR = await prisma.serviceRequest.update({
       where: {
-        srNumber: id,
+        id: sr.id, // Use the actual SR id from the found record
       },
       data: {
         status: "CANCELLED",
-        description: cancelReason
+        description: finalReason
           ? `${
               sr.description || ""
-            }\n\nCancellation Reason: ${cancelReason}`.trim()
+            }\n\nCancellation Reason: ${finalReason}`.trim()
           : sr.description,
         updatedAt: new Date(),
       },
@@ -456,11 +460,11 @@ export const cancelSR = async (req, res, next) => {
       data: {
         userId: userId,
         action: "SR_CANCELLED",
-        resource: "ServiceRequest",
-        resourceId: sr.id,
-        details: JSON.stringify({
+        entityType: "SERVICE_REQUEST", // Changed from 'resource' to 'entityType'
+        entityId: sr.id, // Changed from 'resourceId' to 'entityId'
+        metadataJson: JSON.stringify({ // Changed from 'details' to 'metadataJson'
           srNumber: sr.srNumber,
-          cancelReason: cancelReason || "No reason provided",
+          cancelReason: finalReason || "No reason provided",
           cancelledBy: userRole,
         }),
       },
