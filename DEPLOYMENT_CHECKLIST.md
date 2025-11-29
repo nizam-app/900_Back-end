@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # 🚀 Live Server Deployment Checklist
 
 ## ✅ Prerequisites
@@ -59,6 +61,7 @@ npx prisma migrate deploy
 ### 4️⃣ **Start the Server**
 
 **Option A: Using PM2 (Recommended for production)**
+
 ```bash
 npm install -g pm2
 pm2 start src/server.js --name "fsm-api"
@@ -67,11 +70,13 @@ pm2 startup
 ```
 
 **Option B: Using npm**
+
 ```bash
 npm start
 ```
 
 **Option C: Using Node directly**
+
 ```bash
 node src/server.js
 ```
@@ -85,6 +90,7 @@ node src/server.js
 **Possible Causes:**
 
 1. **Missing Environment Variables**
+
    ```bash
    # Check if environment variables are loaded
    echo $BULKGATE_SMS_APP_ID
@@ -92,10 +98,12 @@ node src/server.js
    ```
 
 2. **Firewall/Network Issues**
+
    - Ensure live server can reach `portal.bulkgate.com`
    - Test with: `curl https://portal.bulkgate.com`
 
 3. **No BulkGate Credits**
+
    - Login to https://portal.bulkgate.com
    - Check "Balance" section
    - Purchase credits if balance is 0
@@ -107,6 +115,7 @@ node src/server.js
 ### Issue 2: "SMS API returns 200 but no SMS received"
 
 **Check BulkGate Response:**
+
 ```bash
 # The API response should show:
 {
@@ -121,12 +130,14 @@ If `price: 0` and `credit: 0`, you have **no credits**.
 ### Issue 3: "Environment variables not loading"
 
 **Solution 1: Verify .env file exists**
+
 ```bash
 ls -la .env
 cat .env | grep BULKGATE
 ```
 
 **Solution 2: Manually load environment variables**
+
 ```bash
 export BULKGATE_SMS_APP_ID="36014"
 export BULKGATE_SMS_APP_TOKEN="mS6UavzDJQ8KoJ2NZlSGmFaiPSNhsdBML1wq2ngi8rXvoTw0Qv"
@@ -135,6 +146,7 @@ export BULKGATE_OTP_APP_TOKEN="7ohN0WzblPga1tugpwCXiHiQweVB3GImpmCanFNZSLsyhL87y
 ```
 
 **Solution 3: Use PM2 with env file**
+
 ```bash
 pm2 start src/server.js --name "fsm-api" --env production --update-env
 ```
@@ -144,6 +156,7 @@ pm2 start src/server.js --name "fsm-api" --env production --update-env
 ## 🧪 Testing on Live Server
 
 ### Test 1: Check if server is running
+
 ```bash
 curl http://localhost:4000/api/auth/health
 # or if using different port
@@ -151,6 +164,7 @@ curl http://localhost:YOUR_PORT/api/auth/health
 ```
 
 ### Test 2: Send OTP Request
+
 ```bash
 curl -X POST http://localhost:4000/api/otp/send \
   -H "Content-Type: application/json" \
@@ -161,6 +175,7 @@ curl -X POST http://localhost:4000/api/otp/send \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "message": "OTP sent successfully",
@@ -169,6 +184,7 @@ curl -X POST http://localhost:4000/api/otp/send \
 ```
 
 ### Test 3: Check Server Logs
+
 ```bash
 # If using PM2
 pm2 logs fsm-api
@@ -181,6 +197,7 @@ journalctl -u fsm-api -f
 ```
 
 **Expected Logs:**
+
 ```
 📱 Original phone: +8801718981009
 📱 Formatted phone: 8801718981009
@@ -195,16 +212,19 @@ journalctl -u fsm-api -f
 ## 🔐 Security Best Practices
 
 1. **Never commit `.env` file to Git**
+
    ```bash
    # Make sure .env is in .gitignore
    echo ".env" >> .gitignore
    ```
 
 2. **Use different credentials for production**
+
    - Consider creating separate BulkGate app for production
    - Use different JWT_SECRET
 
 3. **Set NODE_ENV to production**
+
    ```bash
    export NODE_ENV=production
    ```
@@ -217,6 +237,7 @@ journalctl -u fsm-api -f
 ## 📊 Monitoring
 
 ### Check BulkGate Balance Regularly
+
 ```bash
 # Create a cron job to check balance daily
 crontab -e
@@ -226,6 +247,7 @@ crontab -e
 ```
 
 ### Monitor Server Logs
+
 ```bash
 # With PM2
 pm2 monit
@@ -239,6 +261,7 @@ pm2 logs fsm-api --lines 100
 ## 🆘 Quick Fix Commands
 
 ### Restart Server
+
 ```bash
 pm2 restart fsm-api
 # or
@@ -246,16 +269,19 @@ systemctl restart fsm-api
 ```
 
 ### Clear PM2 logs
+
 ```bash
 pm2 flush
 ```
 
 ### Check environment variables
+
 ```bash
 pm2 env 0
 ```
 
 ### Force reload environment variables
+
 ```bash
 pm2 delete fsm-api
 pm2 start src/server.js --name "fsm-api"

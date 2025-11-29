@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 console.log("🔍 FSM API - Live Server Diagnostic\n");
-console.log("=" .repeat(50));
+console.log("=".repeat(50));
 
 // 1. Check Node.js version
 console.log("\n1️⃣  Node.js Version:");
@@ -30,7 +30,11 @@ const smsToken = process.env.BULKGATE_SMS_APP_TOKEN;
 
 if (smsAppId && smsToken) {
   console.log(`   Application ID: ${smsAppId}`);
-  console.log(`   Token: ${smsToken.substring(0, 10)}...${smsToken.substring(smsToken.length - 5)}`);
+  console.log(
+    `   Token: ${smsToken.substring(0, 10)}...${smsToken.substring(
+      smsToken.length - 5
+    )}`
+  );
   console.log("   ✅ SMS API credentials found");
 } else {
   console.log("   ❌ ERROR: SMS API credentials missing!");
@@ -45,7 +49,11 @@ const otpToken = process.env.BULKGATE_OTP_APP_TOKEN;
 
 if (otpAppId && otpToken) {
   console.log(`   Application ID: ${otpAppId}`);
-  console.log(`   Token: ${otpToken.substring(0, 10)}...${otpToken.substring(otpToken.length - 5)}`);
+  console.log(
+    `   Token: ${otpToken.substring(0, 10)}...${otpToken.substring(
+      otpToken.length - 5
+    )}`
+  );
   console.log("   ✅ OTP API credentials found");
 } else {
   console.log("   ❌ ERROR: OTP API credentials missing!");
@@ -77,7 +85,7 @@ const testConnection = async () => {
 
   try {
     console.log("   📡 Connecting to portal.bulkgate.com...");
-    
+
     const response = await fetch(
       "https://portal.bulkgate.com/api/1.0/simple/transactional",
       {
@@ -102,12 +110,12 @@ const testConnection = async () => {
     if (response.ok) {
       console.log("   ✅ API connection successful");
       console.log(`   Status: ${response.status}`);
-      
+
       if (result.data) {
         console.log(`   Response: ${result.data.status}`);
         console.log(`   Price: ${result.data.price}`);
         console.log(`   Credit: ${result.data.credit}`);
-        
+
         if (result.data.price === 0 && result.data.credit === 0) {
           console.log("\n   ⚠️  WARNING: Account has NO CREDITS!");
           console.log("   🔗 Add credits at: https://portal.bulkgate.com");
