@@ -2,6 +2,8 @@
 
 // src/services/sms.service.js
 // Using built-in fetch API (Node.js 18+)
+import dotenv from "dotenv";
+dotenv.config();
 
 // ========================================
 // 🔑 BulkGate API Credentials
@@ -9,15 +11,15 @@
 
 // HTTP API - For normal SMS (notifications, alerts, updates)
 const HTTP_SMS_CONFIG = {
-  APPLICATION_ID: "36014",
-  APPLICATION_TOKEN: "mS6UavzDJQ8KoJ2NZlSGmFaiPSNhsdBML1wq2ngi8rXvoTw0Qv",
+  APPLICATION_ID: process.env.BULKGATE_SMS_APP_ID || "36014",
+  APPLICATION_TOKEN: process.env.BULKGATE_SMS_APP_TOKEN || "mS6UavzDJQ8KoJ2NZlSGmFaiPSNhsdBML1wq2ngi8rXvoTw0Qv",
   BASE_URL: "https://portal.bulkgate.com/api/1.0/simple",
 };
 
 // OTP API - For verification codes only
 const OTP_API_CONFIG = {
-  APPLICATION_ID: "36013",
-  APPLICATION_TOKEN: "7ohN0WzblPga1tugpwCXiHiQweVB3GImpmCanFNZSLsyhL87yR",
+  APPLICATION_ID: process.env.BULKGATE_OTP_APP_ID || "36013",
+  APPLICATION_TOKEN: process.env.BULKGATE_OTP_APP_TOKEN || "7ohN0WzblPga1tugpwCXiHiQweVB3GImpmCanFNZSLsyhL87yR",
   BASE_URL: "https://portal.bulkgate.com/api/1.0/otp",
 };
 
