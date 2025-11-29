@@ -58,7 +58,7 @@ const testBulkGate = async () => {
     if (response.ok && result.data) {
       if (result.data.status === "accepted" || result.data.status === "sent") {
         console.log("   ✅ BulkGate API is working");
-        
+
         if (result.data.price === 0 && result.data.credit === 0) {
           console.log("\n   ⚠️  CRITICAL: Account has NO CREDITS!");
           console.log("   💳 This is why SMS is not being delivered");

@@ -387,7 +387,7 @@ export const cancelSR = async (req, res, next) => {
     const { reason, cancelReason } = req.body; // Accept both field names
     const userRole = req.user.role;
     const userId = req.user.id;
-    
+
     // Use either 'reason' or 'cancelReason' for backwards compatibility
     const finalReason = reason || cancelReason;
 
@@ -462,7 +462,8 @@ export const cancelSR = async (req, res, next) => {
         action: "SR_CANCELLED",
         entityType: "SERVICE_REQUEST", // Changed from 'resource' to 'entityType'
         entityId: sr.id, // Changed from 'resourceId' to 'entityId'
-        metadataJson: JSON.stringify({ // Changed from 'details' to 'metadataJson'
+        metadataJson: JSON.stringify({
+          // Changed from 'details' to 'metadataJson'
           srNumber: sr.srNumber,
           cancelReason: finalReason || "No reason provided",
           cancelledBy: userRole,

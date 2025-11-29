@@ -4,9 +4,9 @@
 
 const testLocalhost = async () => {
   const phone = "+8801718981009";
-  
+
   console.log("🧪 Testing localhost OTP endpoint...\n");
-  
+
   try {
     const response = await fetch("http://localhost:4000/api/otp/send", {
       method: "POST",
@@ -20,10 +20,10 @@ const testLocalhost = async () => {
     });
 
     console.log(`📊 Response Status: ${response.status}`);
-    
+
     const result = await response.json();
     console.log(`📊 Response Body:`, JSON.stringify(result, null, 2));
-    
+
     if (response.ok) {
       console.log("\n✅ Localhost is working!");
       if (result.code) {
