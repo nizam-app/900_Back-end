@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # 🚀 Coolify/Docker Deployment Configuration
 
 ## ⚠️ Critical: Environment Variable Configuration
@@ -9,6 +11,7 @@ When deploying to Coolify, Docker, or any containerized environment, you need to
 In your Coolify dashboard, go to your application → **Environment Variables** and add:
 
 #### 1. **Build-Time Variables** (Uncheck "Available at Runtime" if possible)
+
 These are needed during the build process:
 
 ```bash
@@ -16,6 +19,7 @@ NIXPACKS_NODE_VERSION=20
 ```
 
 #### 2. **Runtime-Only Variables** (Check "Available at Runtime" only)
+
 These should NOT be available during build:
 
 ```bash
@@ -57,6 +61,7 @@ IMAGE_UPLOAD_SERVICE_URL=https://img.mtscorporate.com
 **Fix:** ✅ Already fixed by running `npm install` and removing `node-fetch`
 
 **What was changed:**
+
 - Removed `node-fetch` dependency (Node.js 18+ has built-in fetch)
 - Regenerated `package-lock.json`
 
@@ -65,6 +70,7 @@ IMAGE_UPLOAD_SERVICE_URL=https://img.mtscorporate.com
 **Cause:** NODE_ENV is set to "development" during build time
 
 **Fix:** In Coolify environment variables:
+
 1. Find `NODE_ENV` variable
 2. **Uncheck** "Available at Buildtime"
 3. **Check** "Available at Runtime"
@@ -75,6 +81,7 @@ IMAGE_UPLOAD_SERVICE_URL=https://img.mtscorporate.com
 **Cause:** Coolify/Nixpacks defaults to Node.js 18
 
 **Fix:** Add this as build-time variable:
+
 ```bash
 NIXPACKS_NODE_VERSION=20
 ```
@@ -150,22 +157,29 @@ curl -X POST https://outside1backend.mtscorporate.com/api/otp/send \
 ### Common Build Errors
 
 #### Error: "Missing packages from lock file"
+
 ```
 npm error Missing: package-name from lock file
 ```
+
 **Fix:** Run `npm install` locally and commit package-lock.json
 
 #### Error: "Cannot find module"
+
 ```
 Error: Cannot find module 'module-name'
 ```
+
 **Fix:** Make sure the package is in `dependencies` (not `devDependencies`)
 
 #### Error: "Prisma Client not generated"
+
 ```
 Error: Cannot find module '@prisma/client'
 ```
+
 **Fix:** Add build command in Coolify:
+
 ```bash
 npx prisma generate && npm start
 ```
@@ -175,25 +189,30 @@ npx prisma generate && npm start
 ## 🎯 Production Best Practices
 
 ### 1. Use Strong Secrets
+
 ```bash
 # Generate a strong JWT secret
 JWT_SECRET=$(openssl rand -base64 32)
 ```
 
 ### 2. Set NODE_ENV to production
+
 ```bash
 NODE_ENV=production
 ```
 
 ### 3. Use Production Database
+
 - Don't use development database in production
 - Use connection pooling
 - Enable SSL connections
 
 ### 4. Enable Security Headers
+
 Already configured in the app with `helmet` middleware
 
 ### 5. Monitor Application
+
 - Set up logging
 - Monitor error rates
 - Track API response times
@@ -205,16 +224,19 @@ Already configured in the app with `helmet` middleware
 After successful deployment, verify:
 
 1. **API Health Check:**
+
    ```bash
    curl https://outside1backend.mtscorporate.com/api/auth/health
    ```
 
 2. **OTP Functionality:**
+
    - Send OTP request
    - Check if SMS is received
    - Verify OTP works
 
 3. **Database Connection:**
+
    - Check if API can query database
    - Test user registration/login
 
@@ -227,12 +249,14 @@ After successful deployment, verify:
 ## 🆘 Still Having Issues?
 
 ### Check Application Logs
+
 ```bash
 # In Coolify Dashboard
 Go to your app → Logs → View Runtime Logs
 ```
 
 ### Test Locally First
+
 ```bash
 # Make sure it works locally
 npm install
@@ -245,6 +269,7 @@ curl http://localhost:4000/api/otp/send -X POST \
 ```
 
 ### Verify Git Repository
+
 ```bash
 # Make sure all changes are committed
 git status
@@ -265,6 +290,7 @@ When deployment succeeds, you should see:
 ```
 
 Then test OTP:
+
 - Send OTP request to production URL
 - SMS should be received on phone
 - Verify OTP should work
