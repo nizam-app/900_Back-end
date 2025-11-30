@@ -40,29 +40,29 @@ const OTP_API_CONFIG = {
  */
 const normalizePhoneNumber = (phone) => {
   if (!phone) return null;
-  
+
   // Remove all non-digit characters except +
   let cleaned = phone.replace(/[^\d+]/g, '');
-  
+
   // If already has country code with +, return as is
   if (cleaned.startsWith('+')) {
     return cleaned;
   }
-  
+
   // If starts with 00, replace with +
   if (cleaned.startsWith('00')) {
     return '+' + cleaned.substring(2);
   }
-  
+
   // If starts with country code without +, add it
   // Kenya: 254, Bangladesh: 880, India: 91, etc.
   if (cleaned.startsWith('254') || cleaned.startsWith('880') || cleaned.startsWith('91')) {
     return '+' + cleaned;
   }
-  
+
   // Get default country code from env or use Kenya as default
   const DEFAULT_COUNTRY_CODE = process.env.DEFAULT_COUNTRY_CODE || '254'; // Kenya
-  
+
   if (cleaned.length === 10) {
     // Remove leading 0 if present (e.g., 0712345678 -> 712345678)
     if (cleaned.startsWith('0')) {
@@ -70,17 +70,17 @@ const normalizePhoneNumber = (phone) => {
     }
     return `+${DEFAULT_COUNTRY_CODE}${cleaned}`;
   }
-  
+
   // If 9 digits (without leading 0), add country code
   if (cleaned.length === 9) {
     return `+${DEFAULT_COUNTRY_CODE}${cleaned}`;
   }
-  
+
   // If number doesn't match patterns, return with + prefix if digits only
   if (/^\d+$/.test(cleaned)) {
     return '+' + cleaned;
   }
-  
+
   console.warn(`⚠️ Could not normalize phone number: ${phone}`);
   return cleaned.startsWith('+') ? cleaned : '+' + cleaned;
 };
@@ -108,7 +108,7 @@ export const sendSMS = async (phone, text, options = {}) => {
 
     // Normalize phone number to international format
     const formattedPhone = normalizePhoneNumber(phone);
-    
+
     // Validate phone number format
     if (!formattedPhone || !formattedPhone.startsWith('+') || formattedPhone.length < 10) {
       console.error(`❌ Invalid phone number format: ${phone}`);
@@ -245,7 +245,7 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
   try {
     // Normalize phone number
     const formattedPhone = normalizePhoneNumber(phone);
-    
+
     // Validate phone number
     if (!formattedPhone || !formattedPhone.startsWith('+')) {
       console.error(`❌ Invalid phone number for OTP: ${phone}`);
@@ -255,7 +255,7 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
         message: 'Phone number must be in international format'
       };
     }
-    
+
     const {
       codeLength = 6, // OTP length (4-100 digits)
       expiration = 300, // Expiration time in seconds (default 5 minutes)
@@ -358,8 +358,7 @@ export const verifyOTPViaBulkGate = async (otpId, code) => {
     if (response.ok && result.data) {
       const isVerified = result.data.verified === true;
       console.log(
-        `${isVerified ? "✅" : "❌"} OTP verification: ${
-          isVerified ? "SUCCESS" : "FAILED"
+        `${isVerified ? "✅" : "❌"} OTP verification: ${isVerified ? "SUCCESS" : "FAILED"
         }`
       );
       return {
