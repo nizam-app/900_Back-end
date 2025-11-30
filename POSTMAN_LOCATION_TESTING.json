@@ -1,13 +1,13 @@
 {
   "info": {
-    "name": "FSM Location Services - Enhanced",
-    "description": "Test collection for enhanced location services with geocoding and distance calculations",
+    "name": "FSM System API - Complete Collection",
+    "description": "Updated test collection with OTP-based authentication, location services, and all new features (Nov 2025)\n\n📝 TEST CREDENTIALS (from seed data):\n• Admin: 1111111111\n• Dispatcher: 2222222222\n• Call Center: 3333333333\n• Internal Tech: 4444444444\n• Freelancer 1: 5555555555\n• Freelancer 2: 6666666666\n• Customer 1: 9999999999\n• Customer 2: 8888888888\n• Customer 3: 7777777777\n\n⚠️ NOTE: All login now uses OTP (no passwords)\n1. First call 'Send OTP' endpoint\n2. Use the OTP code from response\n3. Then call 'Login with OTP' endpoint\n\n🌐 Base URL: http://localhost:4000/api",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:3000/api"
+      "value": "http://localhost:4000/api"
     },
     {
       "key": "auth_token",
@@ -19,7 +19,7 @@
       "name": "Authentication",
       "item": [
         {
-          "name": "Login as Technician",
+          "name": "Send OTP for Login",
           "request": {
             "method": "POST",
             "header": [
@@ -30,7 +30,28 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone\": \"1234567890\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"phone\": \"9999999999\",\n  \"type\": \"LOGIN\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/otp/send",
+              "host": ["{{base_url}}"],
+              "path": ["otp", "send"]
+            }
+          }
+        },
+        {
+          "name": "Login with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9999999999\",\n  \"otp\": \"123456\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
@@ -54,7 +75,7 @@
           ]
         },
         {
-          "name": "Login as Admin/Dispatcher",
+          "name": "Send OTP for Admin Login",
           "request": {
             "method": "POST",
             "header": [
@@ -65,7 +86,28 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone\": \"admin123\",\n  \"password\": \"admin123\"\n}"
+              "raw": "{\n  \"phone\": \"1111111111\",\n  \"type\": \"LOGIN\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/otp/send",
+              "host": ["{{base_url}}"],
+              "path": ["otp", "send"]
+            }
+          }
+        },
+        {
+          "name": "Admin Login with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"1111111111\",\n  \"otp\": \"123456\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
@@ -375,6 +417,249 @@
                   "value": "5"
                 }
               ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Service Requests (SRs)",
+      "item": [
+        {
+          "name": "Create SR with Preferred Date/Time",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9999999999\",\n  \"name\": \"John Customer\",\n  \"email\": \"customer@example.com\",\n  \"address\": \"123 Main St, New York\",\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060,\n  \"categoryId\": 1,\n  \"subserviceId\": 2,\n  \"serviceId\": 3,\n  \"description\": \"AC not cooling properly\",\n  \"priority\": \"HIGH\",\n  \"preferredDate\": \"2025-12-05T10:00:00Z\",\n  \"preferredTime\": \"Morning\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/srs",
+              "host": ["{{base_url}}"],
+              "path": ["srs"]
+            }
+          }
+        },
+        {
+          "name": "Get My Service Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/srs",
+              "host": ["{{base_url}}"],
+              "path": ["srs"]
+            }
+          }
+        },
+        {
+          "name": "Rebook Completed Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferredDate\": \"2025-12-10T14:00:00Z\",\n  \"preferredTime\": \"Afternoon\",\n  \"description\": \"Same issue - need service again\",\n  \"address\": \"123 Main St, New York\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/srs/20/rebook",
+              "host": ["{{base_url}}"],
+              "path": ["srs", "20", "rebook"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications",
+              "host": ["{{base_url}}"],
+              "path": ["notifications"]
+            }
+          }
+        },
+        {
+          "name": "Get Unread Notifications Only",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications?unreadOnly=true",
+              "host": ["{{base_url}}"],
+              "path": ["notifications"],
+              "query": [
+                {
+                  "key": "unreadOnly",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/1/read",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "1", "read"]
+            }
+          }
+        },
+        {
+          "name": "Mark All Notifications as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/read-all",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "read-all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Profile",
+      "item": [
+        {
+          "name": "Get My Profile (with stats)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Profile includes totalBookings', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('totalBookings');",
+                  "});",
+                  "",
+                  "pm.test('Profile includes totalSpent', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('totalSpent');",
+                  "});",
+                  "",
+                  "pm.test('Profile includes businessHours', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('businessHours');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Registration (OTP Flow)",
+      "item": [
+        {
+          "name": "1. Send OTP for Registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"0123456789\",\n  \"type\": \"REGISTRATION\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/otp/send",
+              "host": ["{{base_url}}"],
+              "path": ["otp", "send"]
+            }
+          }
+        },
+        {
+          "name": "2. Complete Registration with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"0123456789\",\n  \"name\": \"New Customer\",\n  \"email\": \"newcustomer@example.com\",\n  \"otp\": \"123456\",\n  \"password\": \"SecurePass123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
             }
           }
         }

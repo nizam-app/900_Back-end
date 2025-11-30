@@ -5,12 +5,18 @@ import * as authService from "../services/auth.service.js";
 
 export const register = async (req, res, next) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, password, name, email, otp } = req.body;
 
-    if (!phone || !password) {
+    if (!phone || !password || !name) {
       return res
         .status(400)
-        .json({ message: "Phone and password are required" });
+        .json({ message: "Phone, name, and password are required" });
+    }
+
+    if (!otp) {
+      return res
+        .status(400)
+        .json({ message: "OTP verification is required before registration" });
     }
 
     const result = await authService.registerUser(req.body);
@@ -19,25 +25,29 @@ export const register = async (req, res, next) => {
     if (err.message === "Phone already registered") {
       return res.status(400).json({ message: err.message });
     }
+    if (err.message === "Invalid or expired OTP") {
+      return res.status(400).json({ message: err.message });
+    }
     next(err);
   }
 };
 
 export const login = async (req, res, next) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, otp } = req.body;
 
-    if (!phone || !password) {
-      return res
-        .status(400)
-        .json({ message: "Phone and password are required" });
+    if (!phone || !otp) {
+      return res.status(400).json({ message: "Phone and OTP are required" });
     }
 
     const result = await authService.loginUser(req.body);
     return res.json(result);
   } catch (err) {
-    if (err.message === "Invalid credentials") {
+    if (err.message === "Invalid or expired OTP") {
       return res.status(401).json({ message: err.message });
+    }
+    if (err.message === "User not found") {
+      return res.status(404).json({ message: err.message });
     }
     if (err.message.includes("blocked")) {
       return res.status(403).json({ message: err.message });

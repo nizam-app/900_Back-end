@@ -5,9 +5,9 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../prisma.js";
 import { signToken } from "../utils/jwt.js";
 
-// ✅ Register new user (phone + password)
+// ✅ Register new user (phone + OTP verification + password)
 export const registerUser = async (userData) => {
-  const { phone, password, name, role } = userData;
+  const { phone, password, name, email, role, otp } = userData;
 
   const existing = await prisma.user.findUnique({
     where: { phone },
@@ -17,6 +17,32 @@ export const registerUser = async (userData) => {
     throw new Error("Phone already registered");
   }
 
+  // Verify OTP before registration
+  const otpRecord = await prisma.oTP.findFirst({
+    where: {
+      phone,
+      code: otp,
+      type: "REGISTRATION",
+      isUsed: false,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  if (!otpRecord) {
+    throw new Error("Invalid or expired OTP");
+  }
+
+  // Mark OTP as used
+  await prisma.oTP.update({
+    where: { id: otpRecord.id },
+    data: { isUsed: true },
+  });
+
   const hash = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.create({
@@ -24,6 +50,7 @@ export const registerUser = async (userData) => {
       phone,
       passwordHash: hash,
       name: name || null,
+      email: email || null,
       role: role || "CUSTOMER",
     },
   });
@@ -40,21 +67,23 @@ export const registerUser = async (userData) => {
       id: user.id,
       name: user.name,
       phone: user.phone,
+      email: user.email,
       role: user.role,
     },
   };
 };
 
-// ✅ Login existing user (phone + password)
+// ✅ Login existing user (phone + OTP)
 export const loginUser = async (credentials) => {
-  const { phone, password } = credentials;
+  const { phone, otp } = credentials;
 
+  // Find user by phone
   const user = await prisma.user.findUnique({
     where: { phone },
   });
 
-  if (!user || !user.passwordHash) {
-    throw new Error("Invalid credentials");
+  if (!user) {
+    throw new Error("User not found");
   }
 
   if (user.isBlocked) {
@@ -65,11 +94,33 @@ export const loginUser = async (credentials) => {
     );
   }
 
-  const isMatch = await bcrypt.compare(password, user.passwordHash);
-  if (!isMatch) {
-    throw new Error("Invalid credentials");
+  // Verify OTP
+  const otpRecord = await prisma.oTP.findFirst({
+    where: {
+      phone,
+      code: otp,
+      type: "LOGIN",
+      isUsed: false,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  if (!otpRecord) {
+    throw new Error("Invalid or expired OTP");
   }
 
+  // Mark OTP as used
+  await prisma.oTP.update({
+    where: { id: otpRecord.id },
+    data: { isUsed: true },
+  });
+
+  // Generate JWT token
   const token = signToken({
     id: user.id,
     role: user.role,
@@ -82,14 +133,11 @@ export const loginUser = async (credentials) => {
       id: user.id,
       name: user.name,
       phone: user.phone,
-      role: user.role, // role property (somoy)
-      somoy: user.role, // Alternative name for role
+      email: user.email,
+      role: user.role,
+      isBlocked: user.isBlocked,
+      createdAt: user.createdAt,
     },
-    // Additional properties for compatibility
-    name: user.name,
-    role: user.role,
-    somoy: user.role,
-    lagbe: true, // Password property indicator
   };
 };
 
@@ -143,6 +191,9 @@ export const getUserProfile = async (userId) => {
       role: true,
       isBlocked: true,
       blockedReason: true,
+      homeAddress: true,
+      latitude: true,
+      longitude: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -150,6 +201,47 @@ export const getUserProfile = async (userId) => {
 
   if (!user) {
     throw new Error("User not found");
+  }
+
+  // If customer, add statistics
+  if (user.role === "CUSTOMER") {
+    // Get total bookings count
+    const totalBookings = await prisma.serviceRequest.count({
+      where: { customerId: userId },
+    });
+
+    // Get total spent (sum of all verified payments)
+    const payments = await prisma.payment.aggregate({
+      where: {
+        workOrder: {
+          customerId: userId,
+        },
+        status: "VERIFIED",
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const totalSpent = payments._sum.amount || 0;
+
+    // Business hours (default - can be made configurable)
+    const businessHours = {
+      monday: "9:00 AM - 6:00 PM",
+      tuesday: "9:00 AM - 6:00 PM",
+      wednesday: "9:00 AM - 6:00 PM",
+      thursday: "9:00 AM - 6:00 PM",
+      friday: "9:00 AM - 6:00 PM",
+      saturday: "10:00 AM - 4:00 PM",
+      sunday: "Closed",
+    };
+
+    return {
+      ...user,
+      totalBookings,
+      totalSpent,
+      businessHours,
+    };
   }
 
   return user;
