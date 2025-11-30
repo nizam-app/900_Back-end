@@ -102,7 +102,48 @@ export const sendOTP = async (phone, type) => {
   }
 };
 
-// ✅ Verify OTP
+// ✅ Verify OTP by code only (no phone required)
+export const verifyOTPByCode = async (code, type) => {
+  try {
+    // Verify OTP from database - find by code and type only
+    const otp = await prisma.oTP.findFirst({
+      where: {
+        code,
+        type,
+        isUsed: false,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!otp) {
+      throw new Error("Invalid or expired OTP");
+    }
+
+    // Mark OTP as used
+    await prisma.oTP.update({
+      where: { id: otp.id },
+      data: { isUsed: true },
+    });
+
+    console.log(`✅ OTP verified successfully: ${code}`);
+
+    return {
+      message: "OTP verified successfully",
+      verified: true,
+      phone: otp.phone, // Return phone for reference
+    };
+  } catch (error) {
+    console.error("❌ Error verifying OTP:", error);
+    throw error;
+  }
+};
+
+// ✅ Verify OTP (legacy - with phone)
 export const verifyOTP = async (phone, code, type) => {
   try {
     // Verify OTP from database
