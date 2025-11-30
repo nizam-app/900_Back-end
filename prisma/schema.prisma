@@ -118,8 +118,8 @@ model Service {
 }
 
 model ServiceRequest {
-  id            Int      @id @default(autoincrement())
-  srNumber      String   @unique
+  id            Int       @id @default(autoincrement())
+  srNumber      String    @unique
   customerId    Int
   createdById   Int?
   categoryId    Int
@@ -134,14 +134,14 @@ model ServiceRequest {
   latitude      Float? // GPS coordinates
   longitude     Float? // GPS coordinates
   attachments   String? // JSON array of file URLs
-  paymentType      String // CASH, MOBILE_MONEY
-  preferredDate    DateTime? // Optional preferred appointment date
-  preferredTime    String? // Optional preferred time slot (e.g., "Morning", "Afternoon", "Evening")
-  status           String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
-  source           String // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
-  isGuest          Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  paymentType   String // CASH, MOBILE_MONEY
+  preferredDate DateTime? // Optional preferred appointment date
+  preferredTime String? // Optional preferred time slot (e.g., "Morning", "Afternoon", "Evening")
+  status        String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
+  source        String // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
+  isGuest       Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   customer   User       @relation("CustomerSR", fields: [customerId], references: [id])
   createdBy  User?      @relation("CreatedBySR", fields: [createdById], references: [id])

@@ -37,9 +37,7 @@ export const login = async (req, res, next) => {
     const { phone, otp } = req.body;
 
     if (!phone || !otp) {
-      return res
-        .status(400)
-        .json({ message: "Phone and OTP are required" });
+      return res.status(400).json({ message: "Phone and OTP are required" });
     }
 
     const result = await authService.loginUser(req.body);

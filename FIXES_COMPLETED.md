@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # 🎉 All Issues Fixed - Complete Summary
 
 **Date:** November 30, 2025  
@@ -8,12 +10,14 @@
 ## ✅ Issue 1: Customer Login Flow (OTP-Based Login)
 
 ### What was Fixed:
+
 - **Removed password-based login**
 - **Implemented OTP-only login flow**
 
 ### How It Works Now:
 
 **Step 1: Send OTP**
+
 ```javascript
 POST /api/otp/send
 
@@ -33,6 +37,7 @@ Response:
 ```
 
 **Step 2: Login with OTP**
+
 ```javascript
 POST /api/auth/login
 
@@ -60,6 +65,7 @@ Response:
 ## ✅ Issue 2: Preferred Appointment Date & Time (Optional Fields)
 
 ### What was Fixed:
+
 - **Added `preferredDate` field** (DateTime) - optional
 - **Added `preferredTime` field** (String) - optional (e.g., "Morning", "Afternoon", "Evening")
 
@@ -96,19 +102,21 @@ Response:
 ## ✅ Issue 3: Guest vs Authenticated SR Identification
 
 ### What was Fixed:
+
 - **Fixed `isGuest` logic** to properly differentiate:
   - **Guest SR**: `isGuest = true` (no authentication, from web portal)
   - **Authenticated SR**: `isGuest = false` (logged-in customer or call center)
 
 ### How It Works:
 
-| Source | Authentication | isGuest | customerId | createdById |
-|--------|---------------|---------|------------|-------------|
-| **Web Portal (Guest)** | No | `true` | Created user ID | `null` |
-| **Customer App** | Yes | `false` | Logged-in user ID | User ID |
-| **Call Center** | Yes (agent) | `false` | Customer ID | Agent ID |
+| Source                 | Authentication | isGuest | customerId        | createdById |
+| ---------------------- | -------------- | ------- | ----------------- | ----------- |
+| **Web Portal (Guest)** | No             | `true`  | Created user ID   | `null`      |
+| **Customer App**       | Yes            | `false` | Logged-in user ID | User ID     |
+| **Call Center**        | Yes (agent)    | `false` | Customer ID       | Agent ID    |
 
 **Example Response:**
+
 ```javascript
 // Guest SR
 {
@@ -134,6 +142,7 @@ Response:
 ## ✅ Issue 4: Missing `scheduledAt` in SR List
 
 ### What was Fixed:
+
 - **Added `scheduledAt` field** to SR list response
 - Shows work order scheduled time if converted, otherwise shows `preferredDate`
 
@@ -164,6 +173,7 @@ Response:
 ## ✅ Issue 5: Book Again / Rebook Service
 
 ### What was Fixed:
+
 - **Created `/api/srs/:srId/rebook` endpoint**
 - Customers can rebook completed services with same details
 
@@ -198,6 +208,7 @@ Response:
 ```
 
 **Frontend Implementation:**
+
 - On "My Bookings → Completed" page
 - Show "Rebook Service" or "Book Again" button
 - Call this endpoint with original SR ID
@@ -207,12 +218,14 @@ Response:
 ## ✅ Issue 6: Notifications API
 
 ### What was Fixed:
+
 - **All notification endpoints already implemented**
 - Proper GET, Mark as Read, and Mark All as Read functionality
 
 ### Available Endpoints:
 
 **1. Get My Notifications**
+
 ```javascript
 GET /api/notifications
 Authorization: Bearer <token>
@@ -237,6 +250,7 @@ Response:
 ```
 
 **2. Mark Single Notification as Read**
+
 ```javascript
 PATCH /api/notifications/:id/read
 Authorization: Bearer <token>
@@ -250,6 +264,7 @@ Response:
 ```
 
 **3. Mark All Notifications as Read**
+
 ```javascript
 PATCH /api/notifications/read-all
 Authorization: Bearer <token>
@@ -265,6 +280,7 @@ Response:
 ## ✅ Issue 7: Missing Customer Profile Data
 
 ### What was Fixed:
+
 - **Added `totalBookings`** - Count of all SRs created
 - **Added `totalSpent`** - Sum of all verified payments
 - **Added `businessHours`** - Service operating hours
@@ -282,11 +298,11 @@ Response:
   "phone": "01234567899",
   "email": "jane@example.com",
   "role": "CUSTOMER",
-  
+
   // ✅ NEW: Statistics
   "totalBookings": 15,              // Count of all service requests
   "totalSpent": 75000,              // Total verified payments (KES)
-  
+
   // ✅ NEW: Business Hours
   "businessHours": {
     "monday": "9:00 AM - 6:00 PM",
@@ -297,7 +313,7 @@ Response:
     "saturday": "10:00 AM - 4:00 PM",
     "sunday": "Closed"
   },
-  
+
   "createdAt": "2025-11-20T10:00:00Z"
 }
 ```
@@ -307,12 +323,14 @@ Response:
 ## ✅ Issue 8: Registration Flow (Phone Verify → Set Password)
 
 ### What was Fixed:
+
 - **Registration now requires OTP verification** before setting password
 - Proper flow: Enter details → Verify phone → Set password → Complete
 
 ### New Registration Flow:
 
 **Step 1: Send OTP for Registration**
+
 ```javascript
 POST /api/otp/send
 
@@ -331,6 +349,7 @@ Response:
 ```
 
 **Step 2: Register with Verified OTP**
+
 ```javascript
 POST /api/auth/register
 
@@ -357,6 +376,7 @@ Response:
 ```
 
 ### Frontend Flow:
+
 1. **Screen 1**: Enter name + phone number
 2. **Action**: Send OTP (`POST /api/otp/send` with `type: "REGISTRATION"`)
 3. **Screen 2**: Verify OTP (user enters 6-digit code)
@@ -369,21 +389,25 @@ Response:
 ## 📊 Summary of All Changes
 
 ### Database Schema Updates:
+
 ✅ Added `preferredDate` (DateTime, optional) to ServiceRequest  
 ✅ Added `preferredTime` (String, optional) to ServiceRequest  
-✅ Fixed `isGuest` logic in SR creation  
+✅ Fixed `isGuest` logic in SR creation
 
 ### API Endpoints Added:
-✅ `POST /api/srs/:srId/rebook` - Rebook completed services  
+
+✅ `POST /api/srs/:srId/rebook` - Rebook completed services
 
 ### API Endpoints Modified:
+
 ✅ `POST /api/auth/login` - Now uses OTP instead of password  
 ✅ `POST /api/auth/register` - Now requires OTP verification  
 ✅ `POST /api/srs` - Now accepts `preferredDate` and `preferredTime`  
 ✅ `GET /api/srs` - Now includes `scheduledAt` in response  
-✅ `GET /api/auth/profile` - Now includes `totalBookings`, `totalSpent`, `businessHours`  
+✅ `GET /api/auth/profile` - Now includes `totalBookings`, `totalSpent`, `businessHours`
 
 ### Files Modified:
+
 1. ✅ `prisma/schema.prisma` - Updated ServiceRequest model
 2. ✅ `src/controllers/auth.controller.js` - OTP-based login and registration
 3. ✅ `src/services/auth.service.js` - OTP verification logic
