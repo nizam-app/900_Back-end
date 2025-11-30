@@ -82,8 +82,8 @@ export const sendOTP = async (phone, type) => {
 
     // Build response
     const response = {
-      message: smsResult.success 
-        ? "OTP sent successfully" 
+      message: smsResult.success
+        ? "OTP sent successfully"
         : "OTP generated but SMS not sent (no credits)",
       code: code, // Always return OTP code so client can see it
       expiresAt: expiresAt,
