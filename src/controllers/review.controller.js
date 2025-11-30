@@ -16,8 +16,11 @@ export const createReview = async (req, res, next) => {
     }
 
     const wo = await prisma.workOrder.findUnique({
-      where: { id: Number(woId) },
-      include: { review: true }
+      where: { id: Number(woId) }
+    });
+
+    const existingReview = await prisma.review.findUnique({
+      where: { woId: Number(woId) }
     });
 
     if (!wo) {
@@ -32,7 +35,7 @@ export const createReview = async (req, res, next) => {
       return res.status(400).json({ message: 'Can only review completed and paid work orders' });
     }
 
-    if (wo.review) {
+    if (existingReview) {
       return res.status(400).json({ message: 'Work order already reviewed' });
     }
 
