@@ -426,20 +426,20 @@ export const listSR = async (req, res, next) => {
       const paymentSummary =
         latestWO && latestWO.payments && latestWO.payments.length > 0
           ? {
-              totalAmount: latestWO.payments.reduce(
-                (sum, p) => sum + (p.amount || 0),
-                0
-              ),
-              paidAmount: latestWO.payments
-                .filter((p) => p.status === "VERIFIED")
-                .reduce((sum, p) => sum + (p.amount || 0), 0),
-              paymentStatus: latestWO.payments.some(
-                (p) => p.status === "VERIFIED"
-              )
-                ? "PAID"
-                : "PENDING",
-              paymentMethod: latestWO.payments[0]?.method || null,
-            }
+            totalAmount: latestWO.payments.reduce(
+              (sum, p) => sum + (p.amount || 0),
+              0
+            ),
+            paidAmount: latestWO.payments
+              .filter((p) => p.status === "VERIFIED")
+              .reduce((sum, p) => sum + (p.amount || 0), 0),
+            paymentStatus: latestWO.payments.some(
+              (p) => p.status === "VERIFIED"
+            )
+              ? "PAID"
+              : "PENDING",
+            paymentMethod: latestWO.payments[0]?.method || null,
+          }
           : null;
 
       return {
@@ -455,10 +455,10 @@ export const listSR = async (req, res, next) => {
         assignedTechnician:
           latestWO && latestWO.technician
             ? {
-                id: latestWO.technician.id,
-                name: latestWO.technician.name,
-                phone: latestWO.technician.phone,
-              }
+              id: latestWO.technician.id,
+              name: latestWO.technician.name,
+              phone: latestWO.technician.phone,
+            }
             : null,
         technicianRating:
           latestWO && latestWO.review ? latestWO.review.rating : null,
@@ -592,19 +592,19 @@ export const getMySRs = async (req, res, next) => {
       const paymentSummary =
         latestWO && latestWO.payments && latestWO.payments.length > 0
           ? {
-              totalAmount: latestWO.payments.reduce(
-                (sum, p) => sum + (p.amount || 0),
-                0
-              ),
-              paidAmount: latestWO.payments
-                .filter((p) => p.status === "VERIFIED")
-                .reduce((sum, p) => sum + (p.amount || 0), 0),
-              paymentStatus: latestWO.payments.some(
-                (p) => p.status === "VERIFIED"
-              )
-                ? "PAID"
-                : "PENDING",
-            }
+            totalAmount: latestWO.payments.reduce(
+              (sum, p) => sum + (p.amount || 0),
+              0
+            ),
+            paidAmount: latestWO.payments
+              .filter((p) => p.status === "VERIFIED")
+              .reduce((sum, p) => sum + (p.amount || 0), 0),
+            paymentStatus: latestWO.payments.some(
+              (p) => p.status === "VERIFIED"
+            )
+              ? "PAID"
+              : "PENDING",
+          }
           : null;
 
       return {
@@ -714,8 +714,8 @@ export const getSRById = async (req, res, next) => {
     const latestWO =
       sr.workOrders && sr.workOrders.length > 0
         ? sr.workOrders.reduce((latest, wo) =>
-            wo.createdAt > latest.createdAt ? wo : latest
-          )
+          wo.createdAt > latest.createdAt ? wo : latest
+        )
         : null;
 
     // Determine user-friendly status
@@ -760,30 +760,30 @@ export const getSRById = async (req, res, next) => {
     const paymentSummary =
       latestWO && latestWO.payments && latestWO.payments.length > 0
         ? {
-            totalAmount: latestWO.payments.reduce(
-              (sum, p) => sum + (p.amount || 0),
-              0
-            ),
-            paidAmount: latestWO.payments
-              .filter((p) => p.status === "VERIFIED")
-              .reduce((sum, p) => sum + (p.amount || 0), 0),
-            pendingAmount: latestWO.payments
-              .filter((p) => p.status !== "VERIFIED")
-              .reduce((sum, p) => sum + (p.amount || 0), 0),
-            paymentStatus: latestWO.payments.some(
-              (p) => p.status === "VERIFIED"
-            )
-              ? "PAID"
-              : "PENDING",
-            payments: latestWO.payments.map((p) => ({
-              id: p.id,
-              amount: p.amount,
-              status: p.status,
-              paymentMethod: p.method, // preserve API response key
-              transactionId: p.transactionRef, // map underlying field to expected key
-              createdAt: p.createdAt,
-            })),
-          }
+          totalAmount: latestWO.payments.reduce(
+            (sum, p) => sum + (p.amount || 0),
+            0
+          ),
+          paidAmount: latestWO.payments
+            .filter((p) => p.status === "VERIFIED")
+            .reduce((sum, p) => sum + (p.amount || 0), 0),
+          pendingAmount: latestWO.payments
+            .filter((p) => p.status !== "VERIFIED")
+            .reduce((sum, p) => sum + (p.amount || 0), 0),
+          paymentStatus: latestWO.payments.some(
+            (p) => p.status === "VERIFIED"
+          )
+            ? "PAID"
+            : "PENDING",
+          payments: latestWO.payments.map((p) => ({
+            id: p.id,
+            amount: p.amount,
+            status: p.status,
+            paymentMethod: p.method, // preserve API response key
+            transactionId: p.transactionRef, // map underlying field to expected key
+            createdAt: p.createdAt,
+          })),
+        }
         : null;
 
     const response = {
@@ -801,10 +801,10 @@ export const getSRById = async (req, res, next) => {
       technicianRating:
         latestWO && latestWO.review
           ? {
-              rating: latestWO.review.rating,
-              comment: latestWO.review.comment,
-              createdAt: latestWO.review.createdAt,
-            }
+            rating: latestWO.review.rating,
+            comment: latestWO.review.comment,
+            createdAt: latestWO.review.createdAt,
+          }
           : null,
       paymentSummary,
     };
@@ -868,8 +868,7 @@ export const cancelSR = async (req, res, next) => {
       data: {
         status: "CANCELLED",
         description: finalReason
-          ? `${
-              sr.description || ""
+          ? `${sr.description || ""
             }\n\nCancellation Reason: ${finalReason}`.trim()
           : sr.description,
         updatedAt: new Date(),
@@ -986,9 +985,8 @@ export const rejectSR = async (req, res, next) => {
       },
       data: {
         status: "REJECTED",
-        description: `${
-          sr.description || ""
-        }\n\nRejection Reason: ${finalReason}`.trim(),
+        description: `${sr.description || ""
+          }\n\nRejection Reason: ${finalReason}`.trim(),
         updatedAt: new Date(),
       },
       include: {
