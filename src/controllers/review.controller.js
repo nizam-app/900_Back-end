@@ -10,23 +10,23 @@ export const createReview = async (req, res, next) => {
     const { woId, rating, comment } = req.body;
 
     // Log request data for debugging
-    console.log('Review request body:', req.body);
-    console.log('woId received:', woId, 'type:', typeof woId);
+    console.log("Review request body:", req.body);
+    console.log("woId received:", woId, "type:", typeof woId);
 
     if (!woId || !rating) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "woId and rating are required",
-        received: { woId, rating }
+        received: { woId, rating },
       });
     }
 
     // Validate woId is a valid number
     const parsedWoId = Number(woId);
     if (isNaN(parsedWoId) || parsedWoId <= 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "Invalid woId - must be a positive number",
         received: woId,
-        parsed: parsedWoId
+        parsed: parsedWoId,
       });
     }
 
