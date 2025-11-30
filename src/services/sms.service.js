@@ -38,9 +38,9 @@ const OTP_API_CONFIG = {
  */
 const isTestPhoneNumber = (phone) => {
   if (!phone) return true;
-  
+
   const cleaned = phone.replace(/[^\d]/g, '');
-  
+
   // Common test patterns
   const testPatterns = [
     /^0+$/,           // All zeros: 0000000000
@@ -56,7 +56,7 @@ const isTestPhoneNumber = (phone) => {
     /^(123)+$/,       // Repeating 123
     /^1234567890$/,   // Sequential
   ];
-  
+
   return testPatterns.some(pattern => pattern.test(cleaned));
 };
 
@@ -141,7 +141,7 @@ export const sendSMS = async (phone, text, options = {}) => {
     // Check for test/dummy numbers in development
     if (isTestPhoneNumber(phone)) {
       console.warn(`⚠️ Test/dummy phone number detected: ${phone}`);
-      
+
       // In development mode, skip actual SMS sending
       if (process.env.NODE_ENV === 'development' || process.env.SKIP_SMS_FOR_TEST_NUMBERS === 'true') {
         console.log(`🧪 Development mode: Skipping SMS to test number ${formattedPhone}`);
@@ -156,7 +156,7 @@ export const sendSMS = async (phone, text, options = {}) => {
           isTestNumber: true
         };
       }
-      
+
       // In production, warn but continue (will likely fail at API)
       console.warn(`⚠️ Attempting to send to test number in production. This will likely fail.`);
     }
@@ -301,7 +301,7 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
     // Check for test/dummy numbers
     if (isTestPhoneNumber(phone)) {
       console.warn(`⚠️ Test/dummy phone number detected for OTP: ${phone}`);
-      
+
       // In development mode, return mock OTP
       if (process.env.NODE_ENV === 'development' || process.env.SKIP_SMS_FOR_TEST_NUMBERS === 'true') {
         console.log(`🧪 Development mode: Skipping OTP to test number ${formattedPhone}`);
@@ -317,7 +317,7 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
         };
       }
     }
-    
+
     // Validate phone number
     if (!formattedPhone || !formattedPhone.startsWith('+')) {
       console.error(`❌ Invalid phone number for OTP: ${phone}`);
