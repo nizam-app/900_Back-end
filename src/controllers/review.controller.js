@@ -9,8 +9,25 @@ export const createReview = async (req, res, next) => {
     const customerId = req.user.id;
     const { woId, rating, comment } = req.body;
 
+    // Log request data for debugging
+    console.log("Review request body:", req.body);
+    console.log("woId received:", woId, "type:", typeof woId);
+
     if (!woId || !rating) {
-      return res.status(400).json({ message: "woId and rating are required" });
+      return res.status(400).json({
+        message: "woId and rating are required",
+        received: { woId, rating },
+      });
+    }
+
+    // Validate woId is a valid number
+    const parsedWoId = Number(woId);
+    if (isNaN(parsedWoId) || parsedWoId <= 0) {
+      return res.status(400).json({
+        message: "Invalid woId - must be a positive number",
+        received: woId,
+        parsed: parsedWoId,
+      });
     }
 
     if (rating < 1 || rating > 5) {
@@ -20,11 +37,11 @@ export const createReview = async (req, res, next) => {
     }
 
     const wo = await prisma.workOrder.findUnique({
-      where: { id: Number(woId) },
+      where: { id: parsedWoId },
     });
 
     const existingReview = await prisma.review.findUnique({
-      where: { woId: Number(woId) },
+      where: { woId: parsedWoId },
     });
 
     if (!wo) {
@@ -47,7 +64,7 @@ export const createReview = async (req, res, next) => {
 
     const review = await prisma.review.create({
       data: {
-        woId: Number(woId),
+        woId: parsedWoId,
         customerId,
         technicianId: wo.technicianId,
         rating: Number(rating),
