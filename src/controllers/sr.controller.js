@@ -358,7 +358,7 @@ export const listSR = async (req, res, next) => {
                 id: true,
                 amount: true,
                 status: true,
-                paymentMethod: true,
+                method: true,
               },
             },
             review: {
@@ -438,7 +438,7 @@ export const listSR = async (req, res, next) => {
               )
                 ? "PAID"
                 : "PENDING",
-              paymentMethod: latestWO.payments[0]?.paymentMethod || null,
+              paymentMethod: latestWO.payments[0]?.method || null,
             }
           : null;
 
@@ -527,7 +527,7 @@ export const getMySRs = async (req, res, next) => {
                 id: true,
                 amount: true,
                 status: true,
-                paymentMethod: true,
+                method: true,
               },
             },
             review: {
@@ -683,8 +683,8 @@ export const getSRById = async (req, res, next) => {
                 id: true,
                 amount: true,
                 status: true,
-                paymentMethod: true,
-                transactionId: true,
+                method: true,
+                transactionRef: true,
                 createdAt: true,
               },
             },
@@ -779,8 +779,8 @@ export const getSRById = async (req, res, next) => {
               id: p.id,
               amount: p.amount,
               status: p.status,
-              paymentMethod: p.paymentMethod,
-              transactionId: p.transactionId,
+              paymentMethod: p.method, // preserve API response key
+              transactionId: p.transactionRef, // map underlying field to expected key
               createdAt: p.createdAt,
             })),
           }
