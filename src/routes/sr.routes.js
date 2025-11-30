@@ -9,6 +9,7 @@ import {
   getSRById,
   cancelSR,
   searchCustomer,
+  rebookService,
 } from "../controllers/sr.controller.js";
 
 const router = Router();
@@ -46,6 +47,14 @@ router.patch(
   authMiddleware,
   requireRole("CUSTOMER", "DISPATCHER", "ADMIN", "CALL_CENTER"),
   cancelSR
+);
+
+// Rebook Service - Customers can rebook completed services
+router.post(
+  "/:srId/rebook",
+  authMiddleware,
+  requireRole("CUSTOMER"),
+  rebookService
 );
 
 export default router;
