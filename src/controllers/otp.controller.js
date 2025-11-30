@@ -44,10 +44,12 @@ export const sendOTP = async (req, res, next) => {
 
 export const verifyOTP = async (req, res, next) => {
   try {
-    const { code, type } = req.body;
+    const { phone, code, type } = req.body;
 
-    if (!code || !type) {
-      return res.status(400).json({ message: "Code and type are required" });
+    if (!phone || !code || !type) {
+      return res
+        .status(400)
+        .json({ message: "Phone, code and type are required" });
     }
 
     // Validate OTP code format (6 digits)
@@ -58,7 +60,7 @@ export const verifyOTP = async (req, res, next) => {
       });
     }
 
-    const result = await otpService.verifyOTPByCode(code, type);
+    const result = await otpService.verifyOTPByCode(phone, code, type);
 
     return res.json(result);
   } catch (err) {

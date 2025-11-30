@@ -5,6 +5,7 @@ import { Router } from "express";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import {
   register,
+  setPassword,
   login,
   logout,
   changePassword,
@@ -15,7 +16,8 @@ import {
 
 const router = Router();
 
-router.post("/register", register);
+router.post("/register", register); // Legacy endpoint (requires OTP in body)
+router.post("/set-password", setPassword); // New flow: verify OTP first, then set password
 router.post("/login", login);
 router.post("/logout", authMiddleware, logout);
 router.post("/change-password", authMiddleware, changePassword);

@@ -5,6 +5,22 @@ import { prisma } from "../prisma.js";
 
 const generateSRNumber = () => "SR-" + Date.now();
 
+/**
+ * Create Service Request
+ *
+ * GUEST HANDLING:
+ * - Guests can create SRs without authentication (isGuest: true)
+ * - Creates a User record with empty passwordHash for tracking
+ * - Guest users CANNOT access: SR list, profile, notifications, rebook/book-again
+ * - When guest registers later with same phone, their User record is upgraded
+ * - isGuest flag differentiates guest SRs from authenticated SRs
+ *
+ * CALL CENTER FLOW:
+ * 1. Search customer by phone (GET /api/srs/search-customer?phone=XXX)
+ * 2. If exists: use customerId from search result
+ * 3. If not exists: provide name, email to create new customer
+ * 4. Create SR with scheduledAt and notes (optional)
+ */
 export const createSR = async (req, res, next) => {
   try {
     const {
@@ -24,6 +40,8 @@ export const createSR = async (req, res, next) => {
       homeAddress,
       preferredDate,
       preferredTime,
+      scheduledAt, // Call center can set scheduled appointment time
+      notes, // Call center appointment notes
     } = req.body;
 
     // Validate required fields
@@ -123,13 +141,37 @@ export const createSR = async (req, res, next) => {
       }
     }
 
-    let customerId = req.user?.id;
-    let createdById = req.user?.id;
-    let isGuest = !req.user; // Guest if no authenticated user
-    let finalSource = source || (req.user ? "CUSTOMER_APP" : "WEB_PORTAL");
+    let customerId = null;
+    let createdById = null;
+    let isGuest = true; // Default to guest
+    let finalSource = source || "WEB_PORTAL";
+
+    // Determine if user is authenticated
+    const isAuthenticated = req.user && req.user.id;
+
+    // Handle call center scheduledAt → preferredDate mapping
+    let finalPreferredDate = preferredDate;
+    let finalDescription = description;
+
+    // Call center can provide scheduledAt instead of preferredDate
+    if (
+      isAuthenticated &&
+      req.user.role === "CALL_CENTER" &&
+      scheduledAt &&
+      !preferredDate
+    ) {
+      finalPreferredDate = scheduledAt;
+    }
+
+    // Call center notes are appended to description
+    if (isAuthenticated && req.user.role === "CALL_CENTER" && notes) {
+      finalDescription = description
+        ? `${description}\n\nCall Center Notes: ${notes}`
+        : `Call Center Notes: ${notes}`;
+    }
 
     // Handle Call Center SR creation
-    if (req.user?.role === "CALL_CENTER") {
+    if (isAuthenticated && req.user.role === "CALL_CENTER") {
       finalSource = "CALL_CENTER";
       createdById = req.user.id;
 
@@ -156,14 +198,18 @@ export const createSR = async (req, res, next) => {
       isGuest = false; // Call center creates for authenticated customers
     }
     // Handle authenticated customer SR creation
-    else if (req.user?.role === "CUSTOMER") {
+    else if (isAuthenticated && req.user.role === "CUSTOMER") {
       customerId = req.user.id;
+      createdById = req.user.id;
       isGuest = false; // Authenticated customer
       finalSource = "CUSTOMER_APP";
-      createdById = req.user.id;
+
+      console.log(
+        `✅ Authenticated customer ${req.user.phone} creating SR (isGuest: false)`
+      );
     }
     // Handle guest/web portal SR creation (no authentication)
-    else if (!customerId) {
+    else {
       let guestUser = await prisma.user.findUnique({ where: { phone } });
 
       if (!guestUser) {
@@ -176,12 +222,15 @@ export const createSR = async (req, res, next) => {
             role: "CUSTOMER",
           },
         });
+        console.log(`👤 Created guest user: ${phone}`);
       }
 
       customerId = guestUser.id;
       isGuest = true; // Guest user from web portal
       finalSource = "WEB_PORTAL";
       createdById = null; // No authenticated creator
+
+      console.log(`🌐 Guest user ${phone} creating SR (isGuest: true)`);
     }
 
     const sr = await prisma.serviceRequest.create({
@@ -192,13 +241,13 @@ export const createSR = async (req, res, next) => {
         categoryId: Number(categoryId),
         subserviceId: Number(subserviceId),
         serviceId: serviceId ? Number(serviceId) : null,
-        description,
+        description: finalDescription,
         priority: finalPriority,
         address,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         paymentType: finalPaymentType,
-        preferredDate: preferredDate ? new Date(preferredDate) : null,
+        preferredDate: finalPreferredDate ? new Date(finalPreferredDate) : null,
         preferredTime: preferredTime || null,
         status: "NEW",
         source: finalSource,
@@ -229,11 +278,12 @@ export const createSR = async (req, res, next) => {
       });
     }
 
-    // Return SR with status and srId properties
+    // Return SR with status, srId, and isGuest properties
     const response = {
       ...sr,
       srId: sr.id, // Include srId property
       status: sr.status, // Explicitly include status
+      isGuest: sr.isGuest, // Explicitly include guest status for clarity
     };
 
     // Real-time notification for new service request
@@ -295,11 +345,27 @@ export const listSR = async (req, res, next) => {
             id: true,
             woNumber: true,
             status: true,
+            scheduledAt: true,
             technician: {
               select: {
                 id: true,
                 name: true,
                 phone: true,
+              },
+            },
+            payments: {
+              select: {
+                id: true,
+                amount: true,
+                status: true,
+                paymentMethod: true,
+              },
+            },
+            review: {
+              select: {
+                id: true,
+                rating: true,
+                comment: true,
               },
             },
           },
@@ -313,26 +379,260 @@ export const listSR = async (req, res, next) => {
     });
 
     // Add WO status, srId, and scheduledAt to each SR
-    const srsWithWOStatus = srs.map((sr) => ({
-      ...sr,
-      srId: sr.id, // Add srId property for compatibility
-      scheduledAt:
-        sr.workOrders && sr.workOrders.length > 0
-          ? sr.workOrders[0].scheduledAt
-          : sr.preferredDate || null, // Use WO scheduledAt or SR preferredDate
-      woStatus:
-        sr.workOrders && sr.workOrders.length > 0
-          ? sr.workOrders[0].status
-          : null,
-      assignedTechnician:
-        sr.workOrders && sr.workOrders.length > 0 && sr.workOrders[0].technician
-          ? sr.workOrders[0].technician.name
-          : "Unassigned",
-      latestWO:
-        sr.workOrders && sr.workOrders.length > 0 ? sr.workOrders[0] : null,
-    }));
+    const srsWithWOStatus = srs.map((sr) => {
+      const latestWO =
+        sr.workOrders && sr.workOrders.length > 0 ? sr.workOrders[0] : null;
+
+      // Determine user-friendly status based on SR status and WO status
+      let userStatus = sr.status;
+      let readableStatus = "";
+
+      if (sr.status === "NEW" || sr.status === "OPEN") {
+        userStatus = "PENDING_APPROVAL";
+        readableStatus = "Pending Approval";
+      } else if (sr.status === "CONVERTED_TO_WO" && latestWO) {
+        // Derive status from Work Order
+        if (latestWO.status === "PAID_VERIFIED") {
+          userStatus = "COMPLETED";
+          readableStatus = "Completed";
+        } else if (latestWO.status === "CANCELLED") {
+          userStatus = "CANCELLED";
+          readableStatus = "Cancelled";
+        } else if (latestWO.status === "ASSIGNED") {
+          userStatus = "ACTIVE";
+          readableStatus = "Assigned to Technician";
+        } else if (latestWO.status === "ACCEPTED") {
+          userStatus = "ACTIVE";
+          readableStatus = "Technician On The Way";
+        } else if (latestWO.status === "IN_PROGRESS") {
+          userStatus = "ACTIVE";
+          readableStatus = "Work In Progress";
+        } else if (latestWO.status === "COMPLETED_PENDING_PAYMENT") {
+          userStatus = "ACTIVE";
+          readableStatus = "Awaiting Payment";
+        } else {
+          userStatus = "ACTIVE";
+          readableStatus = "Active";
+        }
+      } else if (sr.status === "CANCELLED") {
+        userStatus = "CANCELLED";
+        readableStatus = "Cancelled";
+      } else if (sr.status === "REJECTED") {
+        userStatus = "REJECTED";
+        readableStatus = "Rejected";
+      }
+
+      // Calculate payment summary
+      const paymentSummary =
+        latestWO && latestWO.payments && latestWO.payments.length > 0
+          ? {
+              totalAmount: latestWO.payments.reduce(
+                (sum, p) => sum + (p.amount || 0),
+                0
+              ),
+              paidAmount: latestWO.payments
+                .filter((p) => p.status === "VERIFIED")
+                .reduce((sum, p) => sum + (p.amount || 0), 0),
+              paymentStatus: latestWO.payments.some(
+                (p) => p.status === "VERIFIED"
+              )
+                ? "PAID"
+                : "PENDING",
+              paymentMethod: latestWO.payments[0]?.paymentMethod || null,
+            }
+          : null;
+
+      return {
+        ...sr,
+        srId: sr.id, // Add srId property for compatibility
+        status: userStatus, // User-friendly status
+        readableStatus: readableStatus, // Human-readable status description
+        internalStatus: sr.status, // Keep original status for reference
+        preferredAppointmentDate: sr.preferredDate, // Customer's requested date
+        preferredAppointmentTime: sr.preferredTime, // Customer's requested time slot
+        scheduledAt: latestWO ? latestWO.scheduledAt : sr.preferredDate || null, // Use WO scheduledAt or SR preferredDate
+        woStatus: latestWO ? latestWO.status : null,
+        assignedTechnician:
+          latestWO && latestWO.technician
+            ? {
+                id: latestWO.technician.id,
+                name: latestWO.technician.name,
+                phone: latestWO.technician.phone,
+              }
+            : null,
+        technicianRating:
+          latestWO && latestWO.review ? latestWO.review.rating : null,
+        paymentSummary,
+        latestWO,
+      };
+    });
 
     return res.json(srsWithWOStatus);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get My SRs (Customer only - dedicated endpoint)
+export const getMySRs = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { status } = req.query;
+
+    const where = { customerId: userId };
+
+    // Optional status filter (user-friendly status)
+    if (status) {
+      if (status === "PENDING_APPROVAL") {
+        where.status = { in: ["NEW", "OPEN"] };
+      } else if (status === "ACTIVE") {
+        where.status = "CONVERTED_TO_WO";
+      } else if (
+        status === "COMPLETED" ||
+        status === "CANCELLED" ||
+        status === "REJECTED"
+      ) {
+        where.status = status;
+      }
+    }
+
+    const srs = await prisma.serviceRequest.findMany({
+      where,
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        category: true,
+        subservice: true,
+        service: true,
+        workOrders: {
+          select: {
+            id: true,
+            woNumber: true,
+            status: true,
+            scheduledAt: true,
+            technician: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+              },
+            },
+            payments: {
+              select: {
+                id: true,
+                amount: true,
+                status: true,
+                paymentMethod: true,
+              },
+            },
+            review: {
+              select: {
+                id: true,
+                rating: true,
+                comment: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Map to include readable status and all required fields
+    const formattedSRs = srs.map((sr) => {
+      const latestWO =
+        sr.workOrders && sr.workOrders.length > 0 ? sr.workOrders[0] : null;
+
+      let userStatus = sr.status;
+      let readableStatus = "";
+
+      if (sr.status === "NEW" || sr.status === "OPEN") {
+        userStatus = "PENDING_APPROVAL";
+        readableStatus = "Pending Approval";
+      } else if (sr.status === "CONVERTED_TO_WO" && latestWO) {
+        if (latestWO.status === "PAID_VERIFIED") {
+          userStatus = "COMPLETED";
+          readableStatus = "Completed";
+        } else if (latestWO.status === "CANCELLED") {
+          userStatus = "CANCELLED";
+          readableStatus = "Cancelled";
+        } else if (latestWO.status === "ASSIGNED") {
+          userStatus = "ACTIVE";
+          readableStatus = "Assigned to Technician";
+        } else if (latestWO.status === "ACCEPTED") {
+          userStatus = "ACTIVE";
+          readableStatus = "Technician On The Way";
+        } else if (latestWO.status === "IN_PROGRESS") {
+          userStatus = "ACTIVE";
+          readableStatus = "Work In Progress";
+        } else if (latestWO.status === "COMPLETED_PENDING_PAYMENT") {
+          userStatus = "ACTIVE";
+          readableStatus = "Awaiting Payment";
+        } else {
+          userStatus = "ACTIVE";
+          readableStatus = "Active";
+        }
+      } else if (sr.status === "CANCELLED") {
+        userStatus = "CANCELLED";
+        readableStatus = "Cancelled";
+      } else if (sr.status === "REJECTED") {
+        userStatus = "REJECTED";
+        readableStatus = "Rejected";
+      }
+
+      const paymentSummary =
+        latestWO && latestWO.payments && latestWO.payments.length > 0
+          ? {
+              totalAmount: latestWO.payments.reduce(
+                (sum, p) => sum + (p.amount || 0),
+                0
+              ),
+              paidAmount: latestWO.payments
+                .filter((p) => p.status === "VERIFIED")
+                .reduce((sum, p) => sum + (p.amount || 0), 0),
+              paymentStatus: latestWO.payments.some(
+                (p) => p.status === "VERIFIED"
+              )
+                ? "PAID"
+                : "PENDING",
+            }
+          : null;
+
+      return {
+        srId: sr.id,
+        srNumber: sr.srNumber,
+        status: userStatus,
+        readableStatus: readableStatus,
+        internalStatus: sr.status,
+        description: sr.description,
+        priority: sr.priority,
+        address: sr.address,
+        preferredAppointmentDate: sr.preferredDate,
+        preferredAppointmentTime: sr.preferredTime,
+        scheduledAt: latestWO ? latestWO.scheduledAt : sr.preferredDate || null,
+        category: sr.category,
+        subservice: sr.subservice,
+        service: sr.service,
+        assignedTechnician:
+          latestWO && latestWO.technician ? latestWO.technician : null,
+        technicianRating:
+          latestWO && latestWO.review ? latestWO.review.rating : null,
+        paymentSummary,
+        createdAt: sr.createdAt,
+        updatedAt: sr.updatedAt,
+      };
+    });
+
+    return res.json(formattedSRs);
   } catch (err) {
     next(err);
   }
@@ -375,6 +675,25 @@ export const getSRById = async (req, res, next) => {
                 id: true,
                 name: true,
                 phone: true,
+                email: true,
+              },
+            },
+            payments: {
+              select: {
+                id: true,
+                amount: true,
+                status: true,
+                paymentMethod: true,
+                transactionId: true,
+                createdAt: true,
+              },
+            },
+            review: {
+              select: {
+                id: true,
+                rating: true,
+                comment: true,
+                createdAt: true,
               },
             },
           },
@@ -391,7 +710,106 @@ export const getSRById = async (req, res, next) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    return res.json(sr);
+    // Add user-friendly status and scheduledAt
+    const latestWO =
+      sr.workOrders && sr.workOrders.length > 0
+        ? sr.workOrders.reduce((latest, wo) =>
+            wo.createdAt > latest.createdAt ? wo : latest
+          )
+        : null;
+
+    // Determine user-friendly status
+    let userStatus = sr.status;
+    let readableStatus = "";
+
+    if (sr.status === "NEW" || sr.status === "OPEN") {
+      userStatus = "PENDING_APPROVAL";
+      readableStatus = "Pending Approval";
+    } else if (sr.status === "CONVERTED_TO_WO" && latestWO) {
+      if (latestWO.status === "PAID_VERIFIED") {
+        userStatus = "COMPLETED";
+        readableStatus = "Completed";
+      } else if (latestWO.status === "CANCELLED") {
+        userStatus = "CANCELLED";
+        readableStatus = "Cancelled";
+      } else if (latestWO.status === "ASSIGNED") {
+        userStatus = "ACTIVE";
+        readableStatus = "Assigned to Technician";
+      } else if (latestWO.status === "ACCEPTED") {
+        userStatus = "ACTIVE";
+        readableStatus = "Technician On The Way";
+      } else if (latestWO.status === "IN_PROGRESS") {
+        userStatus = "ACTIVE";
+        readableStatus = "Work In Progress";
+      } else if (latestWO.status === "COMPLETED_PENDING_PAYMENT") {
+        userStatus = "ACTIVE";
+        readableStatus = "Awaiting Payment";
+      } else {
+        userStatus = "ACTIVE";
+        readableStatus = "Active";
+      }
+    } else if (sr.status === "CANCELLED") {
+      userStatus = "CANCELLED";
+      readableStatus = "Cancelled";
+    } else if (sr.status === "REJECTED") {
+      userStatus = "REJECTED";
+      readableStatus = "Rejected";
+    }
+
+    // Calculate detailed payment summary
+    const paymentSummary =
+      latestWO && latestWO.payments && latestWO.payments.length > 0
+        ? {
+            totalAmount: latestWO.payments.reduce(
+              (sum, p) => sum + (p.amount || 0),
+              0
+            ),
+            paidAmount: latestWO.payments
+              .filter((p) => p.status === "VERIFIED")
+              .reduce((sum, p) => sum + (p.amount || 0), 0),
+            pendingAmount: latestWO.payments
+              .filter((p) => p.status !== "VERIFIED")
+              .reduce((sum, p) => sum + (p.amount || 0), 0),
+            paymentStatus: latestWO.payments.some(
+              (p) => p.status === "VERIFIED"
+            )
+              ? "PAID"
+              : "PENDING",
+            payments: latestWO.payments.map((p) => ({
+              id: p.id,
+              amount: p.amount,
+              status: p.status,
+              paymentMethod: p.paymentMethod,
+              transactionId: p.transactionId,
+              createdAt: p.createdAt,
+            })),
+          }
+        : null;
+
+    const response = {
+      ...sr,
+      srId: sr.id,
+      status: userStatus,
+      readableStatus: readableStatus,
+      internalStatus: sr.status,
+      preferredAppointmentDate: sr.preferredDate, // Customer's requested date
+      preferredAppointmentTime: sr.preferredTime, // Customer's requested time slot
+      scheduledAt: latestWO ? latestWO.scheduledAt : sr.preferredDate || null,
+      woStatus: latestWO ? latestWO.status : null,
+      assignedTechnician:
+        latestWO && latestWO.technician ? latestWO.technician : null,
+      technicianRating:
+        latestWO && latestWO.review
+          ? {
+              rating: latestWO.review.rating,
+              comment: latestWO.review.comment,
+              createdAt: latestWO.review.createdAt,
+            }
+          : null,
+      paymentSummary,
+    };
+
+    return res.json(response);
   } catch (err) {
     next(err);
   }
@@ -487,8 +905,137 @@ export const cancelSR = async (req, res, next) => {
       },
     });
 
+    // Send cancellation notification
+    const { notifySRCancelled } = await import(
+      "../services/notification.service.js"
+    );
+    await notifySRCancelled(updatedSR, userRole);
+
     return res.json({
       message: "Service Request cancelled successfully",
+      serviceRequest: {
+        ...updatedSR,
+        srId: updatedSR.id,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const rejectSR = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason, rejectReason } = req.body;
+    const userRole = req.user.role;
+    const userId = req.user.id;
+
+    // Only dispatcher, admin, or call center can reject SRs
+    if (!["DISPATCHER", "ADMIN", "CALL_CENTER"].includes(userRole)) {
+      return res.status(403).json({
+        message:
+          "Access denied. Only dispatchers, admins, or call center can reject service requests.",
+      });
+    }
+
+    const finalReason = reason || rejectReason;
+
+    if (!finalReason) {
+      return res.status(400).json({ message: "Rejection reason is required" });
+    }
+
+    // Find SR by either numeric ID or srNumber
+    const whereClause = isNaN(id) ? { srNumber: id } : { id: Number(id) };
+
+    const sr = await prisma.serviceRequest.findUnique({
+      where: whereClause,
+      include: {
+        workOrders: true,
+      },
+    });
+
+    if (!sr) {
+      return res.status(404).json({ message: "Service Request not found" });
+    }
+
+    // Check if already rejected or cancelled
+    if (sr.status === "REJECTED") {
+      return res
+        .status(400)
+        .json({ message: "Service Request is already rejected" });
+    }
+
+    if (sr.status === "CANCELLED") {
+      return res
+        .status(400)
+        .json({ message: "Cannot reject a cancelled Service Request" });
+    }
+
+    // Check if already converted to work order
+    if (sr.status === "CONVERTED_TO_WO" || sr.workOrders.length > 0) {
+      return res.status(400).json({
+        message:
+          "Cannot reject Service Request that has been converted to Work Order",
+      });
+    }
+
+    // Update service request status to REJECTED
+    const updatedSR = await prisma.serviceRequest.update({
+      where: {
+        id: sr.id,
+      },
+      data: {
+        status: "REJECTED",
+        description: `${
+          sr.description || ""
+        }\n\nRejection Reason: ${finalReason}`.trim(),
+        updatedAt: new Date(),
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
+        category: true,
+        subservice: true,
+        service: true,
+      },
+    });
+
+    // Create audit log for rejection
+    await prisma.auditLog.create({
+      data: {
+        userId: userId,
+        action: "SR_REJECTED",
+        entityType: "SERVICE_REQUEST",
+        entityId: sr.id,
+        metadataJson: JSON.stringify({
+          srNumber: sr.srNumber,
+          rejectReason: finalReason,
+          rejectedBy: userRole,
+        }),
+      },
+    });
+
+    // Notify customer about rejection
+    const { createNotification } = await import(
+      "../services/notification.service.js"
+    );
+    await createNotification({
+      userId: sr.customerId,
+      type: "SR_REJECTED",
+      title: "Service Request Rejected",
+      message: `Your service request ${sr.srNumber} has been rejected. Reason: ${finalReason}`,
+      relatedId: sr.id,
+      relatedType: "SERVICE_REQUEST",
+    });
+
+    return res.json({
+      message: "Service Request rejected successfully",
       serviceRequest: {
         ...updatedSR,
         srId: updatedSR.id,
@@ -623,9 +1170,104 @@ export const rebookService = async (req, res, next) => {
 
     return res.status(201).json({
       message: "Service rebooked successfully",
-      sr: newSR,
-      srId: newSR.id,
-      status: newSR.status,
+      sr: {
+        ...newSR,
+        srId: newSR.id,
+        status: "PENDING_APPROVAL", // User-friendly status
+        readableStatus: "Pending Approval",
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Book Again - Simplified version that copies SR exactly with no customization
+export const bookAgain = async (req, res, next) => {
+  try {
+    const { srId } = req.params;
+    const customerId = req.user.id;
+
+    // Find original SR
+    const originalSR = await prisma.serviceRequest.findUnique({
+      where: { id: Number(srId) },
+      include: {
+        category: true,
+        subservice: true,
+        service: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    if (!originalSR) {
+      return res.status(404).json({ message: "Service Request not found" });
+    }
+
+    // Verify customer owns this SR
+    if (originalSR.customerId !== customerId) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to book this service again" });
+    }
+
+    // Create new SR with same service details (reset status, dates, assignments)
+    const newSR = await prisma.serviceRequest.create({
+      data: {
+        srNumber: generateSRNumber(),
+        customerId,
+        createdById: customerId,
+        categoryId: originalSR.categoryId,
+        subserviceId: originalSR.subserviceId,
+        serviceId: originalSR.serviceId,
+        description: originalSR.description,
+        priority: originalSR.priority,
+        address: originalSR.address,
+        streetAddress: originalSR.streetAddress,
+        city: originalSR.city,
+        landmark: originalSR.landmark,
+        latitude: originalSR.latitude,
+        longitude: originalSR.longitude,
+        paymentType: originalSR.paymentType,
+        preferredDate: null, // Reset - customer will schedule later
+        preferredTime: null, // Reset
+        status: "NEW", // Reset to NEW
+        source: "CUSTOMER_APP",
+        isGuest: false,
+      },
+      include: {
+        category: true,
+        subservice: true,
+        service: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    // Notify about new service request
+    const { notifyNewServiceRequest } = await import(
+      "../services/notification.service.js"
+    );
+    await notifyNewServiceRequest(newSR);
+
+    return res.status(201).json({
+      message: "Service booked again successfully",
+      sr: {
+        ...newSR,
+        srId: newSR.id,
+        status: "PENDING_APPROVAL", // User-friendly status
+        readableStatus: "Pending Approval",
+      },
     });
   } catch (err) {
     next(err);
