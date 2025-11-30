@@ -47,9 +47,7 @@ export const verifyOTP = async (req, res, next) => {
     const { code, type } = req.body;
 
     if (!code || !type) {
-      return res
-        .status(400)
-        .json({ message: "Code and type are required" });
+      return res.status(400).json({ message: "Code and type are required" });
     }
 
     // Validate OTP code format (6 digits)
