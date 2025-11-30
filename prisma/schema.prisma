@@ -137,7 +137,7 @@ model ServiceRequest {
   paymentType   String // CASH, MOBILE_MONEY
   preferredDate DateTime? // Optional preferred appointment date
   preferredTime String? // Optional preferred time slot (e.g., "Morning", "Afternoon", "Evening")
-  status        String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED
+  status        String // NEW, OPEN, CONVERTED_TO_WO, CANCELLED, REJECTED (API returns: ACTIVE, COMPLETED, CANCELLED, REJECTED, PENDING_APPROVAL)
   source        String // CUSTOMER_APP, WEB_PORTAL, CALL_CENTER
   isGuest       Boolean   @default(false)
   createdAt     DateTime  @default(now())
@@ -323,15 +323,17 @@ model AuditLog {
 }
 
 model OTP {
-  id        Int      @id @default(autoincrement())
-  phone     String
-  code      String
-  type      String
-  isUsed    Boolean  @default(false)
-  expiresAt DateTime
-  userId    Int?
-  createdAt DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id])
+  id              Int       @id @default(autoincrement())
+  phone           String
+  code            String
+  type            String
+  isUsed          Boolean   @default(false)
+  expiresAt       DateTime
+  tempToken       String?
+  tempTokenExpiry DateTime?
+  userId          Int?
+  createdAt       DateTime  @default(now())
+  user            User?     @relation(fields: [userId], references: [id])
 }
 
 enum Role {

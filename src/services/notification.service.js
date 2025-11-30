@@ -294,7 +294,156 @@ export const notifyTechnicianBlocked = async (technicianId, reason) => {
 
 // ✅ Send notification for new Service Request
 export const notifyNewServiceRequest = async (sr) => {
-  console.log(`📝 New service request notification created: ${sr.srNumber}`);
+  try {
+    // Notify customer
+    await createNotification(
+      sr.customerId,
+      "SR_CREATED",
+      "Service Request Created",
+      `Your service request ${sr.srNumber} has been created successfully and is pending approval.`,
+      { srId: sr.id, srNumber: sr.srNumber }
+    );
+
+    // Notify all dispatchers and admins
+    const dispatchersAndAdmins = await prisma.user.findMany({
+      where: {
+        role: { in: ["DISPATCHER", "ADMIN"] },
+        isBlocked: false,
+      },
+      select: { id: true },
+    });
+
+    for (const user of dispatchersAndAdmins) {
+      await createNotification(
+        user.id,
+        "NEW_SR_AVAILABLE",
+        "New Service Request",
+        `New service request ${sr.srNumber} has been created and needs assignment.`,
+        { srId: sr.id, srNumber: sr.srNumber }
+      );
+    }
+
+    console.log(`📝 New service request notifications sent: ${sr.srNumber}`);
+  } catch (error) {
+    console.error("Error in notifyNewServiceRequest:", error);
+  }
+};
+
+// ✅ Send notification when SR is assigned (converted to WO)
+export const notifySRAssigned = async (sr, wo, technician) => {
+  try {
+    // Notify customer
+    await createNotification(
+      sr.customerId,
+      "SR_ASSIGNED",
+      "Service Request Assigned",
+      `Your service request ${sr.srNumber} has been assigned to ${technician.name}. Work order ${wo.woNumber} created.`,
+      { srId: sr.id, woId: wo.id, srNumber: sr.srNumber, woNumber: wo.woNumber }
+    );
+
+    console.log(
+      `👷 SR assigned notification sent: ${sr.srNumber} -> ${wo.woNumber}`
+    );
+  } catch (error) {
+    console.error("Error in notifySRAssigned:", error);
+  }
+};
+
+// ✅ Send notification when SR is completed
+export const notifySRCompleted = async (sr, wo) => {
+  try {
+    // Notify customer
+    await createNotification(
+      sr.customerId,
+      "SR_COMPLETED",
+      "Service Completed",
+      `Your service request ${sr.srNumber} has been completed. Please verify and make payment.`,
+      { srId: sr.id, woId: wo.id, srNumber: sr.srNumber, woNumber: wo.woNumber }
+    );
+
+    console.log(`✅ SR completed notification sent: ${sr.srNumber}`);
+  } catch (error) {
+    console.error("Error in notifySRCompleted:", error);
+  }
+};
+
+// ✅ Send notification when SR is cancelled
+export const notifySRCancelled = async (sr, cancelledBy) => {
+  try {
+    // Notify customer if cancelled by admin/dispatcher
+    if (cancelledBy !== "CUSTOMER") {
+      await createNotification(
+        sr.customerId,
+        "SR_CANCELLED",
+        "Service Request Cancelled",
+        `Your service request ${sr.srNumber} has been cancelled.`,
+        { srId: sr.id, srNumber: sr.srNumber }
+      );
+    }
+
+    // Notify dispatchers and admins if cancelled by customer
+    if (cancelledBy === "CUSTOMER") {
+      const dispatchersAndAdmins = await prisma.user.findMany({
+        where: {
+          role: { in: ["DISPATCHER", "ADMIN"] },
+          isBlocked: false,
+        },
+        select: { id: true },
+      });
+
+      for (const user of dispatchersAndAdmins) {
+        await createNotification(
+          user.id,
+          "SR_CANCELLED_BY_CUSTOMER",
+          "Service Request Cancelled",
+          `Service request ${sr.srNumber} has been cancelled by customer.`,
+          { srId: sr.id, srNumber: sr.srNumber }
+        );
+      }
+    }
+
+    console.log(`❌ SR cancelled notification sent: ${sr.srNumber}`);
+  } catch (error) {
+    console.error("Error in notifySRCancelled:", error);
+  }
+};
+
+// ✅ Send notification when technician is on the way
+export const notifyTechnicianOnWay = async (wo, customer) => {
+  try {
+    await createNotification(
+      customer.id,
+      "TECH_ON_WAY",
+      "Technician On The Way",
+      `Your technician is on the way to your location for work order ${wo.woNumber}.`,
+      { woId: wo.id, woNumber: wo.woNumber }
+    );
+
+    console.log(
+      `🚗 Technician on way notification sent for WO: ${wo.woNumber}`
+    );
+  } catch (error) {
+    console.error("Error in notifyTechnicianOnWay:", error);
+  }
+};
+
+// ✅ Send notification when technician has arrived
+export const notifyTechnicianArrived = async (wo, customer) => {
+  try {
+    await createNotification(
+      customer.id,
+      "TECH_ARRIVED",
+      "Technician Arrived",
+      `Your technician has arrived at your location for work order ${wo.woNumber}.`,
+      { woId: wo.id, woNumber: wo.woNumber }
+    );
+
+    console.log(
+      `📍 Technician arrived notification sent for WO: ${wo.woNumber}`
+    );
+  } catch (error) {
+    console.error("Error in notifyTechnicianArrived:", error);
+  }
 };
 
 // ✅ Send notification when technician starts work

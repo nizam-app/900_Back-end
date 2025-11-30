@@ -102,12 +102,13 @@ export const sendOTP = async (phone, type) => {
   }
 };
 
-// ✅ Verify OTP by code only (no phone required)
-export const verifyOTPByCode = async (code, type) => {
+// ✅ Verify OTP by phone, code, and type - returns temp token
+export const verifyOTPByCode = async (phone, code, type) => {
   try {
-    // Verify OTP from database - find by code and type only
+    // Verify OTP from database
     const otp = await prisma.oTP.findFirst({
       where: {
+        phone,
         code,
         type,
         isUsed: false,
@@ -132,10 +133,27 @@ export const verifyOTPByCode = async (code, type) => {
 
     console.log(`✅ OTP verified successfully: ${code}`);
 
+    // Generate temporary token (valid for 10 minutes)
+    const tempToken = `temp_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(7)}`;
+    const tempTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Store temp token in OTP record
+    await prisma.oTP.update({
+      where: { id: otp.id },
+      data: {
+        tempToken,
+        tempTokenExpiry,
+      },
+    });
+
     return {
-      message: "OTP verified successfully",
+      message: "OTP verified successfully. You can now set your password.",
       verified: true,
-      phone: otp.phone, // Return phone for reference
+      phone: otp.phone,
+      tempToken,
+      tempTokenExpiry,
     };
   } catch (error) {
     console.error("❌ Error verifying OTP:", error);
