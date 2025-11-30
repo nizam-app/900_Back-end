@@ -28,6 +28,64 @@ const OTP_API_CONFIG = {
 };
 
 // ========================================
+// 📞 Phone Number Normalization
+// ========================================
+
+/**
+ * Normalize phone number to international format
+ * Converts local numbers to international format with country code
+ * 
+ * @param {string} phone - Phone number in any format
+ * @returns {string} Normalized phone number with + prefix
+ */
+const normalizePhoneNumber = (phone) => {
+  if (!phone) return null;
+  
+  // Remove all non-digit characters except +
+  let cleaned = phone.replace(/[^\d+]/g, '');
+  
+  // If already has country code with +, return as is
+  if (cleaned.startsWith('+')) {
+    return cleaned;
+  }
+  
+  // If starts with 00, replace with +
+  if (cleaned.startsWith('00')) {
+    return '+' + cleaned.substring(2);
+  }
+  
+  // If starts with country code without +, add it
+  // Kenya: 254, Bangladesh: 880, India: 91, etc.
+  if (cleaned.startsWith('254') || cleaned.startsWith('880') || cleaned.startsWith('91')) {
+    return '+' + cleaned;
+  }
+  
+  // Get default country code from env or use Kenya as default
+  const DEFAULT_COUNTRY_CODE = process.env.DEFAULT_COUNTRY_CODE || '254'; // Kenya
+  
+  if (cleaned.length === 10) {
+    // Remove leading 0 if present (e.g., 0712345678 -> 712345678)
+    if (cleaned.startsWith('0')) {
+      cleaned = cleaned.substring(1);
+    }
+    return `+${DEFAULT_COUNTRY_CODE}${cleaned}`;
+  }
+  
+  // If 9 digits (without leading 0), add country code
+  if (cleaned.length === 9) {
+    return `+${DEFAULT_COUNTRY_CODE}${cleaned}`;
+  }
+  
+  // If number doesn't match patterns, return with + prefix if digits only
+  if (/^\d+$/.test(cleaned)) {
+    return '+' + cleaned;
+  }
+  
+  console.warn(`⚠️ Could not normalize phone number: ${phone}`);
+  return cleaned.startsWith('+') ? cleaned : '+' + cleaned;
+};
+
+// ========================================
 // 📱 1. HTTP SMS API Functions (Normal SMS)
 // ========================================
 
@@ -48,8 +106,18 @@ export const sendSMS = async (phone, text, options = {}) => {
       messageType = "transactional", // 'transactional' or 'promotional'
     } = options;
 
-    // Format phone number (remove spaces and special characters)
-    const formattedPhone = phone.replace(/[\s\-\(\)]/g, "");
+    // Normalize phone number to international format
+    const formattedPhone = normalizePhoneNumber(phone);
+    
+    // Validate phone number format
+    if (!formattedPhone || !formattedPhone.startsWith('+') || formattedPhone.length < 10) {
+      console.error(`❌ Invalid phone number format: ${phone}`);
+      return {
+        success: false,
+        error: 'Invalid phone number format. Must be in international format (e.g., +254712345678)',
+        message: 'Invalid phone number'
+      };
+    }
 
     // Determine endpoint based on message type
     const endpoint =
@@ -175,18 +243,28 @@ export const sendBulkSMS = async (phoneNumbers, text, options = {}) => {
  */
 export const sendOTPViaBulkGate = async (phone, options = {}) => {
   try {
+    // Normalize phone number
+    const formattedPhone = normalizePhoneNumber(phone);
+    
+    // Validate phone number
+    if (!formattedPhone || !formattedPhone.startsWith('+')) {
+      console.error(`❌ Invalid phone number for OTP: ${phone}`);
+      return {
+        success: false,
+        error: 'Invalid phone number format',
+        message: 'Phone number must be in international format'
+      };
+    }
+    
     const {
       codeLength = 6, // OTP length (4-100 digits)
       expiration = 300, // Expiration time in seconds (default 5 minutes)
-      country = "bd", // Country code (ISO 3166-1 alpha-2)
+      country = "ke", // Country code (ISO 3166-1 alpha-2) - Changed to Kenya
       language = "en", // Language for OTP message
       codeType = "int", // 'int', 'string', or 'combined'
       clientIp = "127.0.0.1", // Client IP for rate limiting
       senderId = "FSM-OTP", // Sender ID
     } = options;
-
-    // Format phone number
-    const formattedPhone = phone.replace(/[\s\-\(\)\+]/g, "");
 
     // Prepare request payload according to BulkGate OTP API v1.0
     const payload = {
