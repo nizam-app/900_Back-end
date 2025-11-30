@@ -263,6 +263,18 @@ export const createWOFromSR = async (req, res, next) => {
     // Send notifications
     if (technicianId) {
       await notifyWOAssignment(Number(technicianId), wo);
+
+      // Notify customer that SR has been assigned
+      const { notifySRAssigned } = await import(
+        "../services/notification.service.js"
+      );
+      const technician = await prisma.user.findUnique({
+        where: { id: Number(technicianId) },
+        select: { name: true },
+      });
+      if (technician) {
+        await notifySRAssigned(sr, wo, technician);
+      }
     }
 
     // Real-time notification removed - notifications stored in database only
@@ -597,8 +609,22 @@ export const respondWO = async (req, res, next) => {
     // Clear response deadline since technician responded
     clearResponseDeadline(wo.id);
 
-    if (action === "ACCEPT" && wo.dispatcherId) {
-      await notifyWOAccepted(wo.dispatcherId, updated);
+    if (action === "ACCEPT") {
+      // Notify dispatcher
+      if (wo.dispatcherId) {
+        await notifyWOAccepted(wo.dispatcherId, updated);
+      }
+
+      // Notify customer that technician is on the way
+      const { notifyTechnicianOnWay } = await import(
+        "../services/notification.service.js"
+      );
+      const customer = await prisma.user.findUnique({
+        where: { id: wo.customerId },
+      });
+      if (customer) {
+        await notifyTechnicianOnWay(updated, customer);
+      }
     }
 
     return res.json({
@@ -716,11 +742,16 @@ export const startWO = async (req, res, next) => {
       },
     });
 
-    // Real-time notification for work started
-    const { notifyWorkStarted } = await import(
+    // Notify customer that technician has arrived
+    const { notifyTechnicianArrived } = await import(
       "../services/notification.service.js"
     );
-    await notifyWorkStarted(updatedWO);
+    const customer = await prisma.user.findUnique({
+      where: { id: updatedWO.customerId },
+    });
+    if (customer) {
+      await notifyTechnicianArrived(updatedWO, customer);
+    }
 
     return res.json({ message: "Work started", wo: updatedWO });
   } catch (err) {
@@ -811,8 +842,20 @@ export const completeWO = async (req, res, next) => {
       },
     });
 
+    // Notify dispatcher
     if (wo.dispatcherId) {
       await notifyWOCompleted(wo.dispatcherId, updated);
+    }
+
+    // Notify customer that SR is completed
+    const { notifySRCompleted } = await import(
+      "../services/notification.service.js"
+    );
+    const sr = await prisma.serviceRequest.findUnique({
+      where: { id: wo.srId },
+    });
+    if (sr) {
+      await notifySRCompleted(sr, updated);
     }
 
     return res.json(updated);

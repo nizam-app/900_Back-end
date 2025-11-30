@@ -2,14 +2,21 @@
 
 // src/routes/sr.routes.js
 import { Router } from "express";
-import { authMiddleware, requireRole } from "../middleware/auth.js";
+import {
+  authMiddleware,
+  optionalAuth,
+  requireRole,
+} from "../middleware/auth.js";
 import {
   createSR,
   listSR,
+  getMySRs,
   getSRById,
   cancelSR,
+  rejectSR,
   searchCustomer,
   rebookService,
+  bookAgain,
 } from "../controllers/sr.controller.js";
 
 const router = Router();
@@ -22,8 +29,11 @@ router.get(
   searchCustomer
 );
 
-// Customer / Guest create SR (no auth required for guests)
-router.post("/", createSR);
+// Customer / Guest create SR (optional auth - supports both authenticated and guest users)
+router.post("/", optionalAuth, createSR);
+
+// Get My SRs - Dedicated endpoint for customers with readable status
+router.get("/my", authMiddleware, requireRole("CUSTOMER"), getMySRs);
 
 // List SRs - Customers see their own, Dispatcher/Admin/Call Center see all
 router.get(
@@ -49,12 +59,28 @@ router.patch(
   cancelSR
 );
 
-// Rebook Service - Customers can rebook completed services
+// Reject SR - Only Dispatcher/Admin/Call Center can reject
+router.patch(
+  "/:id/reject",
+  authMiddleware,
+  requireRole("DISPATCHER", "ADMIN", "CALL_CENTER"),
+  rejectSR
+);
+
+// Rebook Service - Customers can rebook completed services with new date/time
 router.post(
   "/:srId/rebook",
   authMiddleware,
   requireRole("CUSTOMER"),
   rebookService
+);
+
+// Book Again - Simplified version that copies SR exactly
+router.post(
+  "/:srId/book-again",
+  authMiddleware,
+  requireRole("CUSTOMER"),
+  bookAgain
 );
 
 export default router;

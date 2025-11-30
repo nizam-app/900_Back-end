@@ -307,6 +307,41 @@
 				},
 				{
 					"name": "Get My Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Profile has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('phone');",
+									"    pm.expect(jsonData).to.have.property('role');",
+									"});",
+									"",
+									"pm.test(\"Customer profile has statistics\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.role === 'CUSTOMER') {",
+									"        pm.expect(jsonData).to.have.property('totalBookings');",
+									"        pm.expect(jsonData).to.have.property('totalSpent');",
+									"        pm.expect(jsonData).to.have.property('businessHours');",
+									"        pm.expect(jsonData.totalBookings).to.be.a('number');",
+									"        pm.expect(jsonData.totalSpent).to.be.a('number');",
+									"        pm.expect(jsonData.businessHours).to.be.an('object');",
+									"        pm.expect(jsonData.businessHours).to.have.property('open');",
+									"        pm.expect(jsonData.businessHours).to.have.property('close');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -326,7 +361,7 @@
 								"profile"
 							]
 						},
-						"description": "Get current user's profile information"
+						"description": "Get current user's profile information with statistics (totalBookings, totalSpent, businessHours for CUSTOMER role)"
 					}
 				},
 				{
@@ -547,6 +582,76 @@
 					}
 				},
 				{
+					"name": "Get My SRs (Customer)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has serviceRequests array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('serviceRequests');",
+									"    pm.expect(jsonData.serviceRequests).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each SR has required fields including readableStatus\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.serviceRequests.length > 0) {",
+									"        var sr = jsonData.serviceRequests[0];",
+									"        pm.expect(sr).to.have.property('id');",
+									"        pm.expect(sr).to.have.property('srNumber');",
+									"        pm.expect(sr).to.have.property('status');",
+									"        pm.expect(sr).to.have.property('readableStatus');",
+									"        pm.expect(sr.readableStatus).to.be.a('string');",
+									"        pm.expect(sr.readableStatus.length).to.be.above(0);",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"All SRs belong to authenticated customer\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    jsonData.serviceRequests.forEach(function(sr) {",
+									"        pm.expect(sr).to.have.property('customerId');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customerToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/srs/my?status=ACTIVE",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"srs",
+								"my"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACTIVE",
+									"description": "Optional: PENDING_APPROVAL, ACTIVE, COMPLETED, CANCELLED, REJECTED"
+								}
+							]
+						},
+						"description": "Get only authenticated customer's service requests with readable status. Supports status filtering."
+					}
+				},
+				{
 					"name": "Get SR by ID",
 					"request": {
 						"method": "GET",
@@ -601,6 +706,130 @@
 							]
 						},
 						"description": "Cancel a service request. Customers can cancel their own, staff can cancel any."
+					}
+				},
+				{
+					"name": "Rebook Service",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"New SR created with readableStatus\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('sr');",
+									"    pm.expect(jsonData.sr).to.have.property('id');",
+									"    pm.expect(jsonData.sr).to.have.property('srNumber');",
+									"    pm.expect(jsonData.sr).to.have.property('status');",
+									"    pm.expect(jsonData.sr).to.have.property('readableStatus');",
+									"    pm.expect(jsonData.sr.readableStatus).to.equal('Pending Approval');",
+									"});",
+									"",
+									"pm.test(\"Customization applied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var requestBody = JSON.parse(pm.request.body.raw);",
+									"    if (requestBody.preferredDate) {",
+									"        pm.expect(jsonData.sr.preferredDate).to.exist;",
+									"    }",
+									"    if (requestBody.description) {",
+									"        pm.expect(jsonData.sr.description).to.equal(requestBody.description);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customerToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"preferredDate\": \"2025-12-05\",\n  \"preferredTime\": \"10:00 AM\",\n  \"description\": \"Rescheduled maintenance\",\n  \"address\": \"Updated location address\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/sr/{{srId}}/rebook",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sr",
+								"{{srId}}",
+								"rebook"
+							]
+						},
+						"description": "Rebook a service with customization (new date/time/description/address). Creates new SR based on original."
+					}
+				},
+				{
+					"name": "Book Again",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Exact duplicate SR created\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('sr');",
+									"    pm.expect(jsonData.sr).to.have.property('id');",
+									"    pm.expect(jsonData.sr).to.have.property('srNumber');",
+									"    pm.expect(jsonData.sr).to.have.property('status');",
+									"    pm.expect(jsonData.sr).to.have.property('readableStatus');",
+									"    pm.expect(jsonData.sr.status).to.equal('PENDING_APPROVAL');",
+									"    pm.expect(jsonData.sr.readableStatus).to.equal('Pending Approval');",
+									"});",
+									"",
+									"pm.test(\"All service details copied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.sr).to.have.property('categoryId');",
+									"    pm.expect(jsonData.sr).to.have.property('subserviceId');",
+									"    pm.expect(jsonData.sr).to.have.property('serviceId');",
+									"    pm.expect(jsonData.sr).to.have.property('address');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customerToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/sr/{{srId}}/book-again",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sr",
+								"{{srId}}",
+								"book-again"
+							]
+						},
+						"description": "Book the same service again with no customization. Creates exact duplicate of original SR."
 					}
 				}
 			]
@@ -2431,6 +2660,55 @@
 			"item": [
 				{
 					"name": "Get My Notifications",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each notification has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        var notification = jsonData[0];",
+									"        pm.expect(notification).to.have.property('id');",
+									"        pm.expect(notification).to.have.property('title');",
+									"        pm.expect(notification).to.have.property('message');",
+									"        pm.expect(notification).to.have.property('createdAt');",
+									"        pm.expect(notification).to.have.property('createdAtFormatted');",
+									"        pm.expect(notification).to.have.property('isRead');",
+									"        pm.expect(notification).to.have.property('type');",
+									"        pm.expect(notification).to.have.property('referenceId');",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Notification type is valid\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    var validTypes = ['SR_CREATED', 'SR_ASSIGNED', 'SR_COMPLETED', 'SR_CANCELLED', 'TECH_ON_WAY', 'TECH_ARRIVED', 'NEW_SR_AVAILABLE'];",
+									"    if (jsonData.length > 0) {",
+									"        pm.expect(validTypes).to.include(jsonData[0].type);",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"createdAtFormatted is human-readable\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        pm.expect(jsonData[0].createdAtFormatted).to.be.a('string');",
+									"        pm.expect(jsonData[0].createdAtFormatted.length).to.be.above(0);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -2454,11 +2732,77 @@
 									"value": "true"
 								}
 							]
+						},
+						"description": "Get notifications with all required fields: id, title, message, createdAt, createdAtFormatted, isRead, type, referenceId"
+					}
+				},
+				{
+					"name": "Get All Notifications (No Filter)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns both read and unread notifications\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"    if (jsonData.length > 1) {",
+									"        var hasRead = jsonData.some(n => n.isRead === true);",
+									"        var hasUnread = jsonData.some(n => n.isRead === false);",
+									"        pm.expect(hasRead || hasUnread).to.be.true;",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
 						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{techToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notifications"
+							]
+						},
+						"description": "Get all notifications without filtering by read status"
 					}
 				},
 				{
 					"name": "Mark Notification as Read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Notification marked as read\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('marked as read');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "PATCH",
 						"header": [
@@ -2478,11 +2822,31 @@
 								"1",
 								"read"
 							]
-						}
+						},
+						"description": "Mark a specific notification as read"
 					}
 				},
 				{
 					"name": "Mark All as Read",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"All notifications marked as read\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.include('All notifications');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "PATCH",
 						"header": [
@@ -2501,7 +2865,8 @@
 								"notifications",
 								"read-all"
 							]
-						}
+						},
+						"description": "Mark all notifications as read for the authenticated user"
 					}
 				}
 			]

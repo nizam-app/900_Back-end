@@ -32,19 +32,53 @@ export const register = async (req, res, next) => {
   }
 };
 
+export const setPassword = async (req, res, next) => {
+  try {
+    const { phone, password, name, email, tempToken } = req.body;
+
+    if (!phone || !password || !tempToken) {
+      return res
+        .status(400)
+        .json({ message: "Phone, password, and tempToken are required" });
+    }
+
+    const result = await authService.setPasswordAfterOTP({
+      phone,
+      password,
+      name,
+      email,
+      tempToken,
+    });
+    return res.status(201).json(result);
+  } catch (err) {
+    if (err.message === "Invalid or expired temporary token") {
+      return res.status(400).json({ message: err.message });
+    }
+    if (err.message === "Phone already registered") {
+      return res.status(400).json({ message: err.message });
+    }
+    next(err);
+  }
+};
+
 export const login = async (req, res, next) => {
   try {
-    const { phone, otp } = req.body;
+    const { phone, password } = req.body;
 
-    if (!phone || !otp) {
-      return res.status(400).json({ message: "Phone and OTP are required" });
+    if (!phone || !password) {
+      return res
+        .status(400)
+        .json({ message: "Phone and password are required" });
     }
 
     const result = await authService.loginUser(req.body);
     return res.json(result);
   } catch (err) {
-    if (err.message === "Invalid or expired OTP") {
+    if (err.message === "Invalid password") {
       return res.status(401).json({ message: err.message });
+    }
+    if (err.message === "Password not set for this account") {
+      return res.status(400).json({ message: err.message });
     }
     if (err.message === "User not found") {
       return res.status(404).json({ message: err.message });
