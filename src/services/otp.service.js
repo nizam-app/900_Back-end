@@ -77,16 +77,25 @@ export const sendOTP = async (phone, type) => {
       },
     });
 
-    // Log OTP in development mode
-    if (process.env.NODE_ENV === "development") {
-      console.log(`📱 OTP for ${phone}: ${code}`);
+    // Always log OTP code for debugging
+    console.log(`📱 OTP for ${phone}: ${code}`);
+
+    // Build response
+    const response = {
+      message: smsResult.success
+        ? "OTP sent successfully"
+        : "OTP generated but SMS not sent (no credits)",
+      code: code, // Always return OTP code so client can see it
+      expiresAt: expiresAt,
+      smsStatus: smsResult.success ? "sent" : "failed",
+    };
+
+    // Add SMS details if needed
+    if (!smsResult.success && smsResult.message) {
+      response.smsError = smsResult.message;
     }
 
-    return {
-      message: "OTP sent successfully",
-      // Return OTP code in development mode for testing
-      ...(process.env.NODE_ENV === "development" && { code }),
-    };
+    return response;
   } catch (error) {
     console.error("❌ Error in sendOTP service:", error);
     throw error;
