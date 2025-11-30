@@ -22,6 +22,8 @@ export const createSR = async (req, res, next) => {
       priority,
       source,
       homeAddress,
+      preferredDate,
+      preferredTime,
     } = req.body;
 
     // Validate required fields
@@ -123,8 +125,8 @@ export const createSR = async (req, res, next) => {
 
     let customerId = req.user?.id;
     let createdById = req.user?.id;
-    let isGuest = false;
-    let finalSource = source || "CUSTOMER_APP";
+    let isGuest = !req.user; // Guest if no authenticated user
+    let finalSource = source || (req.user ? "CUSTOMER_APP" : "WEB_PORTAL");
 
     // Handle Call Center SR creation
     if (req.user?.role === "CALL_CENTER") {
@@ -151,9 +153,16 @@ export const createSR = async (req, res, next) => {
       }
 
       customerId = customer.id;
-      isGuest = false;
+      isGuest = false; // Call center creates for authenticated customers
     }
-    // Handle guest/web portal SR creation
+    // Handle authenticated customer SR creation
+    else if (req.user?.role === "CUSTOMER") {
+      customerId = req.user.id;
+      isGuest = false; // Authenticated customer
+      finalSource = "CUSTOMER_APP";
+      createdById = req.user.id;
+    }
+    // Handle guest/web portal SR creation (no authentication)
     else if (!customerId) {
       let guestUser = await prisma.user.findUnique({ where: { phone } });
 
@@ -170,8 +179,9 @@ export const createSR = async (req, res, next) => {
       }
 
       customerId = guestUser.id;
-      isGuest = true;
+      isGuest = true; // Guest user from web portal
       finalSource = "WEB_PORTAL";
+      createdById = null; // No authenticated creator
     }
 
     const sr = await prisma.serviceRequest.create({
@@ -188,6 +198,8 @@ export const createSR = async (req, res, next) => {
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         paymentType: finalPaymentType,
+        preferredDate: preferredDate ? new Date(preferredDate) : null,
+        preferredTime: preferredTime || null,
         status: "NEW",
         source: finalSource,
         isGuest,
@@ -300,10 +312,14 @@ export const listSR = async (req, res, next) => {
       orderBy: { createdAt: "desc" },
     });
 
-    // Add WO status and srId to each SR
+    // Add WO status, srId, and scheduledAt to each SR
     const srsWithWOStatus = srs.map((sr) => ({
       ...sr,
       srId: sr.id, // Add srId property for compatibility
+      scheduledAt:
+        sr.workOrders && sr.workOrders.length > 0
+          ? sr.workOrders[0].scheduledAt
+          : sr.preferredDate || null, // Use WO scheduledAt or SR preferredDate
       woStatus:
         sr.workOrders && sr.workOrders.length > 0
           ? sr.workOrders[0].status
@@ -530,6 +546,86 @@ export const searchCustomer = async (req, res, next) => {
     return res.json({
       exists: true,
       customer,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Rebook Service - Create new SR based on completed SR/WO
+export const rebookService = async (req, res, next) => {
+  try {
+    const { srId } = req.params;
+    const customerId = req.user.id;
+    const { preferredDate, preferredTime, description, address } = req.body;
+
+    // Find original SR
+    const originalSR = await prisma.serviceRequest.findUnique({
+      where: { id: Number(srId) },
+      include: {
+        workOrders: {
+          where: { status: "PAID_VERIFIED" },
+          orderBy: { completedAt: "desc" },
+          take: 1,
+        },
+      },
+    });
+
+    if (!originalSR) {
+      return res.status(404).json({ message: "Service Request not found" });
+    }
+
+    // Verify customer owns this SR
+    if (originalSR.customerId !== customerId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Create new SR with same service details
+    const newSR = await prisma.serviceRequest.create({
+      data: {
+        srNumber: generateSRNumber(),
+        customerId,
+        createdById: customerId,
+        categoryId: originalSR.categoryId,
+        subserviceId: originalSR.subserviceId,
+        serviceId: originalSR.serviceId,
+        description: description || originalSR.description,
+        priority: originalSR.priority,
+        address: address || originalSR.address,
+        latitude: originalSR.latitude,
+        longitude: originalSR.longitude,
+        paymentType: originalSR.paymentType,
+        preferredDate: preferredDate ? new Date(preferredDate) : null,
+        preferredTime: preferredTime || null,
+        status: "NEW",
+        source: "CUSTOMER_APP",
+        isGuest: false,
+      },
+      include: {
+        category: true,
+        subservice: true,
+        service: true,
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+      },
+    });
+
+    // Notify about new service request
+    const { notifyNewServiceRequest } = await import(
+      "../services/notification.service.js"
+    );
+    await notifyNewServiceRequest(newSR);
+
+    return res.status(201).json({
+      message: "Service rebooked successfully",
+      sr: newSR,
+      srId: newSR.id,
+      status: newSR.status,
     });
   } catch (err) {
     next(err);

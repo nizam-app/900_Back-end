@@ -44,21 +44,10 @@ export const sendOTP = async (req, res, next) => {
 
 export const verifyOTP = async (req, res, next) => {
   try {
-    const { phone, code, type } = req.body;
+    const { code, type } = req.body;
 
-    if (!phone || !code || !type) {
-      return res
-        .status(400)
-        .json({ message: "Phone, code, and type are required" });
-    }
-
-    // Validate phone format
-    const phoneRegex = /^\+?[0-9]{10,15}$/;
-    if (!phoneRegex.test(phone)) {
-      return res.status(400).json({
-        message:
-          "Invalid phone format. Use format: +8801712345678 or 8801712345678",
-      });
+    if (!code || !type) {
+      return res.status(400).json({ message: "Code and type are required" });
     }
 
     // Validate OTP code format (6 digits)
@@ -69,7 +58,7 @@ export const verifyOTP = async (req, res, next) => {
       });
     }
 
-    const result = await otpService.verifyOTP(phone, code, type);
+    const result = await otpService.verifyOTPByCode(code, type);
 
     return res.json(result);
   } catch (err) {
