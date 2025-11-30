@@ -28,8 +28,37 @@ const OTP_API_CONFIG = {
 };
 
 // ========================================
-// 📞 Phone Number Normalization
+// 📞 Phone Number Normalization & Validation
 // ========================================
+
+/**
+ * Check if phone number is a test/dummy number
+ * @param {string} phone - Phone number to check
+ * @returns {boolean} True if test number
+ */
+const isTestPhoneNumber = (phone) => {
+  if (!phone) return true;
+  
+  const cleaned = phone.replace(/[^\d]/g, '');
+  
+  // Common test patterns
+  const testPatterns = [
+    /^0+$/,           // All zeros: 0000000000
+    /^1+$/,           // All ones: 1111111111
+    /^2+$/,           // All twos: 2222222222
+    /^3+$/,           // All threes: 3333333333
+    /^4+$/,           // All fours: 4444444444
+    /^5+$/,           // All fives: 5555555555
+    /^6+$/,           // All sixes: 6666666666
+    /^7+$/,           // All sevens: 7777777777
+    /^8+$/,           // All eights: 8888888888
+    /^9+$/,           // All nines: 9999999999
+    /^(123)+$/,       // Repeating 123
+    /^1234567890$/,   // Sequential
+  ];
+  
+  return testPatterns.some(pattern => pattern.test(cleaned));
+};
 
 /**
  * Normalize phone number to international format
@@ -108,6 +137,29 @@ export const sendSMS = async (phone, text, options = {}) => {
 
     // Normalize phone number to international format
     const formattedPhone = normalizePhoneNumber(phone);
+
+    // Check for test/dummy numbers in development
+    if (isTestPhoneNumber(phone)) {
+      console.warn(`⚠️ Test/dummy phone number detected: ${phone}`);
+      
+      // In development mode, skip actual SMS sending
+      if (process.env.NODE_ENV === 'development' || process.env.SKIP_SMS_FOR_TEST_NUMBERS === 'true') {
+        console.log(`🧪 Development mode: Skipping SMS to test number ${formattedPhone}`);
+        console.log(`   Message: ${text.substring(0, 50)}...`);
+        return {
+          success: true,
+          messageId: 'TEST_' + Date.now(),
+          status: 'simulated',
+          price: 0,
+          credit: 0,
+          message: 'SMS skipped for test number (development mode)',
+          isTestNumber: true
+        };
+      }
+      
+      // In production, warn but continue (will likely fail at API)
+      console.warn(`⚠️ Attempting to send to test number in production. This will likely fail.`);
+    }
 
     // Validate phone number format
     if (!formattedPhone || !formattedPhone.startsWith('+') || formattedPhone.length < 10) {
@@ -246,6 +298,26 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
     // Normalize phone number
     const formattedPhone = normalizePhoneNumber(phone);
 
+    // Check for test/dummy numbers
+    if (isTestPhoneNumber(phone)) {
+      console.warn(`⚠️ Test/dummy phone number detected for OTP: ${phone}`);
+      
+      // In development mode, return mock OTP
+      if (process.env.NODE_ENV === 'development' || process.env.SKIP_SMS_FOR_TEST_NUMBERS === 'true') {
+        console.log(`🧪 Development mode: Skipping OTP to test number ${formattedPhone}`);
+        console.log(`   Mock OTP: 123456 (use this for testing)`);
+        return {
+          success: true,
+          otpId: 'TEST_OTP_' + Date.now(),
+          status: 'simulated',
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+          message: 'OTP skipped for test number (development mode). Use code: 123456',
+          isTestNumber: true,
+          mockCode: '123456'
+        };
+      }
+    }
+    
     // Validate phone number
     if (!formattedPhone || !formattedPhone.startsWith('+')) {
       console.error(`❌ Invalid phone number for OTP: ${phone}`);
