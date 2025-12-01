@@ -6,7 +6,8 @@ import {
   getNearbyTechnicians,
   getTechnicianLocation,
   getLocationHistory,
-  getETA
+  getETA,
+  getTechnicianStatus
 } from '../controllers/location.controller.js';
 
 const router = Router();
@@ -19,6 +20,9 @@ router.get('/nearby', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getNea
 
 // Get specific technician's current location
 router.get('/technician/:id', authMiddleware, requireRole('ADMIN', 'DISPATCHER', 'CUSTOMER'), getTechnicianLocation); 
+
+// Get technician's location status (ONLINE/BUSY/OFFLINE)
+router.get('/status/:id', authMiddleware, requireRole('ADMIN', 'DISPATCHER', 'CUSTOMER'), getTechnicianStatus);
 
 // Get ETA for technician to destination
 router.get('/eta', authMiddleware, requireRole('ADMIN', 'DISPATCHER', 'CUSTOMER'), getETA);
