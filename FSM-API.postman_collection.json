@@ -1241,7 +1241,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"technicianId\": 6,\n  \"reason\": \"Previous technician unavailable\"\n}"
+							"raw": "{\n  \"technicianId\": 2,\n  \"reason\": \"Previous technician unavailable\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/wos/{{woId}}/reassign",
@@ -1255,7 +1255,40 @@
 								"reassign"
 							]
 						},
-						"description": "Reassign work order to different technician"
+						"description": "Reassign work order to a different technician (Admin/Dispatcher only).\n\nUse Cases:\n• Original technician unavailable\n• Better skilled technician needed\n• Load balancing between technicians\n• Technician declined the job\n\nRequest Body:\n• technicianId (required): New technician ID (must be active/unblocked)\n• reason (optional): Reason for reassignment\n\nIMPORTANT: Ensure the technician ID is active and not blocked. Use Get All Technicians endpoint to find available technicians.\n\nNote: This changes the assigned technician. For rescheduling dates/times, you need to:\n1. Cancel the current WO\n2. Create a new WO from the SR with updated schedule\n\nOr use the SR Rebook endpoint before WO creation."
+					}
+				},
+				{
+					"name": "Reschedule WO",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{dispatcherToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"scheduledDate\": \"2025-12-05\",\n  \"scheduledTime\": \"14:00\",\n  \"estimatedDuration\": 2,\n  \"notes\": \"Rescheduled at customer request\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/wos/{{woId}}/reschedule",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"wos",
+								"{{woId}}",
+								"reschedule"
+							]
+						},
+						"description": "Reschedule work order to a different date and time (Admin/Dispatcher only).\n\nUse Cases:\n• Customer requests different date/time\n• Technician availability changed\n• Weather or emergency delays\n• Optimizing technician schedule\n\nRequest Body:\n• scheduledDate (required): Date in YYYY-MM-DD format\n• scheduledTime (required): Time in HH:MM format (24-hour)\n• estimatedDuration (optional): Duration in hours (will be converted to minutes)\n• notes (optional): Reason for rescheduling\n\nRestrictions:\n• Cannot reschedule COMPLETED or CANCELLED work orders\n• New date/time must be in the future\n• Technician and customer will be notified"
 					}
 				}
 			]
@@ -1502,7 +1535,8 @@
 								"commissions",
 								"wallet"
 							]
-						}
+						},
+						"description": "Get technician/freelancer wallet balance and recent transactions.\n\nResponse includes:\n• balance: Current available balance (always >= 0)\n• actualBalance: Real balance (may be negative if adjustments needed)\n• recentTransactions: Last 10 wallet transactions\n• warning: Alert if balance requires adjustment\n\nWallet is automatically created when technician completes their first paid work order."
 					}
 				},
 				{
@@ -1531,7 +1565,8 @@
 									"value": "EARNED"
 								}
 							]
-						}
+						},
+						"description": "Get technician commission history for completed work orders.\n\nQuery Parameters:\n• status: Filter by EARNED, PAID, or PENDING\n• startDate: Filter from date (YYYY-MM-DD)\n• endDate: Filter to date (YYYY-MM-DD)\n\nResponse includes:\n• amount: Commission amount per work order\n• status: EARNED (available), PAID (withdrawn), PENDING (processing)\n• workOrder: Associated work order details\n• createdAt: When commission was earned"
 					}
 				},
 				{
@@ -1554,7 +1589,8 @@
 								"commissions",
 								"dashboard"
 							]
-						}
+						},
+						"description": "Get comprehensive dashboard summary for technician/freelancer.\n\nResponse includes:\n• walletBalance: Current available balance\n• totalEarned: Total earned commissions (available for payout)\n• totalPaid: Total already paid out commissions\n• pendingPayout: Amount pending withdrawal\n• totalAllTimeEarnings: Lifetime total earnings\n\nThis endpoint provides complete financial overview including:\n- Current wallet balance\n- Total jobs completed with commissions\n- Total earnings across all time\n- Available funds for payout request"
 					}
 				},
 				{

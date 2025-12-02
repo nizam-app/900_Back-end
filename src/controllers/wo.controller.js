@@ -506,6 +506,125 @@ export const reassignWO = async (req, res, next) => {
   }
 };
 
+export const rescheduleWO = async (req, res, next) => {
+  try {
+    const woIdParam = req.params.woId;
+
+    // Validate work order ID is provided
+    if (!woIdParam) {
+      return res.status(400).json({
+        message: "Work Order ID is required",
+      });
+    }
+
+    const whereClause = isNaN(woIdParam)
+      ? { woNumber: woIdParam }
+      : { id: Number(woIdParam) };
+
+    const { scheduledDate, scheduledTime, estimatedDuration, notes } = req.body;
+
+    // Validate required fields
+    if (!scheduledDate) {
+      return res.status(400).json({ message: "Scheduled date is required" });
+    }
+
+    if (!scheduledTime) {
+      return res.status(400).json({ message: "Scheduled time is required" });
+    }
+
+    // Find existing work order
+    const existingWO = await prisma.workOrder.findFirst({
+      where: whereClause,
+      include: {
+        technician: true,
+        customer: true,
+      },
+    });
+
+    if (!existingWO) {
+      return res.status(404).json({ message: "Work Order not found" });
+    }
+
+    // Check if WO can be rescheduled
+    const nonReschedulableStatuses = ["COMPLETED", "CANCELLED"];
+    if (nonReschedulableStatuses.includes(existingWO.status)) {
+      return res.status(400).json({
+        message: `Cannot reschedule work order with status: ${existingWO.status}`,
+      });
+    }
+
+    // Combine date and time into ISO string
+    const scheduledAt = new Date(`${scheduledDate}T${scheduledTime}`);
+
+    // Validate the date is in the future
+    if (scheduledAt < new Date()) {
+      return res.status(400).json({
+        message: "Scheduled date and time must be in the future",
+      });
+    }
+
+    // Update work order
+    const wo = await prisma.workOrder.update({
+      where: whereClause,
+      data: {
+        scheduledAt,
+        estimatedDuration: estimatedDuration ? Number(estimatedDuration) * 60 : existingWO.estimatedDuration, // Convert hours to minutes
+        notes: notes || existingWO.notes,
+      },
+      include: {
+        technician: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        category: true,
+        subservice: true,
+        serviceRequest: {
+          select: {
+            id: true,
+            srNumber: true,
+          },
+        },
+      },
+    });
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: "WO_RESCHEDULED",
+        entityType: "WORK_ORDER",
+        entityId: wo.id,
+        metadataJson: JSON.stringify({
+          previousScheduledAt: existingWO.scheduledAt,
+          newScheduledAt: scheduledAt,
+          estimatedDuration,
+          notes,
+        }),
+      },
+    });
+
+    // TODO: Send notification to technician and customer about reschedule
+    // await notifyWORescheduled(wo);
+
+    return res.json({
+      ...wo,
+      message: "Work order rescheduled successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const respondWO = async (req, res, next) => {
   try {
     const woIdParam = req.params.woId;

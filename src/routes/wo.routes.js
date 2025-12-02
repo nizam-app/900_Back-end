@@ -11,6 +11,7 @@ import {
   createWOFromSR,
   assignWO,
   reassignWO,
+  rescheduleWO,
   respondWO,
   startWO,
   completeWO,
@@ -78,6 +79,13 @@ router.patch(
   authMiddleware,
   requireRole("DISPATCHER", "ADMIN"),
   reassignWO
+);
+
+router.patch(
+  "/:woId/reschedule",
+  authMiddleware,
+  requireRole("DISPATCHER", "ADMIN"),
+  rescheduleWO
 );
 
 router.patch(
