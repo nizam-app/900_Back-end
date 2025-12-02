@@ -21,7 +21,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"phone\": \"1234567890\",\n  \"type\": \"REGISTRATION\"\n}"
+							"raw": "{\n  \"phone\": \"+8801718981009\",\n  \"type\": \"REGISTRATION\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/otp/send",
@@ -34,7 +34,7 @@
 								"send"
 							]
 						},
-						"description": "Send OTP for phone verification. Types: REGISTRATION, LOGIN, PASSWORD_RESET"
+						"description": "Send OTP for phone verification. Types: REGISTRATION, LOGIN, PASSWORD_RESET, VERIFICATION\n\nTESTED & WORKING (Dec 2, 2025)\n\nPhone Format (Bangladesh):\n- +8801718981009 (recommended - with country code)\n- 8801718981009 (works - auto-formatted)\n- 01718981009 (works - auto-converted to 8801718981009)\n\nResponse includes:\n- OTP code (for testing/development)\n- Expiry time (5 minutes)\n- SMS status (sent/failed)\n\nNote: OTP is stored in database and valid for 5 minutes. SMS delivery depends on BulkGate credits."
 					}
 				},
 				{
@@ -49,7 +49,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"phone\": \"1234567890\",\n  \"code\": \"123456\",\n  \"type\": \"REGISTRATION\"\n}"
+							"raw": "{\n  \"phone\": \"+8801718981009\",\n  \"code\": \"123456\",\n  \"type\": \"REGISTRATION\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/otp/verify",
@@ -62,7 +62,7 @@
 								"verify"
 							]
 						},
-						"description": "Verify OTP code sent to phone number"
+						"description": "Verify OTP code sent to phone number\n\nTESTED & WORKING (Dec 2, 2025)\n\nRequirements:\n- Use the SAME phone format as Send OTP\n- 6-digit code must match exactly\n- Must be verified within 5 minutes\n- Type must match the Send OTP request\n\nSuccess Response:\n- verified: true\n- tempToken: Temporary token for registration (valid 10 minutes)\n- tempTokenExpiry: Token expiration time\n\nUse the tempToken to complete registration with /api/auth/set-password endpoint."
 					}
 				},
 				{
@@ -77,7 +77,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"phone\": \"1234567890\",\n  \"password\": \"password123\",\n  \"name\": \"John Doe\",\n  \"role\": \"CUSTOMER\"\n}"
+							"raw": "{\n  \"phone\": \"+8801718981009\",\n  \"password\": \"password123\",\n  \"name\": \"John Doe\",\n  \"role\": \"CUSTOMER\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/register",
