@@ -1,9 +1,11 @@
+/** @format */
+
 // Simple OTP test
 const testPhone = "01718981009";
 const serverUrl = "http://localhost:4000";
 
 console.log("\n🧪 Testing OTP for:", testPhone);
-console.log("=" .repeat(50));
+console.log("=".repeat(50));
 
 async function testOTP() {
   try {
@@ -14,8 +16,8 @@ async function testOTP() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         phone: testPhone,
-        type: "REGISTRATION"
-      })
+        type: "REGISTRATION",
+      }),
     });
 
     const sendResult = await sendResponse.json();
@@ -24,10 +26,10 @@ async function testOTP() {
     if (sendResult.code) {
       console.log("\n🔢 OTP Code:", sendResult.code);
       console.log("📱 SMS Status:", sendResult.smsStatus);
-      
+
       // Wait 2 seconds
       console.log("\n⏳ Waiting 2 seconds...");
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify OTP
       console.log("\n2️⃣  Verifying OTP...");
@@ -37,8 +39,8 @@ async function testOTP() {
         body: JSON.stringify({
           phone: testPhone,
           code: sendResult.code,
-          type: "REGISTRATION"
-        })
+          type: "REGISTRATION",
+        }),
       });
 
       const verifyResult = await verifyResponse.json();
@@ -50,8 +52,14 @@ async function testOTP() {
       console.log("Phone:", testPhone);
       console.log("OTP Send:", sendResponse.ok ? "✅ SUCCESS" : "❌ FAILED");
       console.log("SMS Status:", sendResult.smsStatus);
-      console.log("OTP Verify:", verifyResponse.ok ? "✅ SUCCESS" : "❌ FAILED");
-      console.log("\n🎉 OTP System is", (sendResponse.ok && verifyResponse.ok) ? "WORKING" : "NOT WORKING");
+      console.log(
+        "OTP Verify:",
+        verifyResponse.ok ? "✅ SUCCESS" : "❌ FAILED"
+      );
+      console.log(
+        "\n🎉 OTP System is",
+        sendResponse.ok && verifyResponse.ok ? "WORKING" : "NOT WORKING"
+      );
     }
   } catch (error) {
     console.error("\n❌ Error:", error.message);
