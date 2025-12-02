@@ -910,10 +910,30 @@
 							"query": [
 								{
 									"key": "status",
-									"value": "ASSIGNED"
+									"value": "ASSIGNED",
+									"description": "Filter by work order status"
+								},
+								{
+									"key": "technicianId",
+									"value": "",
+									"disabled": true,
+									"description": "Filter by technician ID (for my tasks)"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true,
+									"description": "Page number"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"disabled": true,
+									"description": "Results per page"
 								}
 							]
-						}
+						},
+						"description": "Get all work orders with filtering options.\n\nQuery Parameters:\n• status: Filter by status (UNASSIGNED, ASSIGNED, ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED)\n• technicianId: Filter by technician ID (for freelancer to see their own tasks)\n• customerId: Filter by customer ID\n• priority: Filter by priority (LOW, MEDIUM, HIGH, URGENT)\n• page: Page number (default: 1)\n• limit: Results per page (default: 10)\n\nFor Freelancer Technician Dashboard:\n1. Active Tasks (Ready to Start + In Progress):\n   GET /api/wos?technicianId={id}&status=ASSIGNED (Ready to Start)\n   GET /api/wos?technicianId={id}&status=ACCEPTED (Active Now)\n   GET /api/wos?technicianId={id}&status=IN_PROGRESS (In Progress)\n\n2. Completed Tasks This Month:\n   GET /api/wos?technicianId={id}&status=COMPLETED\n\n3. Task Counts:\n   • Ready to Start: status=ASSIGNED\n   • Active Now: status=ACCEPTED or IN_PROGRESS\n   • This Month: status=COMPLETED (filter by date range)\n\nResponse includes full work order details with customer, technician, category info, payment and commission data, service request reference, and GPS coordinates for location."
 					}
 				},
 				{

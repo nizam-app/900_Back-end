@@ -85,7 +85,7 @@ export const getTechnicianDashboard = async (req, res, next) => {
   try {
     const technicianId = req.user.id;
 
-    const [wallet, totalEarned, totalPaid, allCommissions] = await Promise.all([
+    const [wallet, totalEarned, totalPaid, allCommissions, totalJobsCompleted] = await Promise.all([
       prisma.wallet.findUnique({ where: { technicianId } }),
       prisma.commission.aggregate({
         where: { technicianId, status: 'EARNED' },
@@ -98,6 +98,9 @@ export const getTechnicianDashboard = async (req, res, next) => {
       prisma.commission.aggregate({
         where: { technicianId },
         _sum: { amount: true },
+      }),
+      prisma.workOrder.count({
+        where: { technicianId, status: 'COMPLETED' },
       }),
     ]);
 
@@ -121,6 +124,7 @@ export const getTechnicianDashboard = async (req, res, next) => {
       totalPaid: paidAmount,
       pendingPayout: earnedAmount, // Only earned commissions are pending
       totalAllTimeEarnings: totalAmount,
+      totalJobsCompleted,
     };
 
     // Add warning for negative balance
