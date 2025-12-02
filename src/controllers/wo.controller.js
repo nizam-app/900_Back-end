@@ -568,7 +568,9 @@ export const rescheduleWO = async (req, res, next) => {
       where: whereClause,
       data: {
         scheduledAt,
-        estimatedDuration: estimatedDuration ? Number(estimatedDuration) * 60 : existingWO.estimatedDuration, // Convert hours to minutes
+        estimatedDuration: estimatedDuration
+          ? Number(estimatedDuration) * 60
+          : existingWO.estimatedDuration, // Convert hours to minutes
         notes: notes || existingWO.notes,
       },
       include: {
