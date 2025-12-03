@@ -51,7 +51,7 @@ export const sendOTP = async (phone, type) => {
 
     // Normalize phone for database (without country code)
     const normalizedPhone = normalizePhoneForDB(phone);
-    
+
     // Format phone number with country code for SMS
     const formattedPhone = formatPhoneForSMS(phone);
 
@@ -123,7 +123,7 @@ export const verifyOTPByCode = async (phone, code, type) => {
   try {
     // Normalize phone number
     const normalizedPhone = normalizePhoneForDB(phone);
-    
+
     // Verify OTP from database
     const otp = await prisma.oTP.findFirst({
       where: {
@@ -185,7 +185,7 @@ export const verifyOTP = async (phone, code, type) => {
   try {
     // Normalize phone number
     const normalizedPhone = normalizePhoneForDB(phone);
-    
+
     // Verify OTP from database
     const otp = await prisma.oTP.findFirst({
       where: {

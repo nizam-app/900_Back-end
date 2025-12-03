@@ -120,7 +120,9 @@ export const registerUser = async (userData) => {
     });
 
     if (!otpRecord) {
-      throw new Error("Invalid or expired temporary token. Please verify OTP again.");
+      throw new Error(
+        "Invalid or expired temporary token. Please verify OTP again."
+      );
     }
 
     // Clear temp token

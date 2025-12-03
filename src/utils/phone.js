@@ -71,7 +71,7 @@ export const isValidPhone = (phone) => {
   if (!phone) return false;
 
   const normalized = normalizePhoneForDB(phone);
-  
+
   // Bangladesh mobile numbers are 10 digits (without country code)
   // Example: 1719912009, 1512345678
   return /^[0-9]{10}$/.test(normalized);
