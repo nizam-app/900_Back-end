@@ -4,6 +4,7 @@
 import { prisma } from "../prisma.js";
 import { sendSMS } from "./sms.service.js";
 import { normalizePhoneForDB, formatPhoneForSMS } from "../utils/phone.js";
+import { signToken } from "../utils/jwt.js";
 
 // Generate a random 6-digit OTP
 const generateOTPCode = () => {
@@ -64,6 +65,17 @@ export const sendOTP = async (phone, type) => {
       where: { phone: normalizedPhone },
     });
 
+    // Generate JWT token if user exists (for LOGIN type)
+    let jwtToken = null;
+    if (user && type === 'LOGIN') {
+      jwtToken = signToken({
+        id: user.id,
+        role: user.role,
+        phone: user.phone,
+      }, '7d'); // 7 days expiry
+      console.log(`🔑 Generated JWT token for user ${user.id}`);
+    }
+
     // Create OTP message
     const otpMessage = `Your FSM verification code is: ${code}. Valid for 5 minutes. Do not share this code with anyone.`;
 
@@ -82,7 +94,13 @@ export const sendOTP = async (phone, type) => {
       console.log(`✅ OTP SMS sent successfully to ${formattedPhone}`);
     }
 
-    // Save OTP to database with normalized phone
+    // Generate temporary token (valid for 10 minutes) for immediate use
+    const tempToken = `temp_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(7)}`;
+    const tempTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Save OTP to database with normalized phone and temp token
     const otpRecord = await prisma.oTP.create({
       data: {
         phone: normalizedPhone,
@@ -90,11 +108,14 @@ export const sendOTP = async (phone, type) => {
         type,
         expiresAt,
         userId: user?.id,
+        tempToken,
+        tempTokenExpiry,
       },
     });
 
     // Always log OTP code for debugging
     console.log(`📱 OTP for ${normalizedPhone}: ${code}`);
+    console.log(`🔑 Temp token: ${tempToken}`);
 
     // Build response
     const response = {
@@ -103,8 +124,21 @@ export const sendOTP = async (phone, type) => {
         : "OTP generated but SMS not sent (no credits)",
       code: code, // Always return OTP code so client can see it
       expiresAt: expiresAt,
+      tempToken: tempToken, // Include temp token in response
+      tempTokenExpiry: tempTokenExpiry,
       smsStatus: smsResult.success ? "sent" : "failed",
     };
+
+    // Add JWT token if user exists and it's a LOGIN request
+    if (jwtToken) {
+      response.token = jwtToken;
+      response.user = {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        role: user.role,
+      };
+    }
 
     // Add SMS details if needed
     if (!smsResult.success && smsResult.message) {
@@ -152,6 +186,50 @@ export const verifyOTPByCode = async (phone, code, type) => {
 
     console.log(`✅ OTP verified successfully: ${code}`);
 
+    // Get or create user for JWT token generation
+    let user = await prisma.user.findUnique({
+      where: { phone: otp.phone },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    // If user doesn't exist and it's a LOGIN or REGISTRATION type, create a basic user account
+    if (!user && (type === 'LOGIN' || type === 'REGISTRATION')) {
+      console.log(`👤 Creating new user account for ${otp.phone}`);
+      user = await prisma.user.create({
+        data: {
+          phone: otp.phone,
+          passwordHash: '', // Empty password, user can set it later
+          role: 'CUSTOMER',
+          name: otp.phone, // Use phone as default name
+        },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          email: true,
+          role: true,
+        },
+      });
+      console.log(`✅ Created new user account with ID: ${user.id}`);
+    }
+
+    // Generate JWT token for authenticated session
+    let jwtToken = null;
+    if (user) {
+      jwtToken = signToken({
+        id: user.id,
+        role: user.role,
+        phone: user.phone,
+      }, '7d'); // 7 days expiry
+      console.log(`🔑 Generated JWT token for user ${user.id}`);
+    }
+
     // Generate temporary token (valid for 10 minutes)
     const tempToken = `temp_${Date.now()}_${Math.random()
       .toString(36)
@@ -167,13 +245,27 @@ export const verifyOTPByCode = async (phone, code, type) => {
       },
     });
 
-    return {
+    const response = {
       message: "OTP verified successfully. You can now set your password.",
       verified: true,
       phone: otp.phone,
       tempToken,
       tempTokenExpiry,
     };
+
+    // Add JWT token and user info if user exists
+    if (jwtToken && user) {
+      response.token = jwtToken;
+      response.user = {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+      };
+    }
+
+    return response;
   } catch (error) {
     console.error("❌ Error verifying OTP:", error);
     throw error;
