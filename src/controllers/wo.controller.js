@@ -93,12 +93,17 @@ export const getWOById = async (req, res, next) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    // Technicians can only view work orders assigned to them or unassigned ones they might accept
     if (
       (userRole === "TECH_INTERNAL" || userRole === "TECH_FREELANCER") &&
+      workOrder.technicianId &&
       workOrder.technicianId !== userId
     ) {
       return res.status(403).json({ message: "Access denied" });
     }
+
+    // Admin, dispatcher, and call center can view all work orders
+    // No restriction needed for these roles
 
     return res.json(workOrder);
   } catch (err) {
@@ -911,22 +916,18 @@ export const completeWO = async (req, res, next) => {
         .json({ message: "This WO does not belong to you" });
     }
 
-    if (wo.status !== "IN_PROGRESS") {
-      return res
-        .status(400)
-        .json({ message: "WO is not in IN_PROGRESS status" });
+    // Allow completion from ACCEPTED or IN_PROGRESS status
+    if (wo.status !== "IN_PROGRESS" && wo.status !== "ACCEPTED") {
+      return res.status(400).json({
+        message: "WO must be in ACCEPTED or IN_PROGRESS status to complete",
+        currentStatus: wo.status,
+      });
     }
 
-    // Validate that photos are uploaded
-    if (!req.files || req.files.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "At least one completion photo is required" });
-    }
-
-    const photoUrls = req.files.map(
-      (file) => `/uploads/wo-completion/${file.filename}`
-    );
+    // Make photo upload optional - photos can be uploaded via the upload endpoint later
+    const photoUrls = req.files?.length
+      ? req.files.map((file) => `/uploads/wo-completion/${file.filename}`)
+      : [];
 
     let parsedMaterials = null;
     if (materialsUsed) {
@@ -952,7 +953,46 @@ export const completeWO = async (req, res, next) => {
           photoUrls.length > 0 ? JSON.stringify(photoUrls) : null,
         materialsUsed: parsedMaterials ? JSON.stringify(parsedMaterials) : null,
       },
+      include: {
+        service: {
+          select: {
+            baseRate: true,
+          },
+        },
+        technician: {
+          include: {
+            technicianProfile: {
+              select: {
+                commissionRate: true,
+                bonusRate: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    // Calculate bonus/commission
+    let bonusCalculation = null;
+    if (updated.technician?.technicianProfile) {
+      const basePayment = updated.service?.baseRate || 0;
+      const rate =
+        updated.technician.role === "TECH_FREELANCER"
+          ? updated.technician.technicianProfile.commissionRate
+          : updated.technician.technicianProfile.bonusRate;
+
+      const bonusAmount = basePayment * rate;
+
+      bonusCalculation = {
+        jobPayment: basePayment,
+        bonusRate: rate * 100, // Convert to percentage
+        yourBonus: bonusAmount,
+        payoutInfo:
+          updated.technician.role === "TECH_FREELANCER"
+            ? "Paid every Monday with your weekly bonuses"
+            : "Added to monthly salary",
+      };
+    }
 
     await prisma.auditLog.create({
       data: {
@@ -979,7 +1019,11 @@ export const completeWO = async (req, res, next) => {
       await notifySRCompleted(sr, updated);
     }
 
-    return res.json(updated);
+    return res.json({
+      ...updated,
+      bonusCalculation,
+      message: "Work order completed successfully",
+    });
   } catch (err) {
     next(err);
   }

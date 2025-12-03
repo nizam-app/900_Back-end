@@ -83,6 +83,11 @@ async function main() {
       baseSalary: 30000,
       specialization: "AC Repair, HVAC",
       status: "ACTIVE",
+      degreesUrl: JSON.stringify([
+        { name: "HVAC Master Certification", url: "/uploads/cert-hvac-1.pdf", verifiedAt: new Date() },
+        { name: "AC Repair Specialist", url: "/uploads/cert-hvac-2.pdf", verifiedAt: new Date() },
+        { name: "Refrigeration License", url: "/uploads/cert-hvac-3.pdf", verifiedAt: new Date() }
+      ]),
     },
   });
   console.log("✅ Created internal technician:", techInternal.phone);
@@ -115,6 +120,13 @@ async function main() {
       bonusRate: 0.05,
       specialization: "Electrical, Plumbing",
       status: "ACTIVE",
+      degreesUrl: JSON.stringify([
+        { name: "Electrical Engineering Diploma", url: "/uploads/cert-1.pdf", verifiedAt: new Date() },
+        { name: "Plumbing License", url: "/uploads/cert-2.pdf", verifiedAt: new Date() },
+        { name: "HVAC Certification", url: "/uploads/cert-3.pdf", verifiedAt: new Date() },
+        { name: "Safety Training Certificate", url: "/uploads/cert-4.pdf", verifiedAt: new Date() },
+        { name: "Advanced Electrical Systems", url: "/uploads/cert-5.pdf", verifiedAt: new Date() }
+      ]),
     },
   });
 
@@ -472,7 +484,7 @@ async function main() {
       paymentType: "CASH",
       priority: "HIGH",
       status: "IN_PROGRESS",
-      scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      scheduledAt: new Date(), // Today
       acceptedAt: new Date(),
       startedAt: new Date(),
       notes: "Urgent repair needed",
@@ -484,10 +496,11 @@ async function main() {
       woNumber: "WO-" + (Date.now() + 2),
       srId: sr2.id,
       customerId: customer3.id,
-      technicianId: tech2.id,
+      technicianId: techFreelancer.id,
       dispatcherId: dispatcher.id,
       categoryId: electrical.id,
       subserviceId: electricalRepair.id,
+      serviceId: 3,
       address: "456 Johnson Ave, Nairobi",
       latitude: -1.28,
       longitude: 36.815,
@@ -495,10 +508,65 @@ async function main() {
       paymentType: "MOBILE_MONEY",
       priority: "MEDIUM",
       status: "ASSIGNED",
-      scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      scheduledAt: new Date(), // Today
+      acceptedAt: new Date(),
       notes: "Check all electrical outlets in bedroom",
     },
   });
+
+  // Create additional completed work orders for this week and month stats
+  const completedWO1ThisWeek = await prisma.workOrder.create({
+    data: {
+      woNumber: "WO-" + (Date.now() + 3),
+      srId: sr3.id,
+      customerId: customer.id,
+      technicianId: techFreelancer.id,
+      dispatcherId: dispatcher.id,
+      categoryId: plumbing.id,
+      subserviceId: 3,
+      serviceId: 3,
+      address: "123 Customer Lane, Nairobi",
+      latitude: -1.286389,
+      longitude: 36.817223,
+      estimatedDuration: 120,
+      paymentType: "MOBILE_MONEY",
+      priority: "MEDIUM",
+      status: "PAID_VERIFIED",
+      scheduledAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      acceptedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      startedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
+      completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+      paidVerifiedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      completionNotes: "Fixed plumbing leak",
+    },
+  });
+
+  const completedWO2ThisWeek = await prisma.workOrder.create({
+    data: {
+      woNumber: "WO-" + (Date.now() + 4),
+      srId: sr3.id,
+      customerId: customer2.id,
+      technicianId: techFreelancer.id,
+      dispatcherId: dispatcher.id,
+      categoryId: hvac.id,
+      subserviceId: hvacRepair.id,
+      serviceId: 1,
+      address: "789 Smith Road, Nairobi",
+      latitude: -1.295,
+      longitude: 36.82,
+      estimatedDuration: 90,
+      paymentType: "CASH",
+      priority: "HIGH",
+      status: "PAID_VERIFIED",
+      scheduledAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      acceptedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      startedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
+      completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+      paidVerifiedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      completionNotes: "AC cooling issue resolved",
+    },
+  });
+
   console.log("✅ Created work orders");
 
   // Create Payments
@@ -527,6 +595,35 @@ async function main() {
       status: "PENDING_VERIFICATION",
     },
   });
+
+  const paymentThisWeek1 = await prisma.payment.create({
+    data: {
+      woId: completedWO1ThisWeek.id,
+      technicianId: techFreelancer.id,
+      amount: 1500,
+      method: "MOBILE_MONEY",
+      transactionRef: "MPESA-XYZ789012",
+      proofUrl: "/uploads/payment-proof-3.jpg",
+      status: "VERIFIED",
+      verifiedById: admin.id,
+      verifiedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  const paymentThisWeek2 = await prisma.payment.create({
+    data: {
+      woId: completedWO2ThisWeek.id,
+      technicianId: techFreelancer.id,
+      amount: 3000,
+      method: "CASH",
+      transactionRef: "CASH-20251201-002",
+      proofUrl: "/uploads/payment-proof-4.jpg",
+      status: "VERIFIED",
+      verifiedById: admin.id,
+      verifiedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+  });
+
   console.log("✅ Created payments");
 
   // Create Commissions
@@ -553,6 +650,31 @@ async function main() {
       paymentId: payment2.id,
     },
   });
+
+  await prisma.commission.create({
+    data: {
+      woId: completedWO1ThisWeek.id,
+      technicianId: techFreelancer.id,
+      type: "COMMISSION",
+      rate: 0.4,
+      amount: 600, // 40% of 1500
+      status: "BOOKED",
+      paymentId: paymentThisWeek1.id,
+    },
+  });
+
+  await prisma.commission.create({
+    data: {
+      woId: completedWO2ThisWeek.id,
+      technicianId: techFreelancer.id,
+      type: "COMMISSION",
+      rate: 0.4,
+      amount: 1200, // 40% of 3000
+      status: "BOOKED",
+      paymentId: paymentThisWeek2.id,
+    },
+  });
+
   console.log("✅ Created commissions");
 
   // Update freelancer wallet balances (internal technicians don't have wallets)
@@ -561,9 +683,10 @@ async function main() {
   });
 
   if (freelancerWallet) {
+    // Total: 600 + 1200 = 1800 from this week's completed jobs
     await prisma.wallet.update({
       where: { technicianId: techFreelancer.id },
-      data: { balance: 800 },
+      data: { balance: 1800 },
     });
 
     await prisma.walletTransaction.create({
@@ -575,6 +698,30 @@ async function main() {
         sourceId: wo2.id,
         amount: 800,
         description: "Commission for WO-" + wo2.woNumber,
+      },
+    });
+
+    await prisma.walletTransaction.create({
+      data: {
+        walletId: freelancerWallet.id,
+        technicianId: techFreelancer.id,
+        type: "COMMISSION",
+        sourceType: "WORK_ORDER",
+        sourceId: completedWO1ThisWeek.id,
+        amount: 600,
+        description: "Commission for completed work order this week",
+      },
+    });
+
+    await prisma.walletTransaction.create({
+      data: {
+        walletId: freelancerWallet.id,
+        technicianId: techFreelancer.id,
+        type: "COMMISSION",
+        sourceType: "WORK_ORDER",
+        sourceId: completedWO2ThisWeek.id,
+        amount: 1200,
+        description: "Commission for completed work order this week",
       },
     });
   }
