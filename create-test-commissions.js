@@ -21,7 +21,11 @@ async function createTestData() {
   }
 
   console.log(`👤 Technician: ${technician.name} (${technician.role})`);
-  console.log(`💰 Commission Rate: ${(technician.technicianProfile?.commissionRate || 0.15) * 100}%\n`);
+  console.log(
+    `💰 Commission Rate: ${
+      (technician.technicianProfile?.commissionRate || 0.15) * 100
+    }%\n`
+  );
 
   // Get customer
   const customer = await prisma.user.findFirst({
@@ -34,10 +38,26 @@ async function createTestData() {
   const service = await prisma.service.findFirst();
 
   const testJobs = [
-    { name: "HVAC Maintenance", amount: 633, date: new Date("2025-12-03T14:00:00Z") },
-    { name: "Plumbing Repair", amount: 500, date: new Date("2025-11-03T10:00:00Z") },
-    { name: "HVAC Installation", amount: 1333, date: new Date("2025-11-02T15:00:00Z") },
-    { name: "Electrical Repair", amount: 367, date: new Date("2025-11-01T09:00:00Z") },
+    {
+      name: "HVAC Maintenance",
+      amount: 633,
+      date: new Date("2025-12-03T14:00:00Z"),
+    },
+    {
+      name: "Plumbing Repair",
+      amount: 500,
+      date: new Date("2025-11-03T10:00:00Z"),
+    },
+    {
+      name: "HVAC Installation",
+      amount: 1333,
+      date: new Date("2025-11-02T15:00:00Z"),
+    },
+    {
+      name: "Electrical Repair",
+      amount: 367,
+      date: new Date("2025-11-01T09:00:00Z"),
+    },
   ];
 
   for (const job of testJobs) {
@@ -111,7 +131,9 @@ async function createTestData() {
     console.log(`✓ ${job.name}`);
     console.log(`  WO: ${wo.woNumber}`);
     console.log(`  Payment: $${job.amount}`);
-    console.log(`  Commission: $${commissionAmount.toFixed(2)} (${commissionRate * 100}%)`);
+    console.log(
+      `  Commission: $${commissionAmount.toFixed(2)} (${commissionRate * 100}%)`
+    );
     console.log(`  Date: ${job.date.toLocaleDateString()}\n`);
 
     // Update wallet
@@ -153,7 +175,9 @@ async function createTestData() {
 
   console.log("📊 Summary:");
   console.log(`  Total Jobs: ${totalCommissions._count}`);
-  console.log(`  Total Commissions: $${totalCommissions._sum.amount.toFixed(2)}`);
+  console.log(
+    `  Total Commissions: $${totalCommissions._sum.amount.toFixed(2)}`
+  );
   console.log(`  Wallet Balance: $${wallet.balance.toFixed(2)}`);
 
   console.log("\n✅ Test data created successfully!\n");

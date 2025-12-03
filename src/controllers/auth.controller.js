@@ -130,7 +130,13 @@ export const updateProfile = async (req, res, next) => {
     const userRole = req.user.role;
 
     // Base allowed fields for all users
-    const allowedFields = ["name", "email", "homeAddress", "latitude", "longitude"];
+    const allowedFields = [
+      "name",
+      "email",
+      "homeAddress",
+      "latitude",
+      "longitude",
+    ];
     const updates = {};
 
     for (const field of allowedFields) {
@@ -158,13 +164,20 @@ export const updateProfile = async (req, res, next) => {
 
       // Convert skills array to specialization string
       if (technicianFields.skills && Array.isArray(technicianFields.skills)) {
-        technicianFields.specialization = JSON.stringify(technicianFields.skills);
+        technicianFields.specialization = JSON.stringify(
+          technicianFields.skills
+        );
         delete technicianFields.skills;
       }
 
       // Convert certifications array to degreesUrl string
-      if (technicianFields.certifications && Array.isArray(technicianFields.certifications)) {
-        technicianFields.degreesUrl = JSON.stringify(technicianFields.certifications);
+      if (
+        technicianFields.certifications &&
+        Array.isArray(technicianFields.certifications)
+      ) {
+        technicianFields.degreesUrl = JSON.stringify(
+          technicianFields.certifications
+        );
         delete technicianFields.certifications;
       }
 

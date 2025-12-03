@@ -44,7 +44,8 @@ async function seedCommissions() {
       continue;
     }
 
-    const commissionRate = wo.technician?.technicianProfile?.commissionRate || 0.15;
+    const commissionRate =
+      wo.technician?.technicianProfile?.commissionRate || 0.15;
     const commissionAmount = payment.amount * commissionRate;
 
     // Create commission record
@@ -60,7 +61,11 @@ async function seedCommissions() {
 
     console.log(`✓ Created commission for ${wo.woNumber}`);
     console.log(`  ${wo.category.name} - ${wo.customer.name}`);
-    console.log(`  Payment: $${payment.amount} × ${commissionRate * 100}% = $${commissionAmount}\n`);
+    console.log(
+      `  Payment: $${payment.amount} × ${
+        commissionRate * 100
+      }% = $${commissionAmount}\n`
+    );
 
     // Update or create wallet
     const wallet = await prisma.wallet.upsert({

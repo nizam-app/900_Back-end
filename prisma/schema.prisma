@@ -277,18 +277,18 @@ model Commission {
 }
 
 model PayoutRequest {
-  id              Int       @id @default(autoincrement())
-  technicianId    Int
-  amount          Float
-  status          String
-  reason          String?
-  paymentMethod   String? // BANK_ACCOUNT, MOBILE_BANKING
+  id               Int       @id @default(autoincrement())
+  technicianId     Int
+  amount           Float
+  status           String
+  reason           String?
+  paymentMethod    String? // BANK_ACCOUNT, MOBILE_BANKING
   bankAccountLast4 String? // Last 4 digits of account number (for display)
-  reviewedById    Int?
-  reviewedAt      DateTime?
-  createdAt       DateTime  @default(now())
-  reviewedBy      User?     @relation("PayoutReviewer", fields: [reviewedById], references: [id])
-  technician      User      @relation(fields: [technicianId], references: [id])
+  reviewedById     Int?
+  reviewedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  reviewedBy       User?     @relation("PayoutReviewer", fields: [reviewedById], references: [id])
+  technician       User      @relation(fields: [technicianId], references: [id])
 }
 
 model Payout {

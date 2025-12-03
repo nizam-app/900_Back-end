@@ -22,7 +22,9 @@ async function checkData() {
 
   workOrders.forEach((wo) => {
     console.log(`WO: ${wo.woNumber}`);
-    console.log(`  Technician: ${wo.technician?.name} (ID: ${wo.technicianId})`);
+    console.log(
+      `  Technician: ${wo.technician?.name} (ID: ${wo.technicianId})`
+    );
     console.log(`  Payment: $${wo.payments[0]?.amount || 0}`);
     console.log(`  Commission: $${wo.commissions[0]?.amount || 0}`);
     console.log(`  Commission Status: ${wo.commissions[0]?.status || "NONE"}`);
@@ -55,7 +57,9 @@ async function checkData() {
       `\n💰 ${tech?.name} (ID: ${techId}) - ${tech?.role}: ${commissions.length} commissions`
     );
     commissions.forEach((c) => {
-      console.log(`  ${c.workOrder.category.name} - ${c.workOrder.customer.name}: $${c.amount} (${c.status})`);
+      console.log(
+        `  ${c.workOrder.category.name} - ${c.workOrder.customer.name}: $${c.amount} (${c.status})`
+      );
     });
   }
 
