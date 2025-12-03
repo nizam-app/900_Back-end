@@ -412,6 +412,9 @@ export const getUserProfile = async (userId) => {
           residencePermitFrom: true,
           residencePermitTo: true,
           degreesUrl: true,
+          department: true,
+          joinDate: true,
+          position: true,
           bankName: true,
           bankAccountNumber: true,
           bankAccountHolder: true,
@@ -512,12 +515,103 @@ export const getUserProfile = async (userId) => {
       }
     }
 
+    // Calculate response time (average time to accept jobs)
+    const acceptedJobs = await prisma.workOrder.findMany({
+      where: {
+        technicianId: userId,
+        status: { in: ["ACCEPTED", "IN_PROGRESS", "COMPLETED", "PAID_VERIFIED"] },
+        acceptedAt: { not: null },
+      },
+      select: {
+        createdAt: true,
+        acceptedAt: true,
+      },
+      take: 20, // Last 20 accepted jobs
+    });
+
+    let avgResponseMinutes = 0;
+    if (acceptedJobs.length > 0) {
+      const totalMinutes = acceptedJobs.reduce((sum, job) => {
+        const diffMs = new Date(job.acceptedAt) - new Date(job.createdAt);
+        const minutes = Math.abs(diffMs / 1000 / 60); // Use absolute value to handle any timing issues
+        return sum + minutes;
+      }, 0);
+      avgResponseMinutes = Math.round(totalMinutes / acceptedJobs.length);
+    }
+
+    // Calculate current week bonus
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weekBonus = await prisma.commission.aggregate({
+      where: {
+        technicianId: userId,
+        createdAt: { gte: startOfWeek },
+        status: { in: ["BOOKED", "PAID_OUT"] },
+      },
+      _sum: { amount: true },
+    });
+
+    const profile = user.technicianProfile;
+    const isFreelancer = user.role === "TECH_FREELANCER";
+    const bonusRate = isFreelancer ? profile.commissionRate : profile.bonusRate;
+
+    // Get priority distribution (what priority levels they handle)
+    const priorityCounts = await prisma.workOrder.groupBy({
+      by: ["priority"],
+      where: {
+        technicianId: userId,
+        status: { not: "CANCELLED" },
+      },
+      _count: { priority: true },
+    });
+
+    const priorityStats = {
+      low: priorityCounts.find((p) => p.priority === "LOW")?._count.priority || 0,
+      medium: priorityCounts.find((p) => p.priority === "MEDIUM")?._count.priority || 0,
+      high: priorityCounts.find((p) => p.priority === "HIGH")?._count.priority || 0,
+    };
+
+    const totalJobs = priorityStats.low + priorityStats.medium + priorityStats.high;
+    const priorityPercentages = {
+      low: totalJobs > 0 ? Math.round((priorityStats.low / totalJobs) * 100) : 0,
+      medium: totalJobs > 0 ? Math.round((priorityStats.medium / totalJobs) * 100) : 0,
+      high: totalJobs > 0 ? Math.round((priorityStats.high / totalJobs) * 100) : 0,
+    };
+
     return {
       ...user,
       technicianProfile: {
         ...user.technicianProfile,
         skills, // Array of skills for UI
         certifications, // Array of certifications for UI
+        // 15.1 Response Time
+        responseTime: {
+          minutes: avgResponseMinutes,
+          formatted: avgResponseMinutes < 60 
+            ? `${avgResponseMinutes} min` 
+            : `${Math.floor(avgResponseMinutes / 60)}h ${avgResponseMinutes % 60}m`,
+          status: avgResponseMinutes <= 30 ? "excellent" : avgResponseMinutes <= 60 ? "good" : "average",
+        },
+        // 15.2 Bonus Information
+        bonus: {
+          thisWeek: weekBonus._sum.amount || 0,
+          rate: bonusRate,
+          ratePercentage: bonusRate * 100,
+          type: isFreelancer ? "Commission" : "Bonus",
+        },
+        // 15.3 Priority Status Distribution
+        priorityStatus: {
+          counts: priorityStats,
+          percentages: priorityPercentages,
+          mostCommon: 
+            priorityStats.high >= priorityStats.medium && priorityStats.high >= priorityStats.low 
+              ? "HIGH"
+              : priorityStats.medium >= priorityStats.low 
+              ? "MEDIUM" 
+              : "LOW",
+        },
       },
     };
   }

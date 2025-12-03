@@ -2,12 +2,12 @@
 
 import { Router } from "express";
 import * as technicianController from "../controllers/technician.controller.js";
-import { authenticateToken } from "../middleware/auth.middleware.js";
+import { authMiddleware } from "../middleware/auth.js";
 
 const router = Router();
 
 // All routes require authentication
-router.use(authenticateToken);
+router.use(authMiddleware);
 
 /**
  * @route   GET /api/technician/dashboard

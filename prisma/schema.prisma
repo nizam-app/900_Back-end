@@ -70,6 +70,10 @@ model TechnicianProfile {
   residencePermitFrom DateTime? // Validity start date
   residencePermitTo   DateTime? // Validity end date
   degreesUrl          String? // Degrees/certificates JSON array
+  // Employment details
+  department          String? // Department name (e.g., "Field Services")
+  joinDate            DateTime? // Employment start date
+  position            String? // Job position (e.g., "Senior Technician")
   // Bank account details for payouts
   bankName            String? // Bank name (e.g., "Dutch Bangla Bank")
   bankAccountNumber   String? // Account number

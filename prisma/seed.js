@@ -83,6 +83,9 @@ async function main() {
       baseSalary: 30000,
       specialization: "AC Repair, HVAC",
       status: "ACTIVE",
+      department: "Field Services",
+      joinDate: new Date("2022-03-15"),
+      position: "HVAC Specialist",
       degreesUrl: JSON.stringify([
         {
           name: "HVAC Master Certification",
@@ -132,6 +135,9 @@ async function main() {
       bonusRate: 0.05,
       specialization: "Electrical, Plumbing",
       status: "ACTIVE",
+      department: "Field Services",
+      joinDate: new Date("2023-01-15"),
+      position: "Senior Technician",
       degreesUrl: JSON.stringify([
         {
           name: "Electrical Engineering Diploma",
@@ -499,6 +505,7 @@ async function main() {
     },
   });
 
+  const wo2CreatedAt = new Date(Date.now() - 25 * 60 * 1000); // Created 25 mins ago
   const wo2 = await prisma.workOrder.create({
     data: {
       woNumber: "WO-" + (Date.now() + 1),
@@ -517,12 +524,14 @@ async function main() {
       priority: "HIGH",
       status: "IN_PROGRESS",
       scheduledAt: new Date(), // Today
-      acceptedAt: new Date(),
+      createdAt: wo2CreatedAt,
+      acceptedAt: new Date(wo2CreatedAt.getTime() + 10 * 60 * 1000), // Accepted 10 mins after creation
       startedAt: new Date(),
       notes: "Urgent repair needed",
     },
   });
 
+  const wo3CreatedAt = new Date(Date.now() - 60 * 60 * 1000); // Created 1 hour ago
   const wo3 = await prisma.workOrder.create({
     data: {
       woNumber: "WO-" + (Date.now() + 2),
@@ -541,7 +550,8 @@ async function main() {
       priority: "MEDIUM",
       status: "ASSIGNED",
       scheduledAt: new Date(), // Today
-      acceptedAt: new Date(),
+      createdAt: wo3CreatedAt,
+      acceptedAt: new Date(wo3CreatedAt.getTime() + 15 * 60 * 1000), // Accepted 15 mins after creation
       notes: "Check all electrical outlets in bedroom",
     },
   });
