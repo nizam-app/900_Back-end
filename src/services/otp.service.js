@@ -3,6 +3,7 @@
 // src/services/otp.service.js
 import { prisma } from "../prisma.js";
 import { sendSMS } from "./sms.service.js";
+import { normalizePhoneForDB, formatPhoneForSMS } from "../utils/phone.js";
 
 // Generate a random 6-digit OTP
 const generateOTPCode = () => {
@@ -48,15 +49,19 @@ export const sendOTP = async (phone, type) => {
     const code = generateOTPCode();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    // Format phone number with country code
-    const formattedPhone = formatPhoneNumber(phone);
+    // Normalize phone for database (without country code)
+    const normalizedPhone = normalizePhoneForDB(phone);
+    
+    // Format phone number with country code for SMS
+    const formattedPhone = formatPhoneForSMS(phone);
 
     console.log(`📱 Original phone: ${phone}`);
-    console.log(`📱 Formatted phone: ${formattedPhone}`);
+    console.log(`📱 Normalized phone (DB): ${normalizedPhone}`);
+    console.log(`📱 Formatted phone (SMS): ${formattedPhone}`);
 
     // Check if user exists
     const user = await prisma.user.findUnique({
-      where: { phone },
+      where: { phone: normalizedPhone },
     });
 
     // Create OTP message
@@ -77,10 +82,10 @@ export const sendOTP = async (phone, type) => {
       console.log(`✅ OTP SMS sent successfully to ${formattedPhone}`);
     }
 
-    // Save OTP to database
+    // Save OTP to database with normalized phone
     const otpRecord = await prisma.oTP.create({
       data: {
-        phone,
+        phone: normalizedPhone,
         code,
         type,
         expiresAt,
@@ -89,7 +94,7 @@ export const sendOTP = async (phone, type) => {
     });
 
     // Always log OTP code for debugging
-    console.log(`📱 OTP for ${phone}: ${code}`);
+    console.log(`📱 OTP for ${normalizedPhone}: ${code}`);
 
     // Build response
     const response = {
@@ -116,10 +121,13 @@ export const sendOTP = async (phone, type) => {
 // ✅ Verify OTP by phone, code, and type - returns temp token
 export const verifyOTPByCode = async (phone, code, type) => {
   try {
+    // Normalize phone number
+    const normalizedPhone = normalizePhoneForDB(phone);
+    
     // Verify OTP from database
     const otp = await prisma.oTP.findFirst({
       where: {
-        phone,
+        phone: normalizedPhone,
         code,
         type,
         isUsed: false,
@@ -175,10 +183,13 @@ export const verifyOTPByCode = async (phone, code, type) => {
 // ✅ Verify OTP (legacy - with phone)
 export const verifyOTP = async (phone, code, type) => {
   try {
+    // Normalize phone number
+    const normalizedPhone = normalizePhoneForDB(phone);
+    
     // Verify OTP from database
     const otp = await prisma.oTP.findFirst({
       where: {
-        phone,
+        phone: normalizedPhone,
         code,
         type,
         isUsed: false,

@@ -6,7 +6,7 @@ import { prisma } from "../prisma.js";
 
 export const register = async (req, res, next) => {
   try {
-    const { phone, password, name, email, otp } = req.body;
+    const { phone, password, name, email, otp, tempToken } = req.body;
 
     if (!phone || !password || !name) {
       return res
@@ -14,7 +14,8 @@ export const register = async (req, res, next) => {
         .json({ message: "Phone, name, and password are required" });
     }
 
-    if (!otp) {
+    // Accept either OTP code or tempToken from OTP verification
+    if (!otp && !tempToken) {
       return res
         .status(400)
         .json({ message: "OTP verification is required before registration" });

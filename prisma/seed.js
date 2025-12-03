@@ -252,7 +252,19 @@ async function main() {
   const customer2Password = await bcrypt.hash("customer123", 10);
   const customer2 = await prisma.user.upsert({
     where: { phone: "8888888888" },
-    update: {},
+    update: {
+      passwordHash: customer2Password,
+      name: "Robert Smith",
+      email: "robert@example.com",
+      role: "CUSTOMER",
+      latitude: -1.295,
+      longitude: 36.82,
+      homeAddress: "789 Smith Road, Nairobi",
+      isBlocked: true,
+      blockedReason: "Multiple customer complaints",
+      blockedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      blockedById: 1,
+    },
     create: {
       phone: "8888888888",
       name: "Robert Smith",

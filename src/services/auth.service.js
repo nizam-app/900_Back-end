@@ -4,15 +4,19 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../prisma.js";
 import { signToken } from "../utils/jwt.js";
+import { normalizePhoneForDB } from "../utils/phone.js";
 
 // ✅ Set password after OTP verification (new registration/password reset flow)
 export const setPasswordAfterOTP = async (userData) => {
   const { phone, password, name, email, tempToken } = userData;
 
+  // Normalize phone number
+  const normalizedPhone = normalizePhoneForDB(phone);
+
   // Verify temporary token
   const otpRecord = await prisma.oTP.findFirst({
     where: {
-      phone,
+      phone: normalizedPhone,
       tempToken,
       tempTokenExpiry: {
         gt: new Date(),
@@ -28,7 +32,7 @@ export const setPasswordAfterOTP = async (userData) => {
   }
 
   const existing = await prisma.user.findUnique({
-    where: { phone },
+    where: { phone: normalizedPhone },
   });
 
   // If user exists and has a password, they're already registered
@@ -45,6 +49,7 @@ export const setPasswordAfterOTP = async (userData) => {
     user = await prisma.user.update({
       where: { id: existing.id },
       data: {
+        phone: normalizedPhone,
         passwordHash: hash,
         name: name || existing.name,
         email: email || existing.email,
@@ -57,7 +62,7 @@ export const setPasswordAfterOTP = async (userData) => {
     // Create new user
     user = await prisma.user.create({
       data: {
-        phone,
+        phone: normalizedPhone,
         passwordHash: hash,
         name: name || null,
         email: email || null,
@@ -93,98 +98,200 @@ export const setPasswordAfterOTP = async (userData) => {
   };
 };
 export const registerUser = async (userData) => {
-  const { phone, password, name, email, role, otp } = userData;
+  const { phone, password, name, email, role, otp, tempToken } = userData;
 
-  const existing = await prisma.user.findUnique({
-    where: { phone },
-  });
+  // Normalize phone number
+  const normalizedPhone = normalizePhoneForDB(phone);
 
-  // If user exists and has a password, they're already registered
-  if (existing && existing.passwordHash && existing.passwordHash !== "") {
-    throw new Error("Phone already registered");
-  }
-
-  // Verify OTP before registration
-  const otpRecord = await prisma.oTP.findFirst({
-    where: {
-      phone,
-      code: otp,
-      type: "REGISTRATION",
-      isUsed: false,
-      expiresAt: {
-        gt: new Date(),
+  // If tempToken provided, use new flow (OTP already verified)
+  if (tempToken) {
+    // Verify temp token
+    const otpRecord = await prisma.oTP.findFirst({
+      where: {
+        phone: normalizedPhone,
+        tempToken,
+        tempTokenExpiry: {
+          gt: new Date(),
+        },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
-
-  if (!otpRecord) {
-    throw new Error("Invalid or expired OTP");
-  }
-
-  // Mark OTP as used
-  await prisma.oTP.update({
-    where: { id: otpRecord.id },
-    data: { isUsed: true },
-  });
-
-  const hash = await bcrypt.hash(password, 10);
-
-  let user;
-
-  // If guest user exists (no password), upgrade them to registered user
-  if (existing && (!existing.passwordHash || existing.passwordHash === "")) {
-    user = await prisma.user.update({
-      where: { id: existing.id },
-      data: {
-        passwordHash: hash,
-        name: name || existing.name,
-        email: email || existing.email,
-        role: role || "CUSTOMER",
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
-    console.log(`👤 Guest user upgraded to registered: ${phone}`);
-  } else {
-    // Create new user
-    user = await prisma.user.create({
-      data: {
-        phone,
-        passwordHash: hash,
-        name: name || null,
-        email: email || null,
-        role: role || "CUSTOMER",
-      },
+    if (!otpRecord) {
+      throw new Error("Invalid or expired temporary token. Please verify OTP again.");
+    }
+
+    // Clear temp token
+    await prisma.oTP.update({
+      where: { id: otpRecord.id },
+      data: { tempToken: null, tempTokenExpiry: null },
     });
-  }
 
-  const token = signToken({
-    id: user.id,
-    role: user.role,
-    phone: user.phone,
-  });
+    // Proceed with registration using tempToken flow
+    const existing = await prisma.user.findUnique({
+      where: { phone: normalizedPhone },
+    });
 
-  return {
-    token,
-    user: {
+    // If user exists and has a password, they're already registered
+    if (existing && existing.passwordHash && existing.passwordHash !== "") {
+      throw new Error("Phone already registered");
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    let user;
+
+    // If guest user exists (no password), upgrade them to registered user
+    if (existing && (!existing.passwordHash || existing.passwordHash === "")) {
+      user = await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          phone: normalizedPhone,
+          passwordHash: hash,
+          name: name || existing.name,
+          email: email || existing.email,
+          role: role || "CUSTOMER",
+        },
+      });
+
+      console.log(`👤 Guest user upgraded to registered: ${normalizedPhone}`);
+    } else {
+      // Create new user
+      user = await prisma.user.create({
+        data: {
+          phone: normalizedPhone,
+          passwordHash: hash,
+          name: name || null,
+          email: email || null,
+          role: role || "CUSTOMER",
+        },
+      });
+
+      console.log(`👤 New user registered: ${normalizedPhone}`);
+    }
+
+    const token = signToken({
       id: user.id,
-      name: user.name,
-      phone: user.phone,
-      email: user.email,
       role: user.role,
-    },
-  };
+      phone: user.phone,
+    });
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+      },
+      message: "Registration successful",
+    };
+  }
+
+  // Legacy flow: If OTP code provided directly
+  if (otp) {
+    const existing = await prisma.user.findUnique({
+      where: { phone: normalizedPhone },
+    });
+
+    // If user exists and has a password, they're already registered
+    if (existing && existing.passwordHash && existing.passwordHash !== "") {
+      throw new Error("Phone already registered");
+    }
+
+    // Verify OTP before registration
+    const otpRecord = await prisma.oTP.findFirst({
+      where: {
+        phone: normalizedPhone,
+        code: otp,
+        type: "REGISTRATION",
+        isUsed: false,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!otpRecord) {
+      throw new Error("Invalid or expired OTP");
+    }
+
+    // Mark OTP as used
+    await prisma.oTP.update({
+      where: { id: otpRecord.id },
+      data: { isUsed: true },
+    });
+
+    const hash = await bcrypt.hash(password, 10);
+    let user;
+
+    // If guest user exists (no password), upgrade them to registered user
+    if (existing && (!existing.passwordHash || existing.passwordHash === "")) {
+      user = await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          phone: normalizedPhone,
+          passwordHash: hash,
+          name: name || existing.name,
+          email: email || existing.email,
+          role: role || "CUSTOMER",
+        },
+      });
+
+      console.log(`👤 Guest user upgraded to registered: ${normalizedPhone}`);
+    } else {
+      // Create new user
+      user = await prisma.user.create({
+        data: {
+          phone: normalizedPhone,
+          passwordHash: hash,
+          name: name || null,
+          email: email || null,
+          role: role || "CUSTOMER",
+        },
+      });
+
+      console.log(`👤 New user registered: ${normalizedPhone}`);
+    }
+
+    const token = signToken({
+      id: user.id,
+      role: user.role,
+      phone: user.phone,
+    });
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+      },
+      message: "Registration successful",
+    };
+  }
+
+  // Neither tempToken nor OTP provided
+  throw new Error("OTP verification is required before registration");
 };
 
 // ✅ Login existing user (phone + password only)
 export const loginUser = async (credentials) => {
   const { phone, password } = credentials;
 
+  // Normalize phone number
+  const normalizedPhone = normalizePhoneForDB(phone);
+
   // Find user by phone
   const user = await prisma.user.findUnique({
-    where: { phone },
+    where: { phone: normalizedPhone },
   });
 
   if (!user) {
