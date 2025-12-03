@@ -260,6 +260,10 @@ async function main() {
       latitude: -1.295000,
       longitude: 36.820000,
       homeAddress: '789 Smith Road, Nairobi',
+      isBlocked: true,
+      blockedReason: 'Multiple customer complaints',
+      blockedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      blockedById: 1, // Admin user
     },
   });
 
