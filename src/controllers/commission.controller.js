@@ -72,6 +72,17 @@ export const getMyCommissions = async (req, res, next) => {
           select: {
             woNumber: true,
             completedAt: true,
+            customer: {
+              select: {
+                name: true,
+                phone: true,
+              },
+            },
+            category: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },

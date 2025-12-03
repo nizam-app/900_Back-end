@@ -933,7 +933,7 @@
 								}
 							]
 						},
-						"description": "Get all work orders with filtering options.\n\nQuery Parameters:\n• status: Filter by status (UNASSIGNED, ASSIGNED, ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED)\n• technicianId: Filter by technician ID (for freelancer to see their own tasks)\n• customerId: Filter by customer ID\n• priority: Filter by priority (LOW, MEDIUM, HIGH, URGENT)\n• page: Page number (default: 1)\n• limit: Results per page (default: 10)\n\nFor Freelancer Technician Dashboard:\n1. Active Tasks (Ready to Start + In Progress):\n   GET /api/wos?technicianId={id}&status=ASSIGNED (Ready to Start)\n   GET /api/wos?technicianId={id}&status=ACCEPTED (Active Now)\n   GET /api/wos?technicianId={id}&status=IN_PROGRESS (In Progress)\n\n2. Completed Tasks This Month:\n   GET /api/wos?technicianId={id}&status=COMPLETED\n\n3. Task Counts:\n   • Ready to Start: status=ASSIGNED\n   • Active Now: status=ACCEPTED or IN_PROGRESS\n   • This Month: status=COMPLETED (filter by date range)\n\nResponse includes full work order details with customer, technician, category info, payment and commission data, service request reference, and GPS coordinates for location."
+						"description": "Get all work orders with filtering options.\n\n**2.1 WHERE I GET START, ACTIVE, THIS MONTH (Dashboard Stats):**\n\n• **Ready to Start (2)**: `GET /api/wos?technicianId={yourId}&status=ASSIGNED`\n  - Jobs assigned to you, waiting for acceptance\n  - Shows in \"Ready to Start\" section with count\n\n• **Active Now (1)**: `GET /api/wos?technicianId={yourId}&status=ACCEPTED` or `status=IN_PROGRESS`\n  - Jobs you accepted or currently working on\n  - Shows in \"Active\" tab with count\n\n• **This Month (28)**: `GET /api/wos?technicianId={yourId}&status=COMPLETED`\n  - Jobs you finished this month\n  - Shows in \"Completed\" tab with count\n  - Also from: `/api/commissions/dashboard` → totalJobsCompleted\n\n**2.2 TASKS ASSIGNED TO FREELANCER TECHNICIAN:**\n\nEach task card displays:\n• Customer: Name + Phone (Michael Johnson +1 234 567 8900)\n• Location: Address with GPS (123 Main St, Apt 4B)\n• Scheduled: Date and time (Today at 2:00 PM)\n• Commission: Your earnings ($18.00 from $120 job = 15%)\n• Payment note: \"Payment follows completion verification\"\n• Action buttons: Complete Job, Close\n\n**API Response Structure:**\n```json\n{\n  \"workOrders\": [\n    {\n      \"id\": 4,\n      \"woNumber\": \"WO-1234567890\",\n      \"status\": \"IN_PROGRESS\",\n      \"customer\": {\n        \"name\": \"Michael Johnson\",\n        \"phone\": \"+1 234 567 8900\"\n      },\n      \"address\": \"123 Main St, Apt 4B\",\n      \"latitude\": 23.8103,\n      \"longitude\": 90.4125,\n      \"scheduledAt\": \"2025-12-03T14:00:00Z\",\n      \"commissions\": [\n        {\n          \"type\": \"COMMISSION\",\n          \"amount\": 18.00,\n          \"status\": \"PENDING\"\n        }\n      ],\n      \"payments\": [\n        {\n          \"amount\": 120,\n          \"status\": \"PENDING_VERIFICATION\"\n        }\n      ]\n    }\n  ]\n}\n```\n\n**Query Parameters:**\n• status: Filter by status (UNASSIGNED, ASSIGNED, ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED)\n• technicianId: Filter by technician ID (for freelancer to see their own tasks)\n• customerId: Filter by customer ID\n• priority: Filter by priority (LOW, MEDIUM, HIGH, URGENT)\n• page: Page number (default: 1)\n• limit: Results per page (default: 10)\n\n**For Freelancer Technician Dashboard:**\n\n1. **Active Tasks (Ready to Start + In Progress):**\n   - Ready to Start: `GET /api/wos?technicianId={id}&status=ASSIGNED`\n   - Active Now: `GET /api/wos?technicianId={id}&status=ACCEPTED`\n   - In Progress: `GET /api/wos?technicianId={id}&status=IN_PROGRESS`\n\n2. **Completed Tasks This Month:**\n   - `GET /api/wos?technicianId={id}&status=COMPLETED`\n\n3. **Task Counts:**\n   • Ready to Start: Count results with status=ASSIGNED\n   • Active Now: Count results with status=ACCEPTED or IN_PROGRESS\n   • This Month: Count results with status=COMPLETED (filter by date range)\n\nResponse includes full work order details with customer, technician, category info, payment and commission data, service request reference, and GPS coordinates for location."
 					}
 				},
 				{
@@ -1020,7 +1020,8 @@
 								"{{woId}}",
 								"respond"
 							]
-						}
+						},
+						"description": "Technician accepts assigned work order (Ready to Start). Action: ACCEPT. This moves the work order from ASSIGNED to ACCEPTED status, indicating the technician has confirmed they will complete the job. Next Steps: 1) Review job details 2) Travel to customer location 3) Click Start Job button with GPS check-in. UI Button: View Details then Accept Job"
 					}
 				},
 				{
@@ -1052,7 +1053,8 @@
 								"{{woId}}",
 								"respond"
 							]
-						}
+						},
+						"description": "Technician declines assigned work order. Action: DECLINE, Required: declineReason. This returns the work order to UNASSIGNED status so dispatcher can reassign to another technician. Common decline reasons: Unable to reach location, Lack required skills or tools, Schedule conflict, Emergency situation"
 					}
 				},
 				{
@@ -1084,7 +1086,8 @@
 								"{{woId}}",
 								"start"
 							]
-						}
+						},
+						"description": "Start work order with GPS check-in verification. Required: lat (latitude), lng (longitude). This changes status from ACCEPTED to IN_PROGRESS and records start time, GPS coordinates for location verification, and technician arrival confirmation. UI Flow: 1) Technician clicks Continue or Start Job button 2) App captures GPS location 3) Verifies technician is at job site 4) Status updates to In Progress. Note: GPS verification ensures service quality and prevents fraud."
 					}
 				},
 				{
@@ -1134,7 +1137,7 @@
 								"complete"
 							]
 						},
-						"description": "Complete work order with photos, notes, and materials used"
+						"description": "Complete work order with photos and notes.\n\n**UI Flow (Complete Job Modal):**\n\n1. **Work Photos (Required):**\n   - Tap to upload photos\n   - At least 1 photo required\n   - Maximum 5 photos allowed (10MB each)\n   - Formats: JPEG, PNG, PDF\n   - Shows before/after work evidence\n\n2. **Work Notes (Optional):**\n   - Add notes about work completed\n   - Parts used details\n   - Recommendations for customer\n   - Any issues encountered\n\n3. **Commission Calculation Display:**\n   - Job Payment: $120\n   - Commission Rate: 15%\n   - You Earn: $18.00\n   - Payment processed after job completion verification\n\n**Request Format:**\n- Content-Type: multipart/form-data\n- Authorization: Bearer {{techToken}}\n\n**Form Fields:**\n• photos (required): File uploads (min 1, max 5)\n• completionNotes (optional): String - Work description\n• materialsUsed (optional): JSON array - [{\"item\":\"Air Filter\",\"qty\":1,\"cost\":50}]\n\n**Status Flow:**\nIN_PROGRESS → COMPLETED\n\n**What Happens After:**\n1. Work order status changes to COMPLETED\n2. Photos uploaded to server\n3. Admin receives notification to verify payment\n4. After admin approves payment proof:\n   - Commission calculated (15% of job payment)\n   - Commission added to your wallet as EARNED\n   - Available for payout request\n\n**Commission Calculation Example:**\n```\nJob Payment: $120\nCommission Rate: 15% (from your profile)\nYour Earnings: $120 × 0.15 = $18.00\nStatus: EARNED (available in wallet)\n```\n\n**UI Actions:**\n• Continue button → Opens complete job modal\n• Complete Job button → Submits photos and notes\n• Cancel → Returns to job details\n\n**Status:** ✅ PRODUCTION READY"
 					}
 				},
 				{
@@ -1261,7 +1264,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"technicianId\": 2,\n  \"reason\": \"Previous technician unavailable\"\n}"
+							"raw": "{\n  \"technicianId\": 5,\n  \"reason\": \"Previous technician unavailable\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/wos/{{woId}}/reassign",
@@ -1586,7 +1589,7 @@
 								}
 							]
 						},
-						"description": "Get technician commission history for completed work orders.\n\nQuery Parameters:\n• status: Filter by EARNED, PAID, or PENDING\n• startDate: Filter from date (YYYY-MM-DD)\n• endDate: Filter to date (YYYY-MM-DD)\n\nResponse includes:\n• amount: Commission amount per work order\n• status: EARNED (available), PAID (withdrawn), PENDING (processing)\n• workOrder: Associated work order details\n• createdAt: When commission was earned"
+						"description": "✅ ENHANCED - Commission Transaction History\n\n**UI: Recent Transactions Section**\n\nDisplays recent commission earnings with \"View All\" link:\n```\nRecent Transactions        View All\n\nHVAC Maintenance           $95\nMichael Johnson\nToday, 2:00 PM\n\nPlumbing Repair            $75\nRobert Brown\nNov 3, 2025\n\nHVAC Installation         $200\nEmily Davis\nNov 2, 2025\n\nElectrical Repair          $55\nJames Wilson\nNov 1, 2025\n```\n\n**API Response Structure:**\n```json\n[\n  {\n    \"id\": 1,\n    \"type\": \"COMMISSION\",\n    \"amount\": 95,\n    \"status\": \"EARNED\",\n    \"technicianId\": 5,\n    \"workOrderId\": 4,\n    \"workOrder\": {\n      \"woNumber\": \"WO-1234567890\",\n      \"completedAt\": \"2025-12-03T14:00:00Z\",\n      \"customer\": {\n        \"name\": \"Michael Johnson\"\n      },\n      \"category\": {\n        \"name\": \"HVAC Maintenance\"\n      }\n    },\n    \"createdAt\": \"2025-12-03T14:00:00Z\"\n  }\n]\n```\n\n**Query Parameters:**\n• status: Filter by EARNED, PAID, PENDING (default: all)\n• startDate: Filter from date YYYY-MM-DD (e.g., 2025-11-01)\n• endDate: Filter to date YYYY-MM-DD (e.g., 2025-12-03)\n• limit: Number of results (use ?limit=4 for \"Recent\")\n\n**For Recent Transactions (Last 4):**\n`GET /api/commissions/my-commissions?status=EARNED&limit=4`\n\n**For View All Transactions:**\n`GET /api/commissions/my-commissions?status=EARNED`\n\n**Display Format:**\n1. **Job Type:** workOrder.category.name (\"HVAC Maintenance\")\n2. **Customer:** workOrder.customer.name (\"Michael Johnson\")\n3. **Date:** Format completedAt as \"Today, 2:00 PM\" or \"Nov 3, 2025\"\n4. **Amount:** Commission earned in green ($95)\n\n**Commission Calculation:**\n```\nJob Payment: $633 (from work order)\nCommission Rate: 15% (from profile)\nYour Earnings: $633 × 0.15 = $95\n```\n\n**Response Fields:**\n• amount: Commission earned per job\n• status: EARNED (available), PAID (withdrawn), PENDING (processing)\n• workOrder: Job details with customer, category, completion date\n• createdAt: When commission was recorded\n\n**Status:** ✅ PRODUCTION READY"
 					}
 				},
 				{
@@ -1610,7 +1613,7 @@
 								"dashboard"
 							]
 						},
-						"description": "Get comprehensive dashboard summary for technician/freelancer.\n\nResponse includes:\n• walletBalance: Current available balance\n• totalEarned: Total earned commissions (available for payout)\n• totalPaid: Total already paid out commissions\n• pendingPayout: Amount pending withdrawal\n• totalAllTimeEarnings: Lifetime total earnings\n\nThis endpoint provides complete financial overview including:\n- Current wallet balance\n- Total jobs completed with commissions\n- Total earnings across all time\n- Available funds for payout request"
+						"description": "✅ ENHANCED - Technician Financial Dashboard\n\n**UI: This Month Breakdown Section**\n\nDisplays monthly performance summary:\n```\nJobs Completed\n28 jobs                    $6,450\n\nCommission\nEarnings rate              $320\n\nTotal                      $6,770\n```\n\n**API Response Structure:**\n```json\n{\n  \"walletBalance\": 6770,\n  \"totalEarned\": 320,\n  \"totalPaid\": 0,\n  \"pendingPayout\": 320,\n  \"totalAllTimeEarnings\": 320,\n  \"totalJobsCompleted\": 28\n}\n```\n\n**Field Mapping:**\n• **Jobs Completed:** totalJobsCompleted (28 jobs)\n• **Jobs Value:** Sum of all completed job payments ($6,450)\n  - Get from: `GET /api/wos?technicianId={id}&status=COMPLETED`\n  - Sum: payments[].amount\n\n• **Commission Earnings:** totalEarned ($320)\n  - Your earnings at commission rate (typically 15%)\n  - Status: EARNED (available in wallet)\n\n• **Total:** walletBalance ($6,770)\n  - Jobs Value + Commission = $6,450 + $320 = $6,770\n  - Available for payout request\n\n**Response Fields:**\n• walletBalance: Current available balance\n• totalEarned: Total earned commissions (EARNED status)\n• totalPaid: Already withdrawn amount (PAID status)\n• pendingPayout: Same as totalEarned (available for withdrawal)\n• totalAllTimeEarnings: Lifetime total (all statuses)\n• totalJobsCompleted: Count of COMPLETED work orders\n\n**Usage:**\n1. Display \"28 jobs\" from totalJobsCompleted\n2. Calculate jobs value by summing work order payments\n3. Display \"$320\" from totalEarned (commission earnings)\n4. Display \"$6,770\" from walletBalance (total available)\n\n**Note:** Commission rate is stored in technicianProfile.commissionRate (default 15%)\n\n**Status:** ✅ PRODUCTION READY"
 					}
 				},
 				{
