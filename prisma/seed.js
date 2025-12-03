@@ -84,9 +84,21 @@ async function main() {
       specialization: "AC Repair, HVAC",
       status: "ACTIVE",
       degreesUrl: JSON.stringify([
-        { name: "HVAC Master Certification", url: "/uploads/cert-hvac-1.pdf", verifiedAt: new Date() },
-        { name: "AC Repair Specialist", url: "/uploads/cert-hvac-2.pdf", verifiedAt: new Date() },
-        { name: "Refrigeration License", url: "/uploads/cert-hvac-3.pdf", verifiedAt: new Date() }
+        {
+          name: "HVAC Master Certification",
+          url: "/uploads/cert-hvac-1.pdf",
+          verifiedAt: new Date(),
+        },
+        {
+          name: "AC Repair Specialist",
+          url: "/uploads/cert-hvac-2.pdf",
+          verifiedAt: new Date(),
+        },
+        {
+          name: "Refrigeration License",
+          url: "/uploads/cert-hvac-3.pdf",
+          verifiedAt: new Date(),
+        },
       ]),
     },
   });
@@ -121,11 +133,31 @@ async function main() {
       specialization: "Electrical, Plumbing",
       status: "ACTIVE",
       degreesUrl: JSON.stringify([
-        { name: "Electrical Engineering Diploma", url: "/uploads/cert-1.pdf", verifiedAt: new Date() },
-        { name: "Plumbing License", url: "/uploads/cert-2.pdf", verifiedAt: new Date() },
-        { name: "HVAC Certification", url: "/uploads/cert-3.pdf", verifiedAt: new Date() },
-        { name: "Safety Training Certificate", url: "/uploads/cert-4.pdf", verifiedAt: new Date() },
-        { name: "Advanced Electrical Systems", url: "/uploads/cert-5.pdf", verifiedAt: new Date() }
+        {
+          name: "Electrical Engineering Diploma",
+          url: "/uploads/cert-1.pdf",
+          verifiedAt: new Date(),
+        },
+        {
+          name: "Plumbing License",
+          url: "/uploads/cert-2.pdf",
+          verifiedAt: new Date(),
+        },
+        {
+          name: "HVAC Certification",
+          url: "/uploads/cert-3.pdf",
+          verifiedAt: new Date(),
+        },
+        {
+          name: "Safety Training Certificate",
+          url: "/uploads/cert-4.pdf",
+          verifiedAt: new Date(),
+        },
+        {
+          name: "Advanced Electrical Systems",
+          url: "/uploads/cert-5.pdf",
+          verifiedAt: new Date(),
+        },
       ]),
     },
   });
@@ -534,8 +566,12 @@ async function main() {
       status: "PAID_VERIFIED",
       scheduledAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
       acceptedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      startedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
-      completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+      startedAt: new Date(
+        Date.now() - 2 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000
+      ),
+      completedAt: new Date(
+        Date.now() - 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+      ),
       paidVerifiedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
       completionNotes: "Fixed plumbing leak",
     },
@@ -560,8 +596,12 @@ async function main() {
       status: "PAID_VERIFIED",
       scheduledAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
       acceptedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      startedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
-      completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+      startedAt: new Date(
+        Date.now() - 3 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000
+      ),
+      completedAt: new Date(
+        Date.now() - 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000
+      ),
       paidVerifiedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       completionNotes: "AC cooling issue resolved",
     },

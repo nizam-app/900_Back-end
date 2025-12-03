@@ -1,3 +1,5 @@
+/** @format */
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -20,7 +22,9 @@ async function testTechnicianEarnings() {
       );
       console.log(`   Role: ${internalTech.role}`);
       console.log(
-        `   Bonus Rate: ${(internalTech.technicianProfile.bonusRate * 100).toFixed(0)}%`
+        `   Bonus Rate: ${(
+          internalTech.technicianProfile.bonusRate * 100
+        ).toFixed(0)}%`
       );
       console.log(
         `   Base Salary: $${internalTech.technicianProfile.baseSalary}`
@@ -68,15 +72,15 @@ async function testTechnicianEarnings() {
         console.log(`\n   Recent Bonuses:`);
         recentBonuses.forEach((bonus) => {
           console.log(
-            `   • ${bonus.workOrder?.service?.name || "Service"} - ${bonus.workOrder?.customer?.name || "Customer"}`
+            `   • ${bonus.workOrder?.service?.name || "Service"} - ${
+              bonus.workOrder?.customer?.name || "Customer"
+            }`
           );
           console.log(
             `     Job Payment: $${bonus.workOrder?.service?.baseRate || 0}`
           );
           console.log(`     Your Bonus: +$${bonus.amount.toFixed(2)}`);
-          console.log(
-            `     Date: ${bonus.createdAt.toLocaleDateString()}\n`
-          );
+          console.log(`     Date: ${bonus.createdAt.toLocaleDateString()}\n`);
         });
       }
     }
@@ -90,12 +94,12 @@ async function testTechnicianEarnings() {
     });
 
     if (freelancer) {
-      console.log(
-        `\n👤 Freelancer: ${freelancer.name} (${freelancer.phone})`
-      );
+      console.log(`\n👤 Freelancer: ${freelancer.name} (${freelancer.phone})`);
       console.log(`   Role: ${freelancer.role}`);
       console.log(
-        `   Commission Rate: ${(freelancer.technicianProfile.commissionRate * 100).toFixed(0)}%`
+        `   Commission Rate: ${(
+          freelancer.technicianProfile.commissionRate * 100
+        ).toFixed(0)}%`
       );
 
       // Get this month's commissions
@@ -138,7 +142,11 @@ async function testTechnicianEarnings() {
         console.log(`\n   Recent Commissions:`);
         recentCommissions.forEach((commission) => {
           console.log(
-            `   • ${commission.workOrder?.service?.name || commission.workOrder?.category?.name || "Service"} - ${commission.workOrder?.customer?.name || "Customer"}`
+            `   • ${
+              commission.workOrder?.service?.name ||
+              commission.workOrder?.category?.name ||
+              "Service"
+            } - ${commission.workOrder?.customer?.name || "Customer"}`
           );
           console.log(
             `     Job Payment: $${commission.workOrder?.service?.baseRate || 0}`

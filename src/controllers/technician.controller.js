@@ -1,3 +1,5 @@
+/** @format */
+
 import * as technicianService from "../services/technician.service.js";
 
 /**

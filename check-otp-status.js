@@ -1,3 +1,5 @@
+/** @format */
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -32,19 +34,23 @@ async function checkOTP() {
       console.log('   { "phone": "+8801586006804", "type": "LOGIN" }');
     } else {
       const now = new Date();
-      
+
       allOTPs.forEach((otp, index) => {
         const isExpired = otp.expiresAt < now;
         const minutesAgo = Math.floor((now - otp.createdAt) / 1000 / 60);
         const isTheRequestedCode = otp.code === code;
 
-        console.log(`${index + 1}. Code: ${otp.code} ${isTheRequestedCode ? "⭐ (REQUESTED CODE)" : ""}`);
+        console.log(
+          `${index + 1}. Code: ${otp.code} ${
+            isTheRequestedCode ? "⭐ (REQUESTED CODE)" : ""
+          }`
+        );
         console.log(`   Type: ${otp.type}`);
         console.log(`   Used: ${otp.isUsed ? "✅ Yes" : "❌ No"}`);
         console.log(`   Expired: ${isExpired ? "⏰ Yes" : "✅ No"}`);
         console.log(`   Created: ${minutesAgo} minutes ago`);
         console.log(`   Expires: ${otp.expiresAt.toLocaleString()}`);
-        
+
         if (isTheRequestedCode) {
           console.log("\n   🎯 THIS IS THE CODE YOU'RE TRYING TO USE:");
           if (otp.isUsed) {
@@ -52,10 +58,14 @@ async function checkOTP() {
             console.log("   💡 Solution: Request a new OTP");
           } else if (isExpired) {
             console.log("   ❌ Problem: Expired!");
-            console.log("   💡 Solution: Request a new OTP (expires after 5 minutes)");
+            console.log(
+              "   💡 Solution: Request a new OTP (expires after 5 minutes)"
+            );
           } else {
             console.log("   ✅ This OTP should work!");
-            console.log("   🤔 If it still fails, check the 'type' field matches");
+            console.log(
+              "   🤔 If it still fails, check the 'type' field matches"
+            );
           }
         }
         console.log("");

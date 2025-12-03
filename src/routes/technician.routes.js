@@ -1,3 +1,5 @@
+/** @format */
+
 import { Router } from "express";
 import * as technicianController from "../controllers/technician.controller.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";

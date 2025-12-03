@@ -1,3 +1,5 @@
+/** @format */
+
 import prisma from "../prisma.js";
 
 /**
@@ -5,7 +7,7 @@ import prisma from "../prisma.js";
  */
 export const getTechnicianDashboard = async (technicianId) => {
   const now = new Date();
-  
+
   // Calculate date ranges
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay());
@@ -380,13 +382,16 @@ export const getTechnicianEarnings = async (technicianId) => {
   const earnings = {
     bonusRate: {
       rate: isFreelancer ? profile.commissionRate : profile.bonusRate,
-      ratePercentage: (isFreelancer
-        ? profile.commissionRate
-        : profile.bonusRate) * 100,
+      ratePercentage:
+        (isFreelancer ? profile.commissionRate : profile.bonusRate) * 100,
       type: isFreelancer ? "Commission" : "Bonus",
       description: isFreelancer
-        ? `Earn ${(profile.commissionRate * 100).toFixed(0)}% commission on every verified job completion. Commissions are paid every Monday, with early payout available during the week for urgent needs.`
-        : `Earn ${(profile.bonusRate * 100).toFixed(0)}% bonus on every verified job completion. Bonuses are paid every Monday, with early payout available during the week for urgent needs.`,
+        ? `Earn ${(profile.commissionRate * 100).toFixed(
+            0
+          )}% commission on every verified job completion. Commissions are paid every Monday, with early payout available during the week for urgent needs.`
+        : `Earn ${(profile.bonusRate * 100).toFixed(
+            0
+          )}% bonus on every verified job completion. Bonuses are paid every Monday, with early payout available during the week for urgent needs.`,
     },
     monthlySalary: {
       baseSalary: profile.baseSalary || 0,

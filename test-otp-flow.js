@@ -1,3 +1,5 @@
+/** @format */
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -25,9 +27,7 @@ async function testOTPFlow() {
       console.log(`     Used: ${otp.isUsed}`);
       console.log(`     Expired: ${isExpired}`);
       console.log(`     Created: ${otp.createdAt.toLocaleString()}`);
-      console.log(
-        `     Expires: ${otp.expiresAt.toLocaleString()}\n`
-      );
+      console.log(`     Expires: ${otp.expiresAt.toLocaleString()}\n`);
     });
 
     // Step 2: Create a fresh OTP

@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # Technician Profile & Dashboard - Complete Implementation
 
 ## ✅ All Features Implemented
@@ -5,12 +7,14 @@
 ### 8. Technician Profile Section
 
 #### ✅ 8.1 Availability Status
+
 - **Database Field**: `technicianProfile.status` (ACTIVE, INACTIVE, ON_BREAK)
 - **API Endpoint**: `GET /api/auth/profile`
 - **Response**: Returns `technicianProfile.status` field
 - **Seed Data**: ✅ All technicians have status set to "ACTIVE"
 
 #### ✅ 8.2 Skills & Specializations
+
 - **Database Field**: `technicianProfile.specialization` (stored as comma-separated string)
 - **API Endpoint**: `GET /api/auth/profile`
 - **Response**: Parsed to array `technicianProfile.skills`
@@ -18,6 +22,7 @@
 - **Seed Data**: ✅ All technicians have specializations populated
 
 #### ✅ 8.3 My Certifications
+
 - **Database Field**: `technicianProfile.degreesUrl` (stored as JSON string)
 - **API Endpoint**: `GET /api/auth/profile`
 - **Response**: Parsed to array `technicianProfile.certifications`
@@ -39,6 +44,7 @@
 - **Seed Data**: ✅ All technicians have 3-5 certifications
 
 #### ❌ 8.4 Languages
+
 - **Status**: Not yet implemented
 - **Requires**: Database schema migration to add `languages` field to TechnicianProfile table
 - **Recommendation**: Add as future feature
@@ -48,6 +54,7 @@
 ### 9. Technician Dashboard Section
 
 #### ✅ 9.1 This Week's Bonus and Jobs Today
+
 - **API Endpoint**: `GET /api/technician/dashboard`
 - **Response Fields**:
   - `thisWeekBonus`: Total commissions earned this week (Number)
@@ -61,6 +68,7 @@
   ```
 
 #### ✅ 9.2 Dashboard Statistics
+
 - **API Endpoint**: `GET /api/technician/dashboard`
 - **Response Fields**:
   - `thisWeekEarned`: Total earned this week (Number)
@@ -88,12 +96,14 @@
 ## 📡 API Endpoints
 
 ### Profile Endpoint
+
 ```
 GET /api/auth/profile
 Authorization: Bearer <token>
 ```
 
 **Response**:
+
 ```json
 {
   "id": 5,
@@ -120,12 +130,14 @@ Authorization: Bearer <token>
 ```
 
 ### Dashboard Endpoint (NEW)
+
 ```
 GET /api/technician/dashboard
 Authorization: Bearer <token>
 ```
 
 **Response**:
+
 ```json
 {
   "thisWeekBonus": 1800,
@@ -140,12 +152,14 @@ Authorization: Bearer <token>
 ```
 
 ### Work Orders Endpoint (NEW)
+
 ```
 GET /api/technician/work-orders?status=active
 Authorization: Bearer <token>
 ```
 
 **Query Parameters**:
+
 - `status`: Filter by status
   - `active` - Assigned + In Progress
   - `in_progress` - Currently working
@@ -153,12 +167,14 @@ Authorization: Bearer <token>
   - `ready` - Assigned and ready to start
 
 ### Wallet Endpoint (NEW)
+
 ```
 GET /api/technician/wallet
 Authorization: Bearer <token>
 ```
 
 **Response**:
+
 ```json
 {
   "id": 1,
@@ -169,12 +185,14 @@ Authorization: Bearer <token>
 ```
 
 ### Jobs by Status Endpoint (NEW)
+
 ```
 GET /api/technician/jobs?status={status}
 Authorization: Bearer <token>
 ```
 
 **Query Parameters**:
+
 - `status`: Filter jobs by status (optional)
   - `incoming` - Newly assigned jobs (ASSIGNED status)
   - `active` - Jobs in progress (ACCEPTED or IN_PROGRESS)
@@ -182,6 +200,7 @@ Authorization: Bearer <token>
   - Omit parameter to get all jobs
 
 **Response**:
+
 ```json
 {
   "jobs": [
@@ -219,6 +238,7 @@ Authorization: Bearer <token>
 ## 🗄️ Database Changes
 
 ### Updated Seed Data
+
 - ✅ Added certifications to `technicianProfile.degreesUrl` field
 - ✅ Created 2 work orders for today (populates "Jobs Today")
 - ✅ Created 2 completed work orders this week (populates "This Week's Bonus")
@@ -226,14 +246,17 @@ Authorization: Bearer <token>
 - ✅ Updated wallet balances
 
 ### Test Users
+
 All technicians now have complete profiles:
 
 1. **Internal Technician** (4444444444 / tech123)
+
    - Status: ACTIVE
    - Skills: AC Repair, HVAC
    - Certifications: 3 certificates
 
 2. **Freelancer** (5555555555 / freelancer123)
+
    - Status: ACTIVE
    - Skills: Electrical, Plumbing
    - Certifications: 5 certificates
@@ -250,11 +273,13 @@ All technicians now have complete profiles:
 ## 🧪 Testing
 
 ### Run Test Script
+
 ```bash
 node test-technician-dashboard.js
 ```
 
 **Output**:
+
 ```
 ✅ 8.1 Availability Status: ACTIVE
 ✅ 8.2 Skills & Specializations: ["Electrical", "Plumbing"]
@@ -266,6 +291,7 @@ node test-technician-dashboard.js
 ```
 
 ### Reseed Database
+
 ```bash
 npx prisma db push
 node prisma/seed.js
@@ -276,19 +302,23 @@ node prisma/seed.js
 ## 📝 Implementation Notes
 
 ### Profile Data Parsing
+
 The `getUserProfile` service automatically parses:
+
 - `specialization` string → `skills` array
 - `degreesUrl` JSON string → `certifications` array
 
 This happens in `src/services/auth.service.js` (lines 490-524)
 
 ### Dashboard Calculations
+
 - **This Week**: Starts from Sunday 00:00:00
 - **This Month**: Starts from 1st of current month
 - **Today**: Starts from 00:00:00 today
 - **Commissions**: Only counts BOOKED and PAID_OUT statuses
 
 ### Authorization
+
 - Profile endpoint: All authenticated users
 - Dashboard endpoint: Technicians only (TECH_INTERNAL, TECH_FREELANCER)
 - Wallet endpoint: Freelancers only (TECH_FREELANCER)
@@ -305,6 +335,7 @@ All backend endpoints are ready. Frontend can now:
 4. Display wallet balance and transactions (freelancers only)
 
 ### Missing Feature
+
 - **Languages**: Requires schema migration
   ```sql
   ALTER TABLE "TechnicianProfile" ADD COLUMN "languages" TEXT[];

@@ -1,3 +1,5 @@
+/** @format */
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -62,7 +64,9 @@ async function testTechnicianDashboard() {
   console.log("✅ 8.1 Availability Status:");
   console.log(`   Status: ${user.technicianProfile.status}`);
   console.log(
-    `   ${user.technicianProfile.status === "ACTIVE" ? "✓" : "✗"} Can accept new jobs\n`
+    `   ${
+      user.technicianProfile.status === "ACTIVE" ? "✓" : "✗"
+    } Can accept new jobs\n`
   );
 
   console.log("✅ 8.2 Skills & Specializations:");
