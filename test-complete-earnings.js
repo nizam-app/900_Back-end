@@ -1,3 +1,5 @@
+/** @format */
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -23,14 +25,21 @@ async function testCompleteEarnings() {
     const now = new Date();
     const startOfDay = new Date(now);
     startOfDay.setHours(0, 0, 0, 0);
-    
+
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - now.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
 
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    const endOfLastMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      0,
+      23,
+      59,
+      59
+    );
 
     // Get all metrics
     const [today, week, month, lastMonth, total, weekJobs] = await Promise.all([
@@ -97,21 +106,33 @@ async function testCompleteEarnings() {
     }
 
     console.log("📊 EARNINGS SCREEN DATA:\n");
-    
+
     console.log("1️⃣  Total Bonuses (All Time)");
     console.log(`   Amount: $${totalAmount.toFixed(2)}`);
-    console.log(`   Increase Rate: ${increaseRate >= 0 ? '+' : ''}${increaseRate.toFixed(1)}% from last month`);
-    console.log(`   (Last Month: $${lastMonthAmount}, This Month: $${monthAmount})\n`);
+    console.log(
+      `   Increase Rate: ${increaseRate >= 0 ? "+" : ""}${increaseRate.toFixed(
+        1
+      )}% from last month`
+    );
+    console.log(
+      `   (Last Month: $${lastMonthAmount}, This Month: $${monthAmount})\n`
+    );
 
     console.log("2️⃣  Breakdown Cards:");
     console.log(`   Today: $${todayAmount.toFixed(2)}`);
-    console.log(`   This Week (${freelancer.technicianProfile.commissionRate * 100}%): $${weekAmount.toFixed(2)}`);
+    console.log(
+      `   This Week (${
+        freelancer.technicianProfile.commissionRate * 100
+      }%): $${weekAmount.toFixed(2)}`
+    );
     console.log(`   This Month: $${monthAmount.toFixed(2)}\n`);
 
     console.log("3️⃣  Available Bonus (This Week's Earnings):");
     console.log(`   Amount: $${weekAmount.toFixed(2)}`);
-    console.log(`   Jobs: ${weekJobs} job${weekJobs !== 1 ? 's' : ''}`);
-    console.log(`   Rate: ${freelancer.technicianProfile.commissionRate * 100}% bonus`);
+    console.log(`   Jobs: ${weekJobs} job${weekJobs !== 1 ? "s" : ""}`);
+    console.log(
+      `   Rate: ${freelancer.technicianProfile.commissionRate * 100}% bonus`
+    );
     console.log(`   Payout: Regular payout: Every Monday\n`);
 
     console.log("✅ API Response Structure:");
@@ -119,7 +140,9 @@ async function testCompleteEarnings() {
   "totalBonuses": {
     "amount": ${totalAmount},
     "increaseRate": ${increaseRate.toFixed(1)},
-    "increaseText": "${increaseRate >= 0 ? '+' : ''}${increaseRate.toFixed(1)}% from last month"
+    "increaseText": "${increaseRate >= 0 ? "+" : ""}${increaseRate.toFixed(
+      1
+    )}% from last month"
   },
   "breakdown": {
     "today": ${todayAmount},
@@ -130,7 +153,7 @@ async function testCompleteEarnings() {
   "availableBonus": {
     "amount": ${weekAmount},
     "jobsCount": ${weekJobs},
-    "jobsText": "${weekJobs} job${weekJobs !== 1 ? 's' : ''}",
+    "jobsText": "${weekJobs} job${weekJobs !== 1 ? "s" : ""}",
     "bonusText": "${freelancer.technicianProfile.commissionRate * 100}% bonus",
     "payoutInfo": "Regular payout: Every Monday"
   }
@@ -138,7 +161,6 @@ async function testCompleteEarnings() {
 
     console.log("\n📡 Endpoint: GET /api/technician/earnings");
     console.log("✅ All metrics implemented!");
-
   } catch (error) {
     console.error("❌ Test failed:", error.message);
   } finally {

@@ -1,3 +1,5 @@
+/** @format */
+
 const BASE_URL = "http://localhost:4000/api";
 
 async function testTechnicianProfile() {
@@ -44,7 +46,8 @@ async function testTechnicianProfile() {
     console.log("✅ Profile fetched successfully\n");
     console.log("Profile structure:", JSON.stringify(profileData, null, 2));
 
-    const profile = profileData.technicianProfile || profileData.data?.technicianProfile;
+    const profile =
+      profileData.technicianProfile || profileData.data?.technicianProfile;
     if (!profile) {
       console.error("❌ No technicianProfile in response");
       return;
@@ -55,17 +58,29 @@ async function testTechnicianProfile() {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log(`Department: ${profile.department || "❌ MISSING"}`);
     console.log(
-      `Join Date: ${profile.joinDate ? new Date(profile.joinDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "❌ MISSING"}`
+      `Join Date: ${
+        profile.joinDate
+          ? new Date(profile.joinDate).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "❌ MISSING"
+      }`
     );
     console.log(`Position: ${profile.position || "❌ MISSING"}`);
     console.log(
-      `Status: ${profile.status === "ACTIVE" ? "✅ Active" : "⚠️ " + profile.status}`
+      `Status: ${
+        profile.status === "ACTIVE" ? "✅ Active" : "⚠️ " + profile.status
+      }`
     );
 
     const employmentComplete =
       profile.department && profile.joinDate && profile.position;
     console.log(
-      `\n${employmentComplete ? "✅" : "❌"} Employment Details: ${employmentComplete ? "COMPLETE" : "INCOMPLETE"}\n`
+      `\n${employmentComplete ? "✅" : "❌"} Employment Details: ${
+        employmentComplete ? "COMPLETE" : "INCOMPLETE"
+      }\n`
     );
 
     // Test Component 14.2: Skills & Specializations
@@ -97,7 +112,12 @@ async function testTechnicianProfile() {
         console.log(`\n  ${index + 1}. ${cert.name}`);
         console.log(`     URL: ${cert.url}`);
         console.log(
-          `     Status: ${cert.verifiedAt ? "✅ Verified on " + new Date(cert.verifiedAt).toLocaleDateString() : "⏳ Pending"}`
+          `     Status: ${
+            cert.verifiedAt
+              ? "✅ Verified on " +
+                new Date(cert.verifiedAt).toLocaleDateString()
+              : "⏳ Pending"
+          }`
         );
       });
 
@@ -113,14 +133,18 @@ async function testTechnicianProfile() {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const skillsComplete =
-      profile.skills && Array.isArray(profile.skills) && profile.skills.length > 0;
+      profile.skills &&
+      Array.isArray(profile.skills) &&
+      profile.skills.length > 0;
     const certsComplete =
       profile.certifications &&
       Array.isArray(profile.certifications) &&
       profile.certifications.length > 0;
 
     console.log(
-      `14.1 Employment Details: ${employmentComplete ? "✅ COMPLETE" : "❌ INCOMPLETE"}`
+      `14.1 Employment Details: ${
+        employmentComplete ? "✅ COMPLETE" : "❌ INCOMPLETE"
+      }`
     );
     console.log(
       `14.2 Skills: ${skillsComplete ? "✅ COMPLETE" : "❌ INCOMPLETE"}`
@@ -130,7 +154,11 @@ async function testTechnicianProfile() {
     );
 
     const allComplete = employmentComplete && skillsComplete && certsComplete;
-    console.log(`\n${allComplete ? "🎉" : "⚠️"} Overall: ${allComplete ? "ALL COMPONENTS READY FOR UI" : "SOME COMPONENTS MISSING"}`);
+    console.log(
+      `\n${allComplete ? "🎉" : "⚠️"} Overall: ${
+        allComplete ? "ALL COMPONENTS READY FOR UI" : "SOME COMPONENTS MISSING"
+      }`
+    );
 
     // JSON structure for UI
     if (allComplete) {

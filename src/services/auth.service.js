@@ -519,7 +519,9 @@ export const getUserProfile = async (userId) => {
     const acceptedJobs = await prisma.workOrder.findMany({
       where: {
         technicianId: userId,
-        status: { in: ["ACCEPTED", "IN_PROGRESS", "COMPLETED", "PAID_VERIFIED"] },
+        status: {
+          in: ["ACCEPTED", "IN_PROGRESS", "COMPLETED", "PAID_VERIFIED"],
+        },
         acceptedAt: { not: null },
       },
       select: {
@@ -568,16 +570,26 @@ export const getUserProfile = async (userId) => {
     });
 
     const priorityStats = {
-      low: priorityCounts.find((p) => p.priority === "LOW")?._count.priority || 0,
-      medium: priorityCounts.find((p) => p.priority === "MEDIUM")?._count.priority || 0,
-      high: priorityCounts.find((p) => p.priority === "HIGH")?._count.priority || 0,
+      low:
+        priorityCounts.find((p) => p.priority === "LOW")?._count.priority || 0,
+      medium:
+        priorityCounts.find((p) => p.priority === "MEDIUM")?._count.priority ||
+        0,
+      high:
+        priorityCounts.find((p) => p.priority === "HIGH")?._count.priority || 0,
     };
 
-    const totalJobs = priorityStats.low + priorityStats.medium + priorityStats.high;
+    const totalJobs =
+      priorityStats.low + priorityStats.medium + priorityStats.high;
     const priorityPercentages = {
-      low: totalJobs > 0 ? Math.round((priorityStats.low / totalJobs) * 100) : 0,
-      medium: totalJobs > 0 ? Math.round((priorityStats.medium / totalJobs) * 100) : 0,
-      high: totalJobs > 0 ? Math.round((priorityStats.high / totalJobs) * 100) : 0,
+      low:
+        totalJobs > 0 ? Math.round((priorityStats.low / totalJobs) * 100) : 0,
+      medium:
+        totalJobs > 0
+          ? Math.round((priorityStats.medium / totalJobs) * 100)
+          : 0,
+      high:
+        totalJobs > 0 ? Math.round((priorityStats.high / totalJobs) * 100) : 0,
     };
 
     return {
@@ -589,10 +601,18 @@ export const getUserProfile = async (userId) => {
         // 15.1 Response Time
         responseTime: {
           minutes: avgResponseMinutes,
-          formatted: avgResponseMinutes < 60 
-            ? `${avgResponseMinutes} min` 
-            : `${Math.floor(avgResponseMinutes / 60)}h ${avgResponseMinutes % 60}m`,
-          status: avgResponseMinutes <= 30 ? "excellent" : avgResponseMinutes <= 60 ? "good" : "average",
+          formatted:
+            avgResponseMinutes < 60
+              ? `${avgResponseMinutes} min`
+              : `${Math.floor(avgResponseMinutes / 60)}h ${
+                  avgResponseMinutes % 60
+                }m`,
+          status:
+            avgResponseMinutes <= 30
+              ? "excellent"
+              : avgResponseMinutes <= 60
+              ? "good"
+              : "average",
         },
         // 15.2 Bonus Information
         bonus: {
@@ -605,11 +625,12 @@ export const getUserProfile = async (userId) => {
         priorityStatus: {
           counts: priorityStats,
           percentages: priorityPercentages,
-          mostCommon: 
-            priorityStats.high >= priorityStats.medium && priorityStats.high >= priorityStats.low 
+          mostCommon:
+            priorityStats.high >= priorityStats.medium &&
+            priorityStats.high >= priorityStats.low
               ? "HIGH"
-              : priorityStats.medium >= priorityStats.low 
-              ? "MEDIUM" 
+              : priorityStats.medium >= priorityStats.low
+              ? "MEDIUM"
               : "LOW",
         },
       },

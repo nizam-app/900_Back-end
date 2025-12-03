@@ -286,19 +286,26 @@ export const getTechnicianWallet = async (technicianId) => {
  */
 export const getTechnicianEarnings = async (technicianId) => {
   const now = new Date();
-  
+
   // Calculate date ranges
   const startOfDay = new Date(now);
   startOfDay.setHours(0, 0, 0, 0);
-  
+
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay());
   startOfWeek.setHours(0, 0, 0, 0);
 
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  
+
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+  const endOfLastMonth = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    0,
+    23,
+    59,
+    59
+  );
 
   // Get technician profile
   const technician = await prisma.user.findUnique({
@@ -341,7 +348,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       },
       _sum: { amount: true },
     }),
-    
+
     // This Week
     prisma.commission.aggregate({
       where: {
@@ -351,7 +358,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       },
       _sum: { amount: true },
     }),
-    
+
     // This Month
     prisma.commission.aggregate({
       where: {
@@ -361,7 +368,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       },
       _sum: { amount: true },
     }),
-    
+
     // Last Month
     prisma.commission.aggregate({
       where: {
@@ -371,7 +378,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       },
       _sum: { amount: true },
     }),
-    
+
     // Total All Time
     prisma.commission.aggregate({
       where: {
@@ -380,7 +387,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       },
       _sum: { amount: true },
     }),
-    
+
     // This week's jobs count
     prisma.commission.count({
       where: {
@@ -389,7 +396,7 @@ export const getTechnicianEarnings = async (technicianId) => {
         status: { in: ["BOOKED", "PAID_OUT"] },
       },
     }),
-    
+
     // Recent bonuses (last 10)
     prisma.commission.findMany({
       where: {
@@ -452,30 +459,40 @@ export const getTechnicianEarnings = async (technicianId) => {
     totalBonuses: {
       amount: totalAllTime,
       increaseRate: parseFloat(increaseRate.toFixed(1)),
-      increaseText: increaseRate >= 0 
-        ? `+${increaseRate.toFixed(1)}% from last month`
-        : `${increaseRate.toFixed(1)}% from last month`,
+      increaseText:
+        increaseRate >= 0
+          ? `+${increaseRate.toFixed(1)}% from last month`
+          : `${increaseRate.toFixed(1)}% from last month`,
     },
     breakdown: {
       today: today,
       thisWeek: thisWeek,
-      thisWeekPercentage: isFreelancer ? profile.commissionRate * 100 : profile.bonusRate * 100,
+      thisWeekPercentage: isFreelancer
+        ? profile.commissionRate * 100
+        : profile.bonusRate * 100,
       thisMonth: thisMonth,
     },
     availableBonus: {
       amount: thisWeek,
       jobsCount: weekJobsCount,
-      jobsText: `${weekJobsCount} job${weekJobsCount !== 1 ? 's' : ''}`,
-      bonusText: `${isFreelancer ? profile.commissionRate * 100 : profile.bonusRate * 100}% bonus`,
+      jobsText: `${weekJobsCount} job${weekJobsCount !== 1 ? "s" : ""}`,
+      bonusText: `${
+        isFreelancer ? profile.commissionRate * 100 : profile.bonusRate * 100
+      }% bonus`,
       payoutInfo: "Regular payout: Every Monday",
     },
     bonusRate: {
       rate: isFreelancer ? profile.commissionRate : profile.bonusRate,
-      ratePercentage: (isFreelancer ? profile.commissionRate : profile.bonusRate) * 100,
+      ratePercentage:
+        (isFreelancer ? profile.commissionRate : profile.bonusRate) * 100,
       type: isFreelancer ? "Commission" : "Bonus",
       description: isFreelancer
-        ? `Earn ${(profile.commissionRate * 100).toFixed(0)}% commission on every verified job completion. Commissions are paid every Monday, with early payout available during the week for urgent needs.`
-        : `Earn ${(profile.bonusRate * 100).toFixed(0)}% bonus on every verified job completion. Bonuses are paid every Monday, with early payout available during the week for urgent needs.`,
+        ? `Earn ${(profile.commissionRate * 100).toFixed(
+            0
+          )}% commission on every verified job completion. Commissions are paid every Monday, with early payout available during the week for urgent needs.`
+        : `Earn ${(profile.bonusRate * 100).toFixed(
+            0
+          )}% bonus on every verified job completion. Bonuses are paid every Monday, with early payout available during the week for urgent needs.`,
     },
     monthlySalary: {
       baseSalary: profile.baseSalary || 0,

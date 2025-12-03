@@ -1,3 +1,5 @@
+/** @format */
+
 const BASE_URL = "http://localhost:4000/api";
 
 async function testProfileMetrics() {
@@ -38,7 +40,8 @@ async function testProfileMetrics() {
 
     console.log("✅ Profile fetched successfully\n");
 
-    const profile = profileData.technicianProfile || profileData.data?.technicianProfile;
+    const profile =
+      profileData.technicianProfile || profileData.data?.technicianProfile;
 
     // Test 15.1: Response Time
     console.log("⏱️  15.1 RESPONSE TIME");
@@ -47,10 +50,15 @@ async function testProfileMetrics() {
       console.log(`Average: ${profile.responseTime.formatted}`);
       console.log(`Minutes: ${profile.responseTime.minutes}`);
       console.log(`Status: ${profile.responseTime.status.toUpperCase()}`);
-      console.log(`Rating: ${
-        profile.responseTime.status === 'excellent' ? '⭐⭐⭐' :
-        profile.responseTime.status === 'good' ? '⭐⭐' : '⭐'
-      }`);
+      console.log(
+        `Rating: ${
+          profile.responseTime.status === "excellent"
+            ? "⭐⭐⭐"
+            : profile.responseTime.status === "good"
+            ? "⭐⭐"
+            : "⭐"
+        }`
+      );
       console.log("✅ Response Time: COMPLETE\n");
     } else {
       console.log("❌ Response Time: MISSING\n");
@@ -61,7 +69,9 @@ async function testProfileMetrics() {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     if (profile.bonus) {
       console.log(`This Week: $${profile.bonus.thisWeek.toFixed(2)}`);
-      console.log(`Rate: ${(profile.bonus.rate * 100).toFixed(0)}% ${profile.bonus.type}`);
+      console.log(
+        `Rate: ${(profile.bonus.rate * 100).toFixed(0)}% ${profile.bonus.type}`
+      );
       console.log(`Type: ${profile.bonus.type}`);
       console.log("✅ Bonus Information: COMPLETE\n");
     } else {
@@ -73,9 +83,15 @@ async function testProfileMetrics() {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     if (profile.priorityStatus) {
       console.log("Job Distribution:");
-      console.log(`  HIGH:   ${profile.priorityStatus.counts.high} jobs (${profile.priorityStatus.percentages.high}%)`);
-      console.log(`  MEDIUM: ${profile.priorityStatus.counts.medium} jobs (${profile.priorityStatus.percentages.medium}%)`);
-      console.log(`  LOW:    ${profile.priorityStatus.counts.low} jobs (${profile.priorityStatus.percentages.low}%)`);
+      console.log(
+        `  HIGH:   ${profile.priorityStatus.counts.high} jobs (${profile.priorityStatus.percentages.high}%)`
+      );
+      console.log(
+        `  MEDIUM: ${profile.priorityStatus.counts.medium} jobs (${profile.priorityStatus.percentages.medium}%)`
+      );
+      console.log(
+        `  LOW:    ${profile.priorityStatus.counts.low} jobs (${profile.priorityStatus.percentages.low}%)`
+      );
       console.log(`\nMost Common: ${profile.priorityStatus.mostCommon}`);
       console.log("✅ Priority Status: COMPLETE\n");
     } else {
@@ -89,24 +105,39 @@ async function testProfileMetrics() {
     const hasBonus = !!profile.bonus;
     const hasPriorityStatus = !!profile.priorityStatus;
 
-    console.log(`15.1 Response Time: ${hasResponseTime ? '✅ COMPLETE' : '❌ MISSING'}`);
-    console.log(`15.2 Bonus: ${hasBonus ? '✅ COMPLETE' : '❌ MISSING'}`);
-    console.log(`15.3 Priority Status: ${hasPriorityStatus ? '✅ COMPLETE' : '❌ MISSING'}`);
+    console.log(
+      `15.1 Response Time: ${hasResponseTime ? "✅ COMPLETE" : "❌ MISSING"}`
+    );
+    console.log(`15.2 Bonus: ${hasBonus ? "✅ COMPLETE" : "❌ MISSING"}`);
+    console.log(
+      `15.3 Priority Status: ${
+        hasPriorityStatus ? "✅ COMPLETE" : "❌ MISSING"
+      }`
+    );
 
     const allComplete = hasResponseTime && hasBonus && hasPriorityStatus;
-    console.log(`\n${allComplete ? '🎉' : '⚠️'} Overall: ${allComplete ? 'ALL METRICS READY' : 'SOME METRICS MISSING'}`);
+    console.log(
+      `\n${allComplete ? "🎉" : "⚠️"} Overall: ${
+        allComplete ? "ALL METRICS READY" : "SOME METRICS MISSING"
+      }`
+    );
 
     // Full JSON Response
     if (allComplete) {
       console.log("\n📱 FULL METRICS JSON:");
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(JSON.stringify({
-        responseTime: profile.responseTime,
-        bonus: profile.bonus,
-        priorityStatus: profile.priorityStatus,
-      }, null, 2));
+      console.log(
+        JSON.stringify(
+          {
+            responseTime: profile.responseTime,
+            bonus: profile.bonus,
+            priorityStatus: profile.priorityStatus,
+          },
+          null,
+          2
+        )
+      );
     }
-
   } catch (error) {
     console.error("💥 Test failed with error:", error.message);
   }
