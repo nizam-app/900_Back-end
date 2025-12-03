@@ -2,6 +2,7 @@
 
 // src/controllers/auth.controller.js
 import * as authService from "../services/auth.service.js";
+import { prisma } from "../prisma.js";
 
 export const register = async (req, res, next) => {
   try {
@@ -125,7 +126,11 @@ export const getProfile = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
   try {
-    const allowedFields = ["name", "email"];
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    // Base allowed fields for all users
+    const allowedFields = ["name", "email", "homeAddress", "latitude", "longitude"];
     const updates = {};
 
     for (const field of allowedFields) {
@@ -134,14 +139,58 @@ export const updateProfile = async (req, res, next) => {
       }
     }
 
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ message: "No valid fields to update" });
+    // Technician-specific fields
+    if (userRole === "TECH_INTERNAL" || userRole === "TECH_FREELANCER") {
+      const technicianFields = {
+        status: req.body.status, // ACTIVE, INACTIVE, ON_BREAK
+        specialization: req.body.specialization, // Skills array or comma-separated
+        skills: req.body.skills, // Array of skills
+        academicTitle: req.body.academicTitle,
+        photoUrl: req.body.photoUrl,
+        degreesUrl: req.body.degreesUrl, // Certifications array
+        certifications: req.body.certifications, // Array of certifications
+        bankName: req.body.bankName,
+        bankAccountNumber: req.body.bankAccountNumber,
+        bankAccountHolder: req.body.bankAccountHolder,
+        mobileBankingType: req.body.mobileBankingType,
+        mobileBankingNumber: req.body.mobileBankingNumber,
+      };
+
+      // Convert skills array to specialization string
+      if (technicianFields.skills && Array.isArray(technicianFields.skills)) {
+        technicianFields.specialization = JSON.stringify(technicianFields.skills);
+        delete technicianFields.skills;
+      }
+
+      // Convert certifications array to degreesUrl string
+      if (technicianFields.certifications && Array.isArray(technicianFields.certifications)) {
+        technicianFields.degreesUrl = JSON.stringify(technicianFields.certifications);
+        delete technicianFields.certifications;
+      }
+
+      // Update technician profile
+      const techProfileUpdates = {};
+      for (const [key, value] of Object.entries(technicianFields)) {
+        if (value !== undefined) {
+          techProfileUpdates[key] = value;
+        }
+      }
+
+      if (Object.keys(techProfileUpdates).length > 0) {
+        await prisma.technicianProfile.update({
+          where: { userId },
+          data: techProfileUpdates,
+        });
+      }
     }
 
-    const updatedProfile = await authService.updateUserProfile(
-      req.user.id,
-      updates
-    );
+    // Update base user fields if any
+    if (Object.keys(updates).length > 0) {
+      await authService.updateUserProfile(userId, updates);
+    }
+
+    // Return updated profile
+    const updatedProfile = await authService.getUserProfile(userId);
     return res.json(updatedProfile);
   } catch (err) {
     if (err.message === "Email already in use") {

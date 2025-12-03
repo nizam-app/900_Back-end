@@ -287,6 +287,29 @@ export const getUserProfile = async (userId) => {
       longitude: true,
       createdAt: true,
       updatedAt: true,
+      technicianProfile: {
+        select: {
+          id: true,
+          type: true,
+          commissionRate: true,
+          bonusRate: true,
+          baseSalary: true,
+          status: true,
+          specialization: true,
+          academicTitle: true,
+          photoUrl: true,
+          idCardUrl: true,
+          residencePermitUrl: true,
+          residencePermitFrom: true,
+          residencePermitTo: true,
+          degreesUrl: true,
+          bankName: true,
+          bankAccountNumber: true,
+          bankAccountHolder: true,
+          mobileBankingType: true,
+          mobileBankingNumber: true,
+        },
+      },
     },
   });
 
@@ -344,6 +367,49 @@ export const getUserProfile = async (userId) => {
       totalBookings,
       totalSpent,
       businessHours,
+    };
+  }
+
+  // If technician, parse specialization and degrees
+  if (
+    (user.role === "TECH_INTERNAL" || user.role === "TECH_FREELANCER") &&
+    user.technicianProfile
+  ) {
+    // Parse specialization from string to array
+    let skills = [];
+    if (user.technicianProfile.specialization) {
+      try {
+        skills =
+          typeof user.technicianProfile.specialization === "string"
+            ? JSON.parse(user.technicianProfile.specialization)
+            : user.technicianProfile.specialization;
+      } catch {
+        skills = user.technicianProfile.specialization
+          .split(",")
+          .map((s) => s.trim());
+      }
+    }
+
+    // Parse degrees/certifications from JSON
+    let certifications = [];
+    if (user.technicianProfile.degreesUrl) {
+      try {
+        certifications =
+          typeof user.technicianProfile.degreesUrl === "string"
+            ? JSON.parse(user.technicianProfile.degreesUrl)
+            : user.technicianProfile.degreesUrl;
+      } catch {
+        certifications = [];
+      }
+    }
+
+    return {
+      ...user,
+      technicianProfile: {
+        ...user.technicianProfile,
+        skills, // Array of skills for UI
+        certifications, // Array of certifications for UI
+      },
     };
   }
 

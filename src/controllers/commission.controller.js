@@ -169,10 +169,34 @@ export const getTechnicianDashboard = async (req, res, next) => {
 export const requestPayout = async (req, res, next) => {
   try {
     const technicianId = req.user.id;
-    const { amount, reason } = req.body;
+    const { amount, reason, paymentMethod } = req.body;
 
     if (!amount) {
       return res.status(400).json({ message: "Amount is required" });
+    }
+
+    // Get technician profile to check bank account details
+    const techProfile = await prisma.technicianProfile.findUnique({
+      where: { userId: technicianId },
+    });
+
+    if (!techProfile) {
+      return res.status(404).json({ message: "Technician profile not found" });
+    }
+
+    // Validate payment method is configured
+    if (paymentMethod === "BANK_ACCOUNT") {
+      if (!techProfile.bankAccountNumber) {
+        return res.status(400).json({
+          message: "Bank account not configured. Please update your profile.",
+        });
+      }
+    } else if (paymentMethod === "MOBILE_BANKING") {
+      if (!techProfile.mobileBankingNumber) {
+        return res.status(400).json({
+          message: "Mobile banking not configured. Please update your profile.",
+        });
+      }
     }
 
     const wallet = await prisma.wallet.findUnique({
@@ -183,12 +207,25 @@ export const requestPayout = async (req, res, next) => {
       return res.status(400).json({ message: "Insufficient wallet balance" });
     }
 
+    // Get last 4 digits of account number for display
+    let bankAccountLast4 = null;
+    if (paymentMethod === "BANK_ACCOUNT" && techProfile.bankAccountNumber) {
+      bankAccountLast4 = techProfile.bankAccountNumber.slice(-4);
+    } else if (
+      paymentMethod === "MOBILE_BANKING" &&
+      techProfile.mobileBankingNumber
+    ) {
+      bankAccountLast4 = techProfile.mobileBankingNumber.slice(-4);
+    }
+
     const payoutRequest = await prisma.payoutRequest.create({
       data: {
         technicianId,
         amount: Number(amount),
         status: "PENDING",
         reason,
+        paymentMethod,
+        bankAccountLast4,
       },
     });
 
