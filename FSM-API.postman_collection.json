@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "fsm-api-collection-2025-v3",
 		"name": "FSM System API - Complete Collection",
-		"description": "Complete Field Service Management API Collection - Updated Nov 26, 2025 with ALL endpoints including Reviews, Dispatch Center, Time Management, and enhanced features",
+		"description": "Complete Field Service Management API Collection - Updated Dec 3, 2025 with Technician Profile Enhancements, Dashboard Stats, Jobs Filtering, and Complete WO fixes. Includes all endpoints: Reviews, Dispatch Center, Time Management, Payments, Commissions, and enhanced technician features.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -361,7 +361,7 @@
 								"profile"
 							]
 						},
-						"description": "✅ ENHANCED - Get profile with technician-specific fields\n\n**Response Structure:**\n\n**For All Users:**\n```json\n{\n  \"id\": 5,\n  \"name\": \"Mike Freelancer\",\n  \"phone\": \"5555555555\",\n  \"email\": \"tech.freelancer@fsm.com\",\n  \"role\": \"TECH_FREELANCER\",\n  \"isBlocked\": false,\n  \"homeAddress\": \"789 Freelancer Ave, Nairobi\",\n  \"createdAt\": \"2025-11-30T06:37:39.913Z\"\n}\n```\n\n**For Technicians (Additional Fields):**\n```json\n{\n  \"technicianProfile\": {\n    \"id\": 2,\n    \"type\": \"FREELANCER\",\n    \"commissionRate\": 0.2,\n    \"status\": \"ACTIVE\",\n    \"specialization\": \"[\\\"HVAC\\\",\\\"Electrical\\\",\\\"Plumbing\\\"]\",\n    \"skills\": [\"HVAC\", \"Electrical\", \"Plumbing\"],\n    \"academicTitle\": \"BSc Mechanical Engineering\",\n    \"photoUrl\": \"https://example.com/photo.jpg\",\n    \"degreesUrl\": \"[{\\\"name\\\":\\\"BSc ME\\\",\\\"url\\\":\\\"cert1.pdf\\\"}]\",\n    \"certifications\": [\n      {\"name\": \"BSc ME\", \"url\": \"cert1.pdf\"},\n      {\"name\": \"HVAC Certified\", \"url\": \"cert2.pdf\"}\n    ],\n    \"bankName\": \"Dutch Bangla Bank\",\n    \"bankAccountNumber\": \"1234567890\",\n    \"bankAccountHolder\": \"Mike Freelancer\",\n    \"mobileBankingType\": \"BKASH\",\n    \"mobileBankingNumber\": \"01712345678\"\n  }\n}\n```\n\n**UI Mapping:**\n\n**8.1 Availability Status:**\n- Field: `technicianProfile.status`\n- Values: ACTIVE, INACTIVE, ON_BREAK\n- Display: Green indicator \"Accept new jobs\"\n\n**8.2 Skills & Specializations:**\n- Field: `technicianProfile.skills` (parsed array)\n- Display: Blue badges (HVAC, Electrical, Plumbing, Maintenance)\n\n**8.3 My Certifications:**\n- Field: `technicianProfile.certifications` (parsed array)\n- Display: \"5 verified\" count\n- Each: {name: \"BSc ME\", url: \"cert.pdf\"}\n\n**8.4 Languages:**\n- Currently stored in user preferences or profile\n- Display: Language selection\n\n**Status:** ✅ PRODUCTION READY"
+						"description": "✅ ENHANCED (Dec 3, 2025) - Get profile with ALL technician enhancements\n\n**Response Structure:**\n\n**For All Users:**\n```json\n{\n  \"id\": 5,\n  \"name\": \"Mike Freelancer\",\n  \"phone\": \"5555555555\",\n  \"email\": \"tech.freelancer@fsm.com\",\n  \"role\": \"TECH_FREELANCER\",\n  \"isBlocked\": false,\n  \"homeAddress\": \"789 Freelancer Ave, Nairobi\",\n  \"createdAt\": \"2025-11-30T06:37:39.913Z\"\n}\n```\n\n**For Technicians (Complete Profile with Dec 3 Updates):**\n```json\n{\n  \"technicianProfile\": {\n    \"id\": 2,\n    \"type\": \"FREELANCER\",\n    \"commissionRate\": 0.4,\n    \"bonusRate\": 0.05,\n    \"status\": \"ACTIVE\",\n    \n    \"department\": \"Field Services\",\n    \"joinDate\": \"2023-01-15T00:00:00.000Z\",\n    \"position\": \"Senior Technician\",\n    \n    \"skills\": [\"Electrical\", \"Plumbing\", \"HVAC\"],\n    \n    \"certifications\": [\n      {\n        \"name\": \"Electrical Engineering Diploma\",\n        \"url\": \"/uploads/cert-1.pdf\",\n        \"verifiedAt\": \"2025-12-03T09:24:10.212Z\"\n      },\n      {\n        \"name\": \"Plumbing License\",\n        \"url\": \"/uploads/cert-2.pdf\",\n        \"verifiedAt\": \"2025-12-03T09:24:10.212Z\"\n      }\n    ],\n    \n    \"responseTime\": {\n      \"minutes\": 25,\n      \"formatted\": \"25 min\",\n      \"status\": \"excellent\"\n    },\n    \n    \"bonus\": {\n      \"thisWeek\": 5400,\n      \"rate\": 0.4,\n      \"ratePercentage\": 40,\n      \"type\": \"Commission\"\n    },\n    \n    \"priorityStatus\": {\n      \"counts\": {\"high\": 6, \"medium\": 6, \"low\": 0},\n      \"percentages\": {\"high\": 50, \"medium\": 50, \"low\": 0},\n      \"mostCommon\": \"HIGH\"\n    },\n    \n    \"bankName\": \"Dutch Bangla Bank\",\n    \"bankAccountNumber\": \"1234567890\",\n    \"bankAccountHolder\": \"Mike Freelancer\",\n    \"mobileBankingType\": \"BKASH\",\n    \"mobileBankingNumber\": \"01712345678\"\n  }\n}\n```\n\n**NEW FIELDS ADDED (Dec 3, 2025):**\n\n**14.1 Employment Details:**\n- `department`: Department name (e.g., \"Field Services\")\n- `joinDate`: ISO date of employment start\n- `position`: Job title (e.g., \"Senior Technician\")\n\n**14.2 Skills & Specializations:**\n- `skills`: Auto-parsed array from specialization field\n- Display: Blue skill badges in UI\n\n**14.3 My Certifications:**\n- `certifications`: Auto-parsed array from degreesUrl\n- Each has: name, url, verifiedAt timestamp\n- Display: \"X verified\" count in UI\n\n**15.1 Response Time:**\n- `responseTime.minutes`: Average response in minutes\n- `responseTime.formatted`: Human-readable (e.g., \"25 min\" or \"1h 30m\")\n- `responseTime.status`: excellent/good/average rating\n- Calculated from last 20 jobs (acceptedAt - createdAt)\n\n**15.2 Bonus Information:**\n- `bonus.thisWeek`: Total earned this week\n- `bonus.rate`: Decimal rate (0.4 = 40%)\n- `bonus.ratePercentage`: UI display (40)\n- `bonus.type`: \"Commission\" (freelancer) or \"Bonus\" (internal)\n\n**15.3 Priority Status:**\n- `priorityStatus.counts`: Job counts by priority (HIGH/MEDIUM/LOW)\n- `priorityStatus.percentages`: Percentage distribution\n- `priorityStatus.mostCommon`: Most frequent priority level\n\n**UI Mapping:**\n\n**8.1 Availability Status:**\n- Field: `technicianProfile.status`\n- Values: ACTIVE, INACTIVE, ON_BREAK\n- Display: Green indicator \"Accept new jobs\"\n\n**Status:** ✅ PRODUCTION READY (Updated Dec 3, 2025)"
 					}
 				},
 				{
@@ -1137,7 +1137,7 @@
 								"complete"
 							]
 						},
-						"description": "Complete work order with photos and notes.\n\n**UI Flow (Complete Job Modal):**\n\n1. **Work Photos (Required):**\n   - Tap to upload photos\n   - At least 1 photo required\n   - Maximum 5 photos allowed (10MB each)\n   - Formats: JPEG, PNG, PDF\n   - Shows before/after work evidence\n\n2. **Work Notes (Optional):**\n   - Add notes about work completed\n   - Parts used details\n   - Recommendations for customer\n   - Any issues encountered\n\n3. **Commission Calculation Display:**\n   - Job Payment: $120\n   - Commission Rate: 15%\n   - You Earn: $18.00\n   - Payment processed after job completion verification\n\n**Request Format:**\n- Content-Type: multipart/form-data\n- Authorization: Bearer {{techToken}}\n\n**Form Fields:**\n• photos (required): File uploads (min 1, max 5)\n• completionNotes (optional): String - Work description\n• materialsUsed (optional): JSON array - [{\"item\":\"Air Filter\",\"qty\":1,\"cost\":50}]\n\n**Status Flow:**\nIN_PROGRESS → COMPLETED\n\n**What Happens After:**\n1. Work order status changes to COMPLETED\n2. Photos uploaded to server\n3. Admin receives notification to verify payment\n4. After admin approves payment proof:\n   - Commission calculated (15% of job payment)\n   - Commission added to your wallet as EARNED\n   - Available for payout request\n\n**Commission Calculation Example:**\n```\nJob Payment: $120\nCommission Rate: 15% (from your profile)\nYour Earnings: $120 × 0.15 = $18.00\nStatus: EARNED (available in wallet)\n```\n\n**UI Actions:**\n• Continue button → Opens complete job modal\n• Complete Job button → Submits photos and notes\n• Cancel → Returns to job details\n\n**Status:** ✅ PRODUCTION READY"
+						"description": "✅ FIXED (Dec 3, 2025) - Complete work order with optional photos\n\n**WHAT WAS FIXED:**\n- ✅ Now accepts jobs in ACCEPTED status (not just IN_PROGRESS)\n- ✅ Photos are now OPTIONAL (min 0, max 5)\n- ✅ Returns bonus calculation in response\n\n**UI Flow (Complete Job Modal):**\n\n1. **Work Photos (OPTIONAL - Changed Dec 3):**\n   - Tap to upload photos\n   - 0-5 photos allowed (10MB each)\n   - Formats: JPEG, PNG, PDF\n   - Shows before/after work evidence\n\n2. **Work Notes (Optional):**\n   - Add notes about work completed\n   - Parts used details\n   - Recommendations for customer\n   - Any issues encountered\n\n3. **Commission Calculation Display:**\n   - Job Payment: $120\n   - Commission Rate: 15%\n   - You Earn: $18.00\n   - Payment processed after job completion verification\n\n**Request Format:**\n- Content-Type: multipart/form-data\n- Authorization: Bearer {{techToken}}\n\n**Form Fields:**\n• photos (optional): File uploads (0-5 files)\n• completionNotes (optional): String - Work description\n• materialsUsed (optional): JSON array - [{\"item\":\"Air Filter\",\"qty\":1,\"cost\":50}]\n\n**Status Flow (FIXED):**\n- ACCEPTED → COMPLETED (✅ Now works - Fixed Dec 3)\n- IN_PROGRESS → COMPLETED (✅ Still works)\n\n**Response Structure:**\n```json\n{\n  \"message\": \"Work order completed\",\n  \"workOrder\": {\n    \"id\": 2,\n    \"woNumber\": \"WO-1234567891\",\n    \"status\": \"COMPLETED\",\n    \"completedAt\": \"2025-12-03T14:30:00Z\"\n  },\n  \"bonusCalculation\": {\n    \"baseRate\": 900,\n    \"rate\": 0.4,\n    \"bonus\": 360,\n    \"rateDisplay\": \"40% Commission\"\n  }\n}\n```\n\n**What Happens After:**\n1. Work order status changes to COMPLETED\n2. Photos uploaded to server (if provided)\n3. Admin receives notification to verify payment\n4. After admin approves payment proof:\n   - Commission calculated (15% of job payment)\n   - Commission added to your wallet as EARNED\n   - Available for payout request\n\n**Commission Calculation Example:**\n```\nJob Payment: $120\nCommission Rate: 15% (from your profile)\nYour Earnings: $120 × 0.15 = $18.00\nStatus: EARNED (available in wallet)\n```\n\n**UI Actions:**\n• Continue button → Opens complete job modal\n• Complete Job button → Submits photos and notes\n• Cancel → Returns to job details\n\n**Status:** ✅ FIXED & TESTED (Dec 3, 2025)"
 					}
 				},
 				{
@@ -1775,6 +1775,85 @@
 								"weekly"
 							]
 						}
+					}
+				},
+				{
+					"name": "Technician Dashboard (NEW Dec 3)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{techToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/technician/dashboard",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technician",
+								"dashboard"
+							]
+						},
+						"description": "✅ NEW (Dec 3, 2025) - Technician Dashboard Statistics\n\n**Response Structure:**\n```json\n{\n  \"thisWeekBonus\": 5400,\n  \"jobsToday\": 2,\n  \"activeJobs\": 1,\n  \"completedThisMonth\": 28,\n  \"inProgress\": 1,\n  \"readyToStart\": 2\n}\n```\n\n**Field Descriptions:**\n- `thisWeekBonus`: Total bonus/commission earned this week ($5,400)\n- `jobsToday`: Number of jobs scheduled for today (2)\n- `activeJobs`: Jobs currently in progress or accepted (1)\n- `completedThisMonth`: Total jobs completed this month (28)\n- `inProgress`: Jobs with IN_PROGRESS status (1)\n- `readyToStart`: Jobs with ASSIGNED status (2)\n\n**UI Display:**\n```\n📊 This Month Breakdown\n\nJobs Completed\n28 jobs                    $6,450\n\nCommission\nEarnings rate              $5,400\n\nTotal                      $11,850\n```\n\n**Authorization:** Technician only (TECH_FREELANCER, TECH_INTERNAL)\n\n**Status:** ✅ PRODUCTION READY (Added Dec 3, 2025)"
+					}
+				},
+				{
+					"name": "Technician Jobs by Status (NEW Dec 3)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{techToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/technician/jobs?status=incoming",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technician",
+								"jobs"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "incoming",
+									"description": "incoming | active | done"
+								}
+							]
+						},
+						"description": "✅ NEW (Dec 3, 2025) - Get technician jobs filtered by status\n\n**Query Parameter: status**\n- `incoming`: ASSIGNED jobs (ready to accept)\n- `active`: ACCEPTED or IN_PROGRESS jobs\n- `done`: COMPLETED or PAID_VERIFIED jobs\n\n**Response Structure:**\n```json\n[\n  {\n    \"id\": 2,\n    \"woNumber\": \"WO-1234567891\",\n    \"status\": \"IN_PROGRESS\",\n    \"priority\": \"HIGH\",\n    \"scheduledAt\": \"2025-12-03T00:00:00.000Z\",\n    \"customer\": {\n      \"name\": \"Jane Smith\",\n      \"phone\": \"8888888888\"\n    },\n    \"service\": {\n      \"name\": \"HVAC Repair\"\n    },\n    \"category\": {\n      \"name\": \"HVAC\"\n    },\n    \"address\": \"789 Smith Road, Nairobi\",\n    \"latitude\": 23.8103,\n    \"longitude\": 90.4125,\n    \"estimatedDuration\": 60,\n    \"bonusCalculation\": {\n      \"baseRate\": 900,\n      \"rate\": 0.4,\n      \"bonus\": 360,\n      \"rateDisplay\": \"40% Commission\"\n    }\n  }\n]\n```\n\n**Features:**\n- Shows calculated bonus for each job\n- Includes customer and service details\n- Filtered by technician's assignments\n- Sorted by scheduled date\n- GPS coordinates included for navigation\n\n**UI Display - Task Card:**\n```\n🔧 HVAC Repair\n\n👤 Jane Smith\n📞 +880 888 888 8888\n\n📍 789 Smith Road, Nairobi\n📅 Today at 2:00 PM\n\n💰 Your Commission: $360\n   (40% of $900)\n\n[Accept Job] [View Details]\n```\n\n**Authorization:** Technician only (TECH_FREELANCER, TECH_INTERNAL)\n\n**Status:** ✅ PRODUCTION READY (Added Dec 3, 2025)"
+					}
+				},
+				{
+					"name": "Technician Earnings Summary (NEW Dec 3)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{techToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/technician/earnings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technician",
+								"earnings"
+							]
+						},
+						"description": "✅ NEW (Dec 3, 2025) - Complete Earnings Summary with Breakdown\n\n**Response Structure:**\n```json\n{\n  \"totalBonuses\": {\n    \"amount\": 12500,\n    \"increaseRate\": 25.5,\n    \"increaseText\": \"+25.5% from last month\"\n  },\n  \"breakdown\": {\n    \"today\": 1800,\n    \"thisWeek\": 5400,\n    \"thisWeekPercentage\": 40,\n    \"thisMonth\": 12500\n  },\n  \"availableBonus\": {\n    \"amount\": 5400,\n    \"jobsCount\": 6,\n    \"jobsText\": \"6 jobs\",\n    \"bonusText\": \"40% bonus\",\n    \"payoutInfo\": \"Regular payout: Every Monday\"\n  },\n  \"bonusRate\": {\n    \"rate\": 0.4,\n    \"ratePercentage\": 40,\n    \"type\": \"Commission\",\n    \"description\": \"Earn 40% commission on every verified job completion...\"\n  },\n  \"monthlySalary\": {\n    \"baseSalary\": 0,\n    \"thisMonthBonus\": 12500,\n    \"total\": 12500,\n    \"isFreelancer\": true\n  },\n  \"recentBonuses\": [\n    {\n      \"id\": 1,\n      \"jobName\": \"HVAC Repair\",\n      \"customerName\": \"Michael Johnson\",\n      \"date\": \"2025-12-03T14:00:00Z\",\n      \"jobPayment\": 900,\n      \"bonus\": 360,\n      \"status\": \"BOOKED\",\n      \"woNumber\": \"WO-1234567891\"\n    }\n  ]\n}\n```\n\n**Field Descriptions:**\n\n**totalBonuses:**\n- All-time earnings with month-over-month growth rate\n\n**breakdown:**\n- Today, this week, this month earnings\n- Current bonus/commission percentage\n\n**availableBonus:**\n- This week's earnings available for payout\n- Number of jobs contributing to bonus\n- Payout schedule information\n\n**bonusRate:**\n- Current commission/bonus rate\n- Type (Commission for freelancers, Bonus for internal)\n- Detailed description\n\n**monthlySalary:**\n- Base salary (internal staff only)\n- This month's bonus earnings\n- Total monthly earnings\n\n**recentBonuses:**\n- Last 10 bonus transactions\n- Job details, customer, payment amounts\n\n**UI Display:**\n```\n💰 Total Bonuses: $12,500\n   +25.5% from last month\n\n📊 Breakdown:\n   Today: $1,800\n   This Week: $5,400 (40%)\n   This Month: $12,500\n\n📅 Recent Transactions:\n   HVAC Repair - Michael Johnson\n   Today, 2:00 PM - $360\n```\n\n**Authorization:** Technician only (TECH_FREELANCER, TECH_INTERNAL)\n\n**Status:** ✅ PRODUCTION READY (Added Dec 3, 2025)"
 					}
 				}
 			]

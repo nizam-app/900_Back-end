@@ -6,6 +6,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { detectLanguage, addTranslationHelpers } from "./middleware/language.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import otpRoutes from "./routes/otp.routes.js";
@@ -62,6 +63,10 @@ app.use(morgan("dev"));
 app.use(express.json());
 // URL-encoded (optional, for form posts without files)
 app.use(express.urlencoded({ extended: true }));
+
+// Language detection middleware (before routes)
+app.use(detectLanguage);
+app.use(addTranslationHelpers);
 
 // Serve static files (uploads)
 app.use("/uploads", express.static("uploads"));
