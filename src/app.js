@@ -6,7 +6,10 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { errorHandler } from "./middleware/errorHandler.js";
-import { detectLanguage, addTranslationHelpers } from "./middleware/language.js";
+import {
+  detectLanguage,
+  addTranslationHelpers,
+} from "./middleware/language.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import otpRoutes from "./routes/otp.routes.js";

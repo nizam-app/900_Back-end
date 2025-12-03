@@ -1,26 +1,27 @@
+/** @format */
+
 // Example: How to use translations in controllers
 
-const { translate } = require('../translations');
+const { translate } = require("../translations");
 
 // Example 1: Using req.t() helper
 exports.loginExample = async (req, res) => {
   try {
     // ... login logic ...
-    
+
     // Success with translation
     return res.status(200).json({
       success: true,
-      message: req.t('auth.login_success'), // Automatically uses user's language
-      token: 'abc123',
-      user: { id: 1, name: 'John' }
+      message: req.t("auth.login_success"), // Automatically uses user's language
+      token: "abc123",
+      user: { id: 1, name: "John" },
     });
-    
   } catch (error) {
     // Error with translation
     return res.status(400).json({
       success: false,
-      message: req.t('auth.login_failed'),
-      error: req.t('auth.invalid_credentials')
+      message: req.t("auth.login_failed"),
+      error: req.t("auth.invalid_credentials"),
     });
   }
 };
@@ -29,25 +30,24 @@ exports.loginExample = async (req, res) => {
 exports.updateProfileExample = async (req, res) => {
   try {
     // ... update logic ...
-    
+
     // Simplified success response
-    return res.success('profile.updated_success', {
-      profile: { id: 1, name: 'Updated Name' }
+    return res.success("profile.updated_success", {
+      profile: { id: 1, name: "Updated Name" },
     });
-    
   } catch (error) {
     // Simplified error response
-    return res.error('profile.update_failed', 400);
+    return res.error("profile.update_failed", 400);
   }
 };
 
 // Example 3: With parameters
 exports.paymentExample = async (req, res) => {
   const amount = 5000;
-  
+
   // Translation with parameters (if you add {amount} to translation)
-  return res.success('payment.uploaded_success', {
-    payment: { id: 1, amount }
+  return res.success("payment.uploaded_success", {
+    payment: { id: 1, amount },
   });
 };
 
@@ -55,17 +55,17 @@ exports.paymentExample = async (req, res) => {
 exports.getWorkOrderExample = async (req, res) => {
   const workOrder = {
     id: 1,
-    status: 'IN_PROGRESS',
-    priority: 'HIGH'
+    status: "IN_PROGRESS",
+    priority: "HIGH",
   };
-  
+
   return res.status(200).json({
     success: true,
     data: {
       ...workOrder,
       statusLabel: req.t(`status.${workOrder.status}`), // "In Progress" / "En cours" / "قيد التنفيذ"
-      priorityLabel: req.t(`priority.${workOrder.priority}`) // "High" / "Élevé" / "عالي"
-    }
+      priorityLabel: req.t(`priority.${workOrder.priority}`), // "High" / "Élevé" / "عالي"
+    },
   });
 };
 
@@ -75,7 +75,7 @@ exports.getTranslationsExample = async (req, res) => {
   return res.status(200).json({
     success: true,
     language: req.lang,
-    translations: req.translations
+    translations: req.translations,
   });
 };
 

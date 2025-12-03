@@ -1,8 +1,11 @@
+<!-- @format -->
+
 # 🌐 Static Language Translation System
 
 ## Overview
 
 Backend supports **3 languages** with **static translation files**:
+
 - 🇬🇧 English (en) - Default
 - 🇫🇷 French (fr)
 - 🇸🇦 Arabic (ar)
@@ -32,17 +35,20 @@ src/middleware/
 Three ways to specify language:
 
 **Option A: Header (Recommended)**
+
 ```http
 GET /api/auth/profile
 Accept-Language: ar
 ```
 
 **Option B: Query Parameter**
+
 ```http
 GET /api/auth/profile?lang=fr
 ```
 
 **Option C: User Profile (Future)**
+
 ```json
 // User object has preferredLanguage field
 {
@@ -54,6 +60,7 @@ GET /api/auth/profile?lang=fr
 ### 2. **Backend Detects Language**
 
 Middleware automatically:
+
 1. Reads `Accept-Language` header
 2. Falls back to query parameter `?lang=`
 3. Falls back to user profile
@@ -62,6 +69,7 @@ Middleware automatically:
 ### 3. **API Returns Translated Messages**
 
 **English Response:**
+
 ```json
 {
   "success": true,
@@ -71,6 +79,7 @@ Middleware automatically:
 ```
 
 **French Response:**
+
 ```json
 {
   "success": true,
@@ -80,6 +89,7 @@ Middleware automatically:
 ```
 
 **Arabic Response:**
+
 ```json
 {
   "success": true,
@@ -99,17 +109,17 @@ Middleware automatically:
 export const login = async (req, res) => {
   try {
     // ... authentication logic ...
-    
+
     return res.status(200).json({
       success: true,
-      message: req.t('auth.login_success'), // Translates automatically
+      message: req.t("auth.login_success"), // Translates automatically
       token,
-      user
+      user,
     });
   } catch (error) {
     return res.status(400).json({
       success: false,
-      message: req.t('auth.login_failed')
+      message: req.t("auth.login_failed"),
     });
   }
 };
@@ -122,9 +132,9 @@ export const login = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     // ... update logic ...
-    return res.success('profile.updated_success', { profile });
+    return res.success("profile.updated_success", { profile });
   } catch (error) {
-    return res.error('profile.update_failed', 400);
+    return res.error("profile.update_failed", 400);
   }
 };
 ```
@@ -135,15 +145,15 @@ export const updateProfile = async (req, res) => {
 // Work order example
 export const getWorkOrder = async (req, res) => {
   const wo = await prisma.workOrder.findUnique({ where: { id } });
-  
+
   return res.status(200).json({
     success: true,
     data: {
       ...wo,
       // Translate status codes to labels
       statusLabel: req.t(`status.${wo.status}`),
-      priorityLabel: req.t(`priority.${wo.priority}`)
-    }
+      priorityLabel: req.t(`priority.${wo.priority}`),
+    },
   });
 };
 ```
@@ -153,6 +163,7 @@ export const getWorkOrder = async (req, res) => {
 ## 📝 Available Translation Keys
 
 ### Authentication (`auth.*`)
+
 ```
 auth.login_success
 auth.login_failed
@@ -166,6 +177,7 @@ auth.unauthorized
 ```
 
 ### OTP (`otp.*`)
+
 ```
 otp.sent_success
 otp.send_failed
@@ -176,6 +188,7 @@ otp.max_attempts
 ```
 
 ### Profile (`profile.*`)
+
 ```
 profile.updated_success
 profile.update_failed
@@ -185,6 +198,7 @@ profile.invalid_old_password
 ```
 
 ### Work Orders (`workorder.*`)
+
 ```
 workorder.created_success
 workorder.not_found
@@ -200,6 +214,7 @@ workorder.gps_required
 ```
 
 ### Payments (`payment.*`)
+
 ```
 payment.uploaded_success
 payment.verified_success
@@ -210,6 +225,7 @@ payment.invalid_amount
 ```
 
 ### Commissions (`commission.*`)
+
 ```
 commission.payout_requested
 commission.payout_approved
@@ -219,6 +235,7 @@ commission.invalid_amount
 ```
 
 ### Status Labels (`status.*`)
+
 ```
 status.PENDING_APPROVAL
 status.ACTIVE
@@ -234,6 +251,7 @@ status.BUSY
 ```
 
 ### Priority Labels (`priority.*`)
+
 ```
 priority.LOW
 priority.MEDIUM
@@ -248,6 +266,7 @@ priority.URGENT
 ### Test with cURL
 
 **English (Default):**
+
 ```bash
 curl http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -255,6 +274,7 @@ curl http://localhost:4000/api/auth/login \
 ```
 
 **French:**
+
 ```bash
 curl http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -263,6 +283,7 @@ curl http://localhost:4000/api/auth/login \
 ```
 
 **Arabic:**
+
 ```bash
 curl http://localhost:4000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -284,6 +305,7 @@ curl http://localhost:4000/api/auth/login \
 ### 1. Add to all 3 language files:
 
 **en.json:**
+
 ```json
 {
   "category": {
@@ -293,6 +315,7 @@ curl http://localhost:4000/api/auth/login \
 ```
 
 **fr.json:**
+
 ```json
 {
   "category": {
@@ -302,6 +325,7 @@ curl http://localhost:4000/api/auth/login \
 ```
 
 **ar.json:**
+
 ```json
 {
   "category": {
@@ -313,7 +337,7 @@ curl http://localhost:4000/api/auth/login \
 ### 2. Use in controller:
 
 ```javascript
-return res.success('category.created', { category });
+return res.success("category.created", { category });
 ```
 
 ---
@@ -323,14 +347,16 @@ return res.success('category.created', { category });
 Mobile app should:
 
 1. **Detect device language:**
+
 ```javascript
-import { getLocales } from 'react-native-localize';
+import { getLocales } from "react-native-localize";
 const deviceLang = getLocales()[0].languageCode; // 'en', 'fr', 'ar'
 ```
 
 2. **Set header for all API requests:**
+
 ```javascript
-axios.defaults.headers.common['Accept-Language'] = deviceLang;
+axios.defaults.headers.common["Accept-Language"] = deviceLang;
 ```
 
 3. **All API responses return messages in user's language automatically**
@@ -350,12 +376,14 @@ axios.defaults.headers.common['Accept-Language'] = deviceLang;
 ## 🎯 What's Still Client-Side
 
 Mobile app still handles:
+
 - ✅ UI labels (buttons, titles, placeholders)
 - ✅ Navigation text
 - ✅ Help text and instructions
 - ✅ Static content
 
 Backend only translates:
+
 - ✅ API response messages
 - ✅ Error messages
 - ✅ Success messages
@@ -377,6 +405,7 @@ Backend only translates:
 ### Optional: Save User's Language Preference
 
 Add to User model:
+
 ```prisma
 model User {
   // ...existing fields...
