@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # How to Import Postman Collection
 
 ## 📦 File: FSM-API-FIXED-Dec4-2025.postman_collection.json
@@ -5,14 +7,17 @@
 ### Quick Import Steps
 
 1. **Open Postman**
+
    - Launch Postman application
 
 2. **Import Collection**
+
    - Click "Import" button (top left)
    - Drag & drop `FSM-API-FIXED-Dec4-2025.postman_collection.json`
    - Or click "Choose Files" and select the file
 
 3. **Verify Import**
+
    - Collection name: "FSM System API - Complete Collection (Dec 4, 2025)"
    - Total sections: 15
    - Total endpoints: 112
@@ -25,15 +30,18 @@
 ### 🎯 What's New in This Collection
 
 #### 1. Service Hierarchy Fixed ✅
+
 - `GET /api/categories` now returns correct order
 - Category → Service → Subservice
 
 #### 2. Profile Endpoints ✅
+
 - Section: "Commissions & Payouts"
 - `GET /api/commissions/my-payout-requests` - New endpoint
 - `GET /api/technician/work-history` - New endpoint
 
 #### 3. Employee Registration System ✅
+
 - **NEW SECTION:** "Employee Registration (Internal Team)"
 - 4 endpoints for internal tech registration
 - Complete 3-step flow with OTP
@@ -41,6 +49,7 @@
 ### 📝 Testing the New Features
 
 #### Test Employee Registration (Internal Team)
+
 ```
 1. Navigate to: "Employee Registration (Internal Team)"
 2. Run "Step 1: Initiate Registration"
@@ -56,6 +65,7 @@
 ```
 
 #### Test Profile Endpoints
+
 ```
 1. Login as technician (get {{techToken}})
 2. Navigate to: "Commissions & Payouts"
@@ -116,6 +126,7 @@ FSM System API - Complete Collection (Dec 4, 2025)
 ### ✅ Verification Checklist
 
 After importing, verify:
+
 - [x] Total sections: 15
 - [x] Total endpoints: 112
 - [x] New section "Employee Registration (Internal Team)" visible
@@ -128,11 +139,13 @@ After importing, verify:
 Run this sequence to verify everything works:
 
 1. **Test Service Hierarchy:**
+
    - Categories & Services → Get All Categories
    - Verify: Category has services array
    - Verify: Each service has subservices array
 
 2. **Test Employee Registration:**
+
    - Employee Registration → Step 1: Initiate Registration
    - Use OTP code from response
    - Employee Registration → Step 2: Verify OTP
@@ -147,6 +160,7 @@ Run this sequence to verify everything works:
 ### 📚 Additional Documentation
 
 See these files for detailed information:
+
 - `DECEMBER_4_2025_FIXES.md` - Complete fix summary
 - `REGISTRATION_SYSTEMS_COMPARISON.md` - Freelancer vs Employee registration
 - `TWO_REGISTRATION_SYSTEMS.md` - Quick reference guide
@@ -155,19 +169,23 @@ See these files for detailed information:
 ### 🔧 Troubleshooting
 
 **Issue: Endpoints return 401 Unauthorized**
+
 - Solution: Make sure you have valid token in Authorization header
 - Format: `Bearer {{tokenName}}`
 
 **Issue: OTP not received**
+
 - Solution: Check server logs for OTP code
 - Dev mode shows OTP in console
 
 **Issue: Employee ID validation fails**
+
 - Solution: Use format EMP-YYYY-NNN (e.g., EMP-2025-001)
 
 ### 📞 Support
 
 If you encounter issues:
+
 1. Check server is running: `http://localhost:4000/health`
 2. Review server logs for errors
 3. Verify database migration applied: `npx prisma migrate status`
