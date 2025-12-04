@@ -44,10 +44,10 @@ export const createSR = async (req, res, next) => {
       notes, // Call center appointment notes
     } = req.body;
 
-    // Validate required fields
-    if (!phone || !address || !categoryId || !subserviceId) {
+    // Validate required fields (serviceId is now required, subserviceId is optional)
+    if (!phone || !address || !categoryId || !serviceId) {
       return res.status(400).json({
-        message: "Phone, address, categoryId, and subserviceId are required",
+        message: "Phone, address, categoryId, and serviceId are required",
       });
     }
 
@@ -127,7 +127,7 @@ export const createSR = async (req, res, next) => {
       });
     }
 
-    // Verify category, subservice, and service exist
+    // Verify category and service exist (hierarchy: Category → Service → Subservice)
     const category = await prisma.category.findUnique({
       where: { id: Number(categoryId) },
     });
@@ -135,19 +135,29 @@ export const createSR = async (req, res, next) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    const subservice = await prisma.subservice.findUnique({
-      where: { id: Number(subserviceId) },
+    const service = await prisma.service.findUnique({
+      where: { id: Number(serviceId) },
     });
-    if (!subservice) {
-      return res.status(404).json({ message: "Subservice not found" });
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
     }
 
-    if (serviceId) {
-      const service = await prisma.service.findUnique({
-        where: { id: Number(serviceId) },
+    // Verify service belongs to the category
+    if (service.categoryId !== Number(categoryId)) {
+      return res.status(400).json({ message: "Service does not belong to the specified category" });
+    }
+
+    // Verify subservice if provided
+    if (subserviceId) {
+      const subservice = await prisma.subservice.findUnique({
+        where: { id: Number(subserviceId) },
       });
-      if (!service) {
-        return res.status(404).json({ message: "Service not found" });
+      if (!subservice) {
+        return res.status(404).json({ message: "Subservice not found" });
+      }
+      // Verify subservice belongs to the service
+      if (subservice.serviceId !== Number(serviceId)) {
+        return res.status(400).json({ message: "Subservice does not belong to the specified service" });
       }
     }
 
@@ -258,8 +268,8 @@ export const createSR = async (req, res, next) => {
         customerId,
         createdById,
         categoryId: Number(categoryId),
-        subserviceId: Number(subserviceId),
-        serviceId: serviceId ? Number(serviceId) : null,
+        serviceId: Number(serviceId), // Required after hierarchy fix
+        subserviceId: subserviceId ? Number(subserviceId) : null, // Optional
         description: finalDescription,
         priority: finalPriority,
         address,
