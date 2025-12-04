@@ -46,8 +46,8 @@ export const setPassword = async (req, res, next) => {
 
     // Validate password strength (minimum 6 characters as shown in UI)
     if (password.length < 6) {
-      return res.status(400).json({ 
-        message: "Password must be at least 6 characters long" 
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long",
       });
     }
 

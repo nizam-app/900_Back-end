@@ -13,7 +13,9 @@ export const sendOTP = async (req, res, next) => {
 
     // For REGISTRATION type, name is required (Step 1 of freelancer registration)
     if (type === "REGISTRATION" && !name) {
-      return res.status(400).json({ message: "Name is required for registration" });
+      return res
+        .status(400)
+        .json({ message: "Name is required for registration" });
     }
 
     // Validate phone format (10-15 digits)

@@ -70,12 +70,15 @@ export const sendOTP = async (phone, type, name = null) => {
 
     // Generate JWT token if user exists (for LOGIN type)
     let jwtToken = null;
-    if (user && type === 'LOGIN') {
-      jwtToken = signToken({
-        id: user.id,
-        role: user.role,
-        phone: user.phone,
-      }, '7d'); // 7 days expiry
+    if (user && type === "LOGIN") {
+      jwtToken = signToken(
+        {
+          id: user.id,
+          role: user.role,
+          phone: user.phone,
+        },
+        "7d"
+      ); // 7 days expiry
       console.log(`🔑 Generated JWT token for user ${user.id}`);
     }
 
@@ -203,13 +206,13 @@ export const verifyOTPByCode = async (phone, code, type) => {
     });
 
     // If user doesn't exist and it's a LOGIN or REGISTRATION type, create a basic user account
-    if (!user && (type === 'LOGIN' || type === 'REGISTRATION')) {
+    if (!user && (type === "LOGIN" || type === "REGISTRATION")) {
       console.log(`👤 Creating new user account for ${otp.phone}`);
       user = await prisma.user.create({
         data: {
           phone: otp.phone,
-          passwordHash: '', // Empty password, user can set it later
-          role: 'CUSTOMER',
+          passwordHash: "", // Empty password, user can set it later
+          role: "CUSTOMER",
           name: otp.phone, // Use phone as default name
         },
         select: {
@@ -226,11 +229,14 @@ export const verifyOTPByCode = async (phone, code, type) => {
     // Generate JWT token for authenticated session
     let jwtToken = null;
     if (user) {
-      jwtToken = signToken({
-        id: user.id,
-        role: user.role,
-        phone: user.phone,
-      }, '7d'); // 7 days expiry
+      jwtToken = signToken(
+        {
+          id: user.id,
+          role: user.role,
+          phone: user.phone,
+        },
+        "7d"
+      ); // 7 days expiry
       console.log(`🔑 Generated JWT token for user ${user.id}`);
     }
 

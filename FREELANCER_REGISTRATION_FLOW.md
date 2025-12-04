@@ -1,16 +1,21 @@
+<!-- @format -->
+
 # Freelancer Registration Flow - 3 Steps
 
 ## Overview
+
 This document describes the complete 3-step registration flow for freelancers joining the FSM platform.
 
 ## Flow Steps
 
 ### Step 1: Enter Name & Phone Number
+
 User enters their full name and phone number to begin registration.
 
 **Endpoint:** `POST /api/otp/send`
 
 **Request Body:**
+
 ```json
 {
   "phone": "01712345678",
@@ -20,6 +25,7 @@ User enters their full name and phone number to begin registration.
 ```
 
 **Success Response (200 OK):**
+
 ```json
 {
   "message": "OTP sent successfully",
@@ -32,6 +38,7 @@ User enters their full name and phone number to begin registration.
 ```
 
 **Notes:**
+
 - OTP is valid for 5 minutes
 - tempToken is valid for 10 minutes
 - In development, OTP code is returned in response for testing
@@ -40,11 +47,13 @@ User enters their full name and phone number to begin registration.
 ---
 
 ### Step 2: Verify Phone Number
+
 User enters the 6-digit OTP code sent to their phone.
 
 **Endpoint:** `POST /api/otp/verify`
 
 **Request Body:**
+
 ```json
 {
   "phone": "01712345678",
@@ -54,6 +63,7 @@ User enters the 6-digit OTP code sent to their phone.
 ```
 
 **Success Response (200 OK):**
+
 ```json
 {
   "message": "OTP verified successfully. You can now set your password.",
@@ -65,6 +75,7 @@ User enters the 6-digit OTP code sent to their phone.
 ```
 
 **Error Response (400 Bad Request):**
+
 ```json
 {
   "message": "Invalid or expired OTP"
@@ -72,6 +83,7 @@ User enters the 6-digit OTP code sent to their phone.
 ```
 
 **Notes:**
+
 - OTP is marked as used after successful verification
 - Returns same tempToken from Step 1
 - User proceeds to Step 3 with this tempToken
@@ -79,11 +91,13 @@ User enters the 6-digit OTP code sent to their phone.
 ---
 
 ### Step 3: Set Password
+
 User creates a secure password (minimum 6 characters).
 
 **Endpoint:** `POST /api/auth/set-password`
 
 **Request Body:**
+
 ```json
 {
   "phone": "01712345678",
@@ -93,6 +107,7 @@ User creates a secure password (minimum 6 characters).
 ```
 
 **Success Response (201 Created):**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -110,6 +125,7 @@ User creates a secure password (minimum 6 characters).
 **Error Responses:**
 
 **400 Bad Request - Invalid Token:**
+
 ```json
 {
   "message": "Invalid or expired temporary token"
@@ -117,6 +133,7 @@ User creates a secure password (minimum 6 characters).
 ```
 
 **400 Bad Request - Weak Password:**
+
 ```json
 {
   "message": "Password must be at least 6 characters long"
@@ -124,6 +141,7 @@ User creates a secure password (minimum 6 characters).
 ```
 
 **400 Bad Request - Already Registered:**
+
 ```json
 {
   "message": "Phone already registered"
@@ -131,6 +149,7 @@ User creates a secure password (minimum 6 characters).
 ```
 
 **Notes:**
+
 - Password must be at least 6 characters (as shown in UI validation)
 - User is automatically logged in after successful registration
 - JWT token is returned for immediate use
@@ -145,6 +164,7 @@ User creates a secure password (minimum 6 characters).
 ## Complete Flow Example
 
 ### 1. Start Registration (Step 1)
+
 ```bash
 curl -X POST http://localhost:4000/api/otp/send \
   -H "Content-Type: application/json" \
@@ -156,6 +176,7 @@ curl -X POST http://localhost:4000/api/otp/send \
 ```
 
 ### 2. Verify OTP (Step 2)
+
 ```bash
 curl -X POST http://localhost:4000/api/otp/verify \
   -H "Content-Type: application/json" \
@@ -167,6 +188,7 @@ curl -X POST http://localhost:4000/api/otp/verify \
 ```
 
 ### 3. Set Password (Step 3)
+
 ```bash
 curl -X POST http://localhost:4000/api/auth/set-password \
   -H "Content-Type: application/json" \
@@ -182,6 +204,7 @@ curl -X POST http://localhost:4000/api/auth/set-password \
 ## UI Implementation Guide
 
 ### Step 1 Screen: "Join as Freelancer"
+
 - Full Name input field
 - Phone Number input field
 - "Continue" button
@@ -189,35 +212,38 @@ curl -X POST http://localhost:4000/api/auth/set-password \
 - "Back" button (navigation)
 
 **Validation:**
+
 - Name: Required
 - Phone: Required, 10-15 digits
 
 **On Continue:**
+
 ```javascript
-const response = await fetch('/api/otp/send', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("/api/otp/send", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     phone: phoneNumber,
     name: fullName,
-    type: 'REGISTRATION'
-  })
+    type: "REGISTRATION",
+  }),
 });
 
 if (response.ok) {
   const data = await response.json();
   // Save tempToken for Step 3
-  sessionStorage.setItem('tempToken', data.tempToken);
-  sessionStorage.setItem('registrationPhone', phoneNumber);
-  sessionStorage.setItem('registrationName', fullName);
+  sessionStorage.setItem("tempToken", data.tempToken);
+  sessionStorage.setItem("registrationPhone", phoneNumber);
+  sessionStorage.setItem("registrationName", fullName);
   // Navigate to Step 2
-  navigation.navigate('VerifyPhone');
+  navigation.navigate("VerifyPhone");
 }
 ```
 
 ---
 
 ### Step 2 Screen: "Verify Phone"
+
 - Display: "OTP sent to your phone" with phone number
 - OTP Code input (6-digit numeric)
 - "Resend OTP" button
@@ -225,54 +251,58 @@ if (response.ok) {
 - "Back" button (returns to Step 1)
 
 **Validation:**
+
 - OTP: Required, exactly 6 digits
 
 **On Verify:**
+
 ```javascript
-const response = await fetch('/api/otp/verify', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("/api/otp/verify", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    phone: sessionStorage.getItem('registrationPhone'),
+    phone: sessionStorage.getItem("registrationPhone"),
     code: otpCode,
-    type: 'REGISTRATION'
-  })
+    type: "REGISTRATION",
+  }),
 });
 
 if (response.ok) {
   const data = await response.json();
   // Confirm tempToken matches
-  if (data.tempToken === sessionStorage.getItem('tempToken')) {
+  if (data.tempToken === sessionStorage.getItem("tempToken")) {
     // Navigate to Step 3
-    navigation.navigate('SetPassword');
+    navigation.navigate("SetPassword");
   }
 }
 ```
 
 **On Resend OTP:**
+
 ```javascript
 // Call Step 1 API again with same phone and name
-const response = await fetch('/api/otp/send', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("/api/otp/send", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    phone: sessionStorage.getItem('registrationPhone'),
-    name: sessionStorage.getItem('registrationName'),
-    type: 'REGISTRATION'
-  })
+    phone: sessionStorage.getItem("registrationPhone"),
+    name: sessionStorage.getItem("registrationName"),
+    type: "REGISTRATION",
+  }),
 });
 
 if (response.ok) {
   const data = await response.json();
   // Update tempToken
-  sessionStorage.setItem('tempToken', data.tempToken);
-  showToast('OTP resent successfully');
+  sessionStorage.setItem("tempToken", data.tempToken);
+  showToast("OTP resent successfully");
 }
 ```
 
 ---
 
 ### Step 3 Screen: "Set Password"
+
 - Display: Example "23423" with eye icon (show/hide password)
 - Password input field (minimum 6 characters)
 - Password strength indicator (optional)
@@ -281,33 +311,35 @@ if (response.ok) {
 - "Back" button (returns to Step 2)
 
 **Validation:**
+
 - Password: Required, minimum 6 characters
 
 **On Create Account:**
+
 ```javascript
-const response = await fetch('/api/auth/set-password', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("/api/auth/set-password", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    phone: sessionStorage.getItem('registrationPhone'),
+    phone: sessionStorage.getItem("registrationPhone"),
     password: password,
-    tempToken: sessionStorage.getItem('tempToken')
-  })
+    tempToken: sessionStorage.getItem("tempToken"),
+  }),
 });
 
 if (response.ok) {
   const data = await response.json();
   // Save JWT token
-  localStorage.setItem('authToken', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
-  
+  localStorage.setItem("authToken", data.token);
+  localStorage.setItem("user", JSON.stringify(data.user));
+
   // Clear temporary registration data
-  sessionStorage.removeItem('tempToken');
-  sessionStorage.removeItem('registrationPhone');
-  sessionStorage.removeItem('registrationName');
-  
+  sessionStorage.removeItem("tempToken");
+  sessionStorage.removeItem("registrationPhone");
+  sessionStorage.removeItem("registrationName");
+
   // Navigate to dashboard
-  navigation.navigate('Dashboard');
+  navigation.navigate("Dashboard");
   showToast(data.message); // "Account created successfully! Welcome to FSM."
 }
 ```
@@ -330,12 +362,14 @@ if (response.ok) {
 When a freelancer completes registration, the following records are created:
 
 1. **User Record:**
+
    - phone: Normalized phone number
    - passwordHash: Bcrypt hashed password
    - name: From Step 1
    - role: TECH_FREELANCER
 
 2. **TechnicianProfile Record:**
+
    - type: FREELANCER
    - commissionRate: 0.4 (40%)
    - bonusRate: 0.05 (5%)
@@ -352,18 +386,22 @@ When a freelancer completes registration, the following records are created:
 ### Common Errors:
 
 1. **Phone already registered:**
+
    - Show: "This phone number is already registered. Please login instead."
    - Action: Provide "Go to Login" button
 
 2. **Invalid OTP:**
+
    - Show: "Invalid or expired OTP. Please try again."
    - Action: Allow retry or resend OTP
 
 3. **Expired tempToken:**
+
    - Show: "Session expired. Please start registration again."
    - Action: Return to Step 1
 
 4. **Weak password:**
+
    - Show: "Password must be at least 6 characters long"
    - Action: Show password requirements
 
@@ -376,19 +414,24 @@ When a freelancer completes registration, the following records are created:
 ## Testing
 
 ### Test Credentials:
+
 Use these values to test the complete flow:
 
 **Step 1:**
+
 - Name: "Test Freelancer"
 - Phone: "01799999999"
 
 **Step 2:**
+
 - OTP: (returned in Step 1 response during development)
 
 **Step 3:**
+
 - Password: "test123"
 
 ### Verify Profile Creation:
+
 After registration, call GET /api/auth/profile to verify technician profile:
 
 ```bash
@@ -403,6 +446,7 @@ Expected response should include technicianProfile with FREELANCER type.
 ## Migration from Old Flow
 
 If you have existing users created with the old flow:
+
 - They can still login with phone + password
 - No migration needed for existing accounts
 - New registrations will follow this 3-step flow
@@ -421,6 +465,7 @@ If you have existing users created with the old flow:
 ## Support
 
 For issues or questions about the registration flow:
+
 1. Check server logs for detailed error messages
 2. Verify OTP service is working (SMS credits available)
 3. Ensure database migrations are up to date

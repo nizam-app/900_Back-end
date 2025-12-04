@@ -18,7 +18,7 @@ let tempToken = null;
 let otpCode = null;
 
 console.log("🧪 Testing Freelancer Registration Flow\n");
-console.log("=" .repeat(60));
+console.log("=".repeat(60));
 
 // Step 1: Send OTP (Enter name and phone)
 async function step1_sendOTP() {
@@ -135,7 +135,9 @@ async function verifyProfile(token) {
   if (response.ok && data.technicianProfile) {
     console.log(`\n✅ Technician Profile Verified`);
     console.log(`   Type: ${data.technicianProfile.type}`);
-    console.log(`   Commission Rate: ${data.technicianProfile.commissionRate * 100}%`);
+    console.log(
+      `   Commission Rate: ${data.technicianProfile.commissionRate * 100}%`
+    );
     console.log(`   Status: ${data.technicianProfile.status}`);
     return true;
   } else {

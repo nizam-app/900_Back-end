@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # Freelancer Registration - 3-Step Flow Implementation Summary
 
 ## Date: December 4, 2025
@@ -5,6 +7,7 @@
 ---
 
 ## Overview
+
 Implemented a complete 3-step registration flow for freelancers joining the FSM platform, matching the provided UI mockup exactly.
 
 ---
@@ -12,6 +15,7 @@ Implemented a complete 3-step registration flow for freelancers joining the FSM 
 ## Registration Flow
 
 ### Step 1: Enter Name & Phone Number
+
 - User enters full name and phone number
 - API: `POST /api/otp/send`
 - Name is stored temporarily with OTP record
@@ -19,12 +23,14 @@ Implemented a complete 3-step registration flow for freelancers joining the FSM 
 - Temporary token generated (10 minutes validity)
 
 ### Step 2: Verify Phone Number
+
 - User enters 6-digit OTP code
 - API: `POST /api/otp/verify`
 - OTP is validated and marked as used
 - Same temporary token returned for Step 3
 
 ### Step 3: Set Password
+
 - User creates password (minimum 6 characters)
 - API: `POST /api/auth/set-password`
 - Account is created with:
@@ -44,35 +50,46 @@ Implemented a complete 3-step registration flow for freelancers joining the FSM 
 ## Files Modified
 
 ### 1. Database Schema
+
 **File:** `prisma/schema.prisma`
+
 - Added `metadataJson` field to OTP model to store name temporarily
 
 **Migration:** `20251204061156_add_metadata_to_otp`
+
 ```sql
 ALTER TABLE "OTP" ADD COLUMN "metadataJson" TEXT;
 ```
 
 ### 2. OTP Controller
+
 **File:** `src/controllers/otp.controller.js`
+
 - Updated `sendOTP` to accept `name` parameter
 - Made `name` required for REGISTRATION type
 - Passes `name` to OTP service
 
 ### 3. OTP Service
+
 **File:** `src/services/otp.service.js`
+
 - Updated `sendOTP` function signature to accept `name` parameter
 - Stores name in `metadataJson` field of OTP record
 - Logs registration name for debugging
 
 ### 4. Auth Controller
+
 **File:** `src/controllers/auth.controller.js`
+
 - Updated `setPassword` to accept optional `role` parameter
 - Added password validation (minimum 6 characters)
 - Defaults role to `TECH_FREELANCER` for registration flow
 - Passes role to auth service
 
 ### 5. Auth Service
+
 **File:** `src/services/auth.service.js`
+
 - Updated `setPasswordAfterOTP` to:
   - Accept `role` parameter
   - Retrieve name from OTP metadataJson if not provided
@@ -86,7 +103,9 @@ ALTER TABLE "OTP" ADD COLUMN "metadataJson" TEXT;
 ## New Files Created
 
 ### 1. Documentation
+
 **File:** `FREELANCER_REGISTRATION_FLOW.md` (450+ lines)
+
 - Complete API documentation for all 3 steps
 - Request/response examples
 - Error handling guide
@@ -94,14 +113,18 @@ ALTER TABLE "OTP" ADD COLUMN "metadataJson" TEXT;
 - Testing instructions
 
 ### 2. Test Script
+
 **File:** `test-freelancer-registration.js`
+
 - Automated test script for complete 3-step flow
 - Tests each step sequentially
 - Verifies profile creation
 - Provides detailed console output
 
 ### 3. Postman Collection
+
 **File:** `Freelancer-Registration-3Step.postman_collection.json`
+
 - Complete Postman collection for testing
 - 7 requests covering all scenarios:
   1. Step 1: Send OTP
@@ -115,7 +138,9 @@ ALTER TABLE "OTP" ADD COLUMN "metadataJson" TEXT;
 - Includes comprehensive descriptions
 
 ### 4. UI Implementation Guide
+
 **File:** `UI_IMPLEMENTATION_GUIDE.md` (600+ lines)
+
 - Complete React Native code for all 3 screens
 - Shared styles
 - Navigation setup
@@ -127,6 +152,7 @@ ALTER TABLE "OTP" ADD COLUMN "metadataJson" TEXT;
 ## API Endpoints
 
 ### Step 1: Send OTP
+
 ```
 POST /api/otp/send
 Body: {
@@ -142,6 +168,7 @@ Response: {
 ```
 
 ### Step 2: Verify OTP
+
 ```
 POST /api/otp/verify
 Body: {
@@ -157,6 +184,7 @@ Response: {
 ```
 
 ### Step 3: Set Password
+
 ```
 POST /api/auth/set-password
 Body: {
@@ -180,19 +208,23 @@ Response: {
 ## Database Changes
 
 ### OTP Table
+
 - Added column: `metadataJson` (TEXT, nullable)
 - Used to store temporary data like user's name during registration
 
 ### Automatic Profile Creation
+
 When a freelancer completes registration, the system automatically creates:
 
 1. **User Record:**
+
    - phone: Normalized phone number
    - passwordHash: Bcrypt hashed password
    - name: From Step 1 (stored in OTP metadata)
    - role: TECH_FREELANCER
 
 2. **TechnicianProfile Record:**
+
    - userId: Links to user
    - type: FREELANCER
    - commissionRate: 0.4 (40%)
@@ -220,17 +252,21 @@ When a freelancer completes registration, the system automatically creates:
 ## Testing
 
 ### Manual Testing Steps:
+
 1. Start server: `npm run dev`
 2. Run test script: `node test-freelancer-registration.js`
 3. Or use Postman collection: `Freelancer-Registration-3Step.postman_collection.json`
 
 ### Test Credentials:
+
 - Name: "Test Freelancer"
 - Phone: "01799999999"
 - Password: "test123"
 
 ### Verification:
+
 After registration, call `GET /api/auth/profile` to verify:
+
 - User role is TECH_FREELANCER
 - Technician profile exists
 - Commission rate is 40%
@@ -241,6 +277,7 @@ After registration, call `GET /api/auth/profile` to verify:
 ## UI Screens Implemented (Documentation)
 
 ### Screen 1: Join as Freelancer
+
 - Logo and "Freelancer Portal" subtitle
 - Title: "Join as Freelancer"
 - Step indicator: "Step 1 of 3"
@@ -251,6 +288,7 @@ After registration, call `GET /api/auth/profile` to verify:
 - "← Back" button
 
 ### Screen 2: Verify Phone
+
 - Logo and "Freelancer Portal" subtitle
 - Success icon: "OTP sent to your phone"
 - Title: "Verify Phone"
@@ -261,6 +299,7 @@ After registration, call `GET /api/auth/profile` to verify:
 - "← Back" button
 
 ### Screen 3: Set Password
+
 - Logo and "Freelancer Portal" subtitle
 - Title: "Set Password"
 - Step indicator: "Step 3 of 3"
@@ -275,16 +314,19 @@ After registration, call `GET /api/auth/profile` to verify:
 ## Error Handling
 
 ### Step 1 Errors:
+
 - Missing name: "Name is required for registration"
 - Invalid phone: "Invalid phone format"
 - Phone already registered: Proceeds normally (will fail at Step 3)
 
 ### Step 2 Errors:
+
 - Invalid OTP: "Invalid or expired OTP"
 - Wrong format: "Invalid OTP format. OTP must be 6 digits"
 - Expired: "Invalid or expired OTP"
 
 ### Step 3 Errors:
+
 - Weak password: "Password must be at least 6 characters long"
 - Expired token: "Invalid or expired temporary token"
 - Already registered: "Phone already registered"
@@ -297,6 +339,7 @@ After registration, call `GET /api/auth/profile` to verify:
 ### To Complete Implementation:
 
 1. **Restart Server:**
+
    ```bash
    # Stop current server (Ctrl+C)
    npx prisma generate
@@ -304,11 +347,13 @@ After registration, call `GET /api/auth/profile` to verify:
    ```
 
 2. **Test Registration Flow:**
+
    ```bash
    node test-freelancer-registration.js
    ```
 
 3. **Import Postman Collection:**
+
    - Open Postman
    - Import `Freelancer-Registration-3Step.postman_collection.json`
    - Run "Step 1" → "Step 2" → "Step 3" sequentially
@@ -336,8 +381,10 @@ After registration, call `GET /api/auth/profile` to verify:
 ## Known Issues
 
 ### Issue 1: Prisma Client Generation
+
 **Problem:** Server must be restarted after database migration
-**Solution:** 
+**Solution:**
+
 ```bash
 # Stop server
 npx prisma generate
@@ -346,8 +393,10 @@ npm run dev
 ```
 
 ### Issue 2: BulkGate SMS Credits
+
 **Problem:** SMS may not send if credits are low
-**Solution:** 
+**Solution:**
+
 - Check BulkGate portal: https://portal.bulkgate.com
 - OTP code is returned in response for testing
 
@@ -408,21 +457,25 @@ User                    Frontend                Backend                Database
 ## Support & Troubleshooting
 
 ### Server Not Starting:
+
 1. Check if port 4000 is in use
 2. Verify database connection in `.env`
 3. Run `npx prisma generate`
 
 ### OTP Not Sending:
+
 1. Check BulkGate credits
 2. Verify phone number format
 3. Check server logs for SMS errors
 
 ### Registration Failing at Step 3:
+
 1. Verify tempToken hasn't expired (10 min)
 2. Check if phone is already registered
 3. Ensure password meets minimum length (6 chars)
 
 ### Profile Not Created:
+
 1. Check server logs for errors
 2. Verify database connection
 3. Check if migration was applied

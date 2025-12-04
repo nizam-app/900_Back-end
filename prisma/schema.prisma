@@ -344,7 +344,7 @@ model OTP {
   tempToken       String?
   tempTokenExpiry DateTime?
   userId          Int?
-  metadataJson    String?   // Store additional data like name for registration
+  metadataJson    String? // Store additional data like name for registration
   createdAt       DateTime  @default(now())
   user            User?     @relation(fields: [userId], references: [id])
 }
