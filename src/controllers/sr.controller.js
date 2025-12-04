@@ -144,7 +144,9 @@ export const createSR = async (req, res, next) => {
 
     // Verify service belongs to the category
     if (service.categoryId !== Number(categoryId)) {
-      return res.status(400).json({ message: "Service does not belong to the specified category" });
+      return res
+        .status(400)
+        .json({ message: "Service does not belong to the specified category" });
     }
 
     // Verify subservice if provided
@@ -157,7 +159,11 @@ export const createSR = async (req, res, next) => {
       }
       // Verify subservice belongs to the service
       if (subservice.serviceId !== Number(serviceId)) {
-        return res.status(400).json({ message: "Subservice does not belong to the specified service" });
+        return res
+          .status(400)
+          .json({
+            message: "Subservice does not belong to the specified service",
+          });
       }
     }
 
