@@ -44,7 +44,7 @@ const formatPhoneNumber = (phone) => {
 };
 
 // ✅ Send OTP to phone number
-export const sendOTP = async (phone, type) => {
+export const sendOTP = async (phone, type, name = null) => {
   try {
     // Generate OTP code
     const code = generateOTPCode();
@@ -59,6 +59,9 @@ export const sendOTP = async (phone, type) => {
     console.log(`📱 Original phone: ${phone}`);
     console.log(`📱 Normalized phone (DB): ${normalizedPhone}`);
     console.log(`📱 Formatted phone (SMS): ${formattedPhone}`);
+    if (name) {
+      console.log(`👤 Registration name: ${name}`);
+    }
 
     // Check if user exists
     const user = await prisma.user.findUnique({
@@ -100,7 +103,7 @@ export const sendOTP = async (phone, type) => {
       .substring(7)}`;
     const tempTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Save OTP to database with normalized phone and temp token
+    // Save OTP to database with normalized phone, temp token, and optional name
     const otpRecord = await prisma.oTP.create({
       data: {
         phone: normalizedPhone,
@@ -110,6 +113,7 @@ export const sendOTP = async (phone, type) => {
         userId: user?.id,
         tempToken,
         tempTokenExpiry,
+        metadataJson: name ? JSON.stringify({ name }) : null, // Store name for registration flow
       },
     });
 

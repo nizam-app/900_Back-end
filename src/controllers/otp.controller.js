@@ -5,10 +5,15 @@ import * as otpService from "../services/otp.service.js";
 
 export const sendOTP = async (req, res, next) => {
   try {
-    const { phone, type } = req.body;
+    const { phone, type, name } = req.body;
 
     if (!phone || !type) {
       return res.status(400).json({ message: "Phone and type are required" });
+    }
+
+    // For REGISTRATION type, name is required (Step 1 of freelancer registration)
+    if (type === "REGISTRATION" && !name) {
+      return res.status(400).json({ message: "Name is required for registration" });
     }
 
     // Validate phone format (10-15 digits)
@@ -33,7 +38,7 @@ export const sendOTP = async (req, res, next) => {
       });
     }
 
-    const result = await otpService.sendOTP(phone, type);
+    const result = await otpService.sendOTP(phone, type, name);
 
     return res.json(result);
   } catch (err) {

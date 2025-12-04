@@ -36,12 +36,19 @@ export const register = async (req, res, next) => {
 
 export const setPassword = async (req, res, next) => {
   try {
-    const { phone, password, name, email, tempToken } = req.body;
+    const { phone, password, name, email, tempToken, role } = req.body;
 
     if (!phone || !password || !tempToken) {
       return res
         .status(400)
         .json({ message: "Phone, password, and tempToken are required" });
+    }
+
+    // Validate password strength (minimum 6 characters as shown in UI)
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        message: "Password must be at least 6 characters long" 
+      });
     }
 
     const result = await authService.setPasswordAfterOTP({
@@ -50,6 +57,7 @@ export const setPassword = async (req, res, next) => {
       name,
       email,
       tempToken,
+      role: role || "TECH_FREELANCER", // Default to freelancer for registration flow
     });
     return res.status(201).json(result);
   } catch (err) {

@@ -8,7 +8,7 @@ import { normalizePhoneForDB } from "../utils/phone.js";
 
 // ✅ Set password after OTP verification (new registration/password reset flow)
 export const setPasswordAfterOTP = async (userData) => {
-  const { phone, password, name, email, tempToken } = userData;
+  const { phone, password, name, email, tempToken, role } = userData;
 
   // Normalize phone number
   const normalizedPhone = normalizePhoneForDB(phone);
@@ -31,6 +31,17 @@ export const setPasswordAfterOTP = async (userData) => {
     throw new Error("Invalid or expired temporary token");
   }
 
+  // Get name from OTP metadata if not provided (from Step 1)
+  let finalName = name;
+  if (!finalName && otpRecord.metadataJson) {
+    try {
+      const metadata = JSON.parse(otpRecord.metadataJson);
+      finalName = metadata.name;
+    } catch (e) {
+      console.log("Could not parse OTP metadata");
+    }
+  }
+
   const existing = await prisma.user.findUnique({
     where: { phone: normalizedPhone },
   });
@@ -41,6 +52,7 @@ export const setPasswordAfterOTP = async (userData) => {
   }
 
   const hash = await bcrypt.hash(password, 10);
+  const userRole = role || "TECH_FREELANCER"; // Default to freelancer
 
   let user;
 
@@ -51,9 +63,9 @@ export const setPasswordAfterOTP = async (userData) => {
       data: {
         phone: normalizedPhone,
         passwordHash: hash,
-        name: name || existing.name,
+        name: finalName || existing.name,
         email: email || existing.email,
-        role: "CUSTOMER",
+        role: userRole,
       },
     });
 
@@ -64,13 +76,45 @@ export const setPasswordAfterOTP = async (userData) => {
       data: {
         phone: normalizedPhone,
         passwordHash: hash,
-        name: name || null,
+        name: finalName || null,
         email: email || null,
-        role: "CUSTOMER",
+        role: userRole,
       },
     });
 
-    console.log(`👤 New user registered: ${phone}`);
+    console.log(`👤 New user registered: ${phone} as ${userRole}`);
+  }
+
+  // Create technician profile for freelancers
+  if (user.role === "TECH_FREELANCER" || user.role === "TECH_INTERNAL") {
+    const existingProfile = await prisma.technicianProfile.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!existingProfile) {
+      await prisma.technicianProfile.create({
+        data: {
+          userId: user.id,
+          type: user.role === "TECH_FREELANCER" ? "FREELANCER" : "INTERNAL",
+          commissionRate: user.role === "TECH_FREELANCER" ? 0.4 : 0.15,
+          bonusRate: 0.05,
+          baseSalary: user.role === "TECH_INTERNAL" ? 30000 : null,
+          status: "ACTIVE",
+        },
+      });
+
+      // Create wallet for freelancers
+      if (user.role === "TECH_FREELANCER") {
+        await prisma.wallet.create({
+          data: {
+            technicianId: user.id,
+            balance: 0,
+          },
+        });
+      }
+
+      console.log(`✅ Created technician profile for user ${user.id}`);
+    }
   }
 
   // Clear temp token
@@ -94,7 +138,7 @@ export const setPasswordAfterOTP = async (userData) => {
       email: user.email,
       role: user.role,
     },
-    message: "Password set successfully. You are now logged in.",
+    message: "Account created successfully! Welcome to FSM.",
   };
 };
 export const registerUser = async (userData) => {
