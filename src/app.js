@@ -28,6 +28,7 @@ import dispatchRoutes from "./routes/dispatch.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import smsRoutes from "./routes/sms.routes.js";
 import technicianRoutes from "./routes/technician.routes.js";
+import employeeRoutes from "./routes/employee.routes.js";
 
 const app = express();
 
@@ -92,6 +93,7 @@ app.use("/api/dispatch", dispatchRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/sms", smsRoutes);
 app.use("/api/technician", technicianRoutes);
+app.use("/api/employee", employeeRoutes);
 
 app.get("/", (req, res) => {
   res.json({ status: "FSM backend running ok" });

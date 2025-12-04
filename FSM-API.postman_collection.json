@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "fsm-api-collection-2025-v3",
 		"name": "FSM System API - Complete Collection",
-		"description": "Complete Field Service Management API Collection - Updated Dec 4, 2025 with 3-Step Freelancer Registration Flow, Technician Profile Enhancements, Dashboard Stats, Jobs Filtering, and Complete WO fixes. Includes all endpoints: Authentication, Reviews, Dispatch Center, Time Management, Payments, Commissions, and enhanced technician features.",
+		"description": "Complete Field Service Management API Collection - Updated Dec 4, 2025 with TWO Registration Systems: (1) Freelancer Registration (3-step OTP flow, 40% commission, TECH_FREELANCER) and (2) Internal Employee Registration (3-step portal flow, 5% bonus, TECH_INTERNAL with employeeId). Includes Technician Profile Enhancements, Dashboard Stats, Jobs Filtering, Work History, Payout Requests, and Complete WO fixes. All endpoints: Authentication, Employee Portal, Reviews, Dispatch Center, Time Management, Payments, Commissions, and enhanced technician features.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -455,6 +455,141 @@
 							]
 						},
 						"description": "Call center can update any customer's profile"
+					}
+				}
+			]
+		},
+		{
+			"name": "Employee Registration (Internal Team)",
+			"item": [
+				{
+					"name": "Step 1: Initiate Registration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Internal\",\n  \"employeeId\": \"EMP-2025-001\",\n  \"phone\": \"+8801718981000\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/employee/register/initiate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"register",
+								"initiate"
+							]
+						},
+						"description": "✅ NEW (Dec 4, 2025) - Internal Team Portal Registration\n\n**STEP 1 OF 3: Enter Employee Details**\n\nInitiate employee registration for internal technicians (TECH_INTERNAL role).\n\n**UI: Internal Team Portal - Step 1**\n```\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nCreate Employee Account\n\n[●] Step 1  [ ] Step 2  [ ] Step 3\n\nFull Name *\n┌─────────────────────────┐\n│ John Internal           │\n└─────────────────────────┘\n\nEmployee ID *\n┌─────────────────────────┐\n│ EMP-2025-001            │\n└─────────────────────────┘\n\nPhone Number *\n┌─────────────────────────┐\n│ +880 171 898 1000       │\n└─────────────────────────┘\n\n         [Continue]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n```\n\n**Request Body:**\n- `name` (required): Full name of employee\n- `employeeId` (required): Unique employee ID\n- `phone` (required): Phone number for OTP verification\n\n**Success Response (200 OK):**\n```json\n{\n  \"success\": true,\n  \"message\": \"OTP sent to +8801718981000\",\n  \"code\": \"123456\",\n  \"tempToken\": \"temp_1733305200000_abc123\",\n  \"expiresAt\": \"2025-12-04T10:05:00Z\"\n}\n```\n\n**What Happens:**\n1. Validates employee details\n2. Checks if phone already registered\n3. Stores employeeId in OTP metadata\n4. Sends 6-digit OTP via SMS\n5. Returns temp token for Step 2\n\n**Error Responses:**\n- Phone already registered (400)\n- Missing required fields (400)\n- SMS delivery failed (500)\n\n**Next Step:** Proceed to Step 2: Verify OTP\n\n**Difference from Freelancer Registration:**\n- Requires employeeId (freelancers don't)\n- Creates TECH_INTERNAL role (vs TECH_FREELANCER)\n- 5% bonus rate (vs 40% commission)\n- Fixed salary + bonus model\n\n**Status:** ✅ NEW (Dec 4, 2025)"
+					}
+				},
+				{
+					"name": "Step 2: Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"+8801718981000\",\n  \"code\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/employee/register/verify-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"register",
+								"verify-otp"
+							]
+						},
+						"description": "✅ NEW (Dec 4, 2025) - Verify OTP for Employee Registration\n\n**STEP 2 OF 3: Verify Phone Number**\n\nVerify the 6-digit OTP code sent to employee's phone.\n\n**UI: Internal Team Portal - Step 2**\n```\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nVerify Phone Number\n\n[ ] Step 1  [●] Step 2  [ ] Step 3\n\nEnter the 6-digit code sent to:\n+880 171 898 1000\n\n┌───┬───┬───┬───┬───┬───┐\n│ 1 │ 2 │ 3 │ 4 │ 5 │ 6 │\n└───┴───┴───┴───┴───┴───┘\n\nDidn't receive code?\n    [Resend OTP]\n\n      [Verify & Continue]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n```\n\n**Request Body:**\n- `phone` (required): Same phone from Step 1\n- `code` (required): 6-digit OTP code\n\n**Success Response (200 OK):**\n```json\n{\n  \"success\": true,\n  \"verified\": true,\n  \"message\": \"Phone verified successfully\",\n  \"tempToken\": \"temp_1733305200000_abc123\",\n  \"phone\": \"1718981000\"\n}\n```\n\n**What Happens:**\n1. Validates OTP code\n2. Marks OTP as used (one-time use)\n3. Returns temp token for Step 3\n4. OTP expires after 5 minutes\n5. Employee data preserved for Step 3\n\n**Error Responses:**\n- Invalid or expired OTP (400)\n- OTP already used (400)\n- Phone not found (404)\n\n**Next Step:** Proceed to Step 3: Set Password\n\n**Status:** ✅ NEW (Dec 4, 2025)"
+					}
+				},
+				{
+					"name": "Step 3: Complete Registration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"employeeToken\", jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"+8801718981000\",\n  \"password\": \"employee123\",\n  \"tempToken\": \"temp_1733305200000_abc123\",\n  \"name\": \"John Internal\",\n  \"employeeId\": \"EMP-2025-001\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/employee/register/complete",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"register",
+								"complete"
+							]
+						},
+						"description": "✅ NEW (Dec 4, 2025) - Complete Employee Registration\n\n**STEP 3 OF 3: Set Password & Create Account**\n\nCreate password and complete internal employee registration.\n\n**UI: Internal Team Portal - Step 3**\n```\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nCreate Password\n\n[ ] Step 1  [ ] Step 2  [●] Step 3\n\nEmployee: John Internal\nEmployee ID: EMP-2025-001\nPhone: +880 171 898 1000\n\nCreate Password *\n┌─────────────────────────┐\n│ ••••••••••              │\n└─────────────────────────┘\nMinimum 6 characters\n\nConfirm Password *\n┌─────────────────────────┐\n│ ••••••••••              │\n└─────────────────────────┘\n\n  [Create Account & Login]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n```\n\n**Request Body:**\n- `phone` (required): Same phone from Steps 1 & 2\n- `password` (required): Password (min 6 chars)\n- `tempToken` (required): Token from Step 2\n- `name` (required): Employee full name\n- `employeeId` (required): Employee ID\n\n**Success Response (201 Created):**\n```json\n{\n  \"success\": true,\n  \"message\": \"Employee account created successfully\",\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": 17,\n    \"name\": \"John Internal\",\n    \"phone\": \"1718981000\",\n    \"role\": \"TECH_INTERNAL\",\n    \"technicianProfile\": {\n      \"id\": 4,\n      \"type\": \"INTERNAL\",\n      \"bonusRate\": 0.05,\n      \"status\": \"ACTIVE\"\n    }\n  }\n}\n```\n\n**What Happens:**\n1. Validates temp token\n2. Creates user account (TECH_INTERNAL)\n3. Creates technician profile:\n   - Type: INTERNAL\n   - Bonus Rate: 5%\n   - Status: ACTIVE\n4. Stores employeeId in profile\n5. Initializes wallet (balance: 0)\n6. Generates JWT token (valid 7 days)\n7. Auto-login (returns token)\n\n**Account Created:**\n- Role: TECH_INTERNAL\n- Type: Internal Employee\n- Bonus Rate: 5% (vs 40% for freelancers)\n- Payment Model: Fixed salary + bonus\n- Access: Same as freelancers + internal features\n\n**Error Responses:**\n- Invalid or expired temp token (400)\n- Password too short (400)\n- Phone already registered (400)\n- Missing employeeId (400)\n\n**After Registration:**\nEmployee is logged in and can access:\n- Technician dashboard\n- Job assignments\n- Earnings tracking\n- Internal team features\n\n**Comparison with Freelancer:**\n\n| Feature | Freelancer | Internal Employee |\n|---------|-----------|-------------------|\n| Role | TECH_FREELANCER | TECH_INTERNAL |\n| Rate | 40% commission | 5% bonus |\n| EmployeeId | Not required | Required |\n| Payment | Per job | Salary + bonus |\n| Registration | 3 steps | 3 steps (portal) |\n\n**Status:** ✅ NEW (Dec 4, 2025)"
+					}
+				},
+				{
+					"name": "Resend OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"+8801718981000\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/employee/register/resend-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"employee",
+								"register",
+								"resend-otp"
+							]
+						},
+						"description": "✅ NEW (Dec 4, 2025) - Resend OTP for Employee Registration\n\n**Resend OTP if employee didn't receive it or it expired.**\n\n**UI: Triggered from Step 2**\n```\nDidn't receive code?\n    [Resend OTP]\n```\n\n**Request Body:**\n- `phone` (required): Same phone from Step 1\n\n**Success Response (200 OK):**\n```json\n{\n  \"success\": true,\n  \"message\": \"OTP resent to +8801718981000\",\n  \"code\": \"654321\",\n  \"tempToken\": \"temp_1733305260000_xyz789\",\n  \"expiresAt\": \"2025-12-04T10:10:00Z\"\n}\n```\n\n**What Happens:**\n1. Retrieves previous OTP data\n2. Marks old OTP as expired\n3. Generates new 6-digit OTP\n4. Sends new SMS\n5. Preserves employeeId from Step 1\n6. Returns new temp token\n\n**Features:**\n- Preserves employee data (name, employeeId)\n- New OTP code generated\n- New temp token issued\n- Old OTP invalidated\n- Employee can continue from Step 2\n\n**Error Responses:**\n- No pending registration found (404)\n- SMS delivery failed (500)\n\n**Status:** ✅ NEW (Dec 4, 2025)"
 					}
 				}
 			]

@@ -18,6 +18,9 @@ const router = Router();
 
 router.post("/register", register); // Legacy endpoint (requires OTP in body)
 router.post("/set-password", setPassword); // New flow: verify OTP first, then set password
+router.post("/employee/register", register); // Employee registration (Step 1: Enter details + send OTP)
+router.post("/employee/verify-otp", setPassword); // Employee OTP verification (Step 2: Verify code)
+router.post("/employee/set-password", setPassword); // Employee password setup (Step 3: Create password)
 router.post("/login", login);
 router.post("/logout", authMiddleware, logout);
 router.post("/change-password", authMiddleware, changePassword);
