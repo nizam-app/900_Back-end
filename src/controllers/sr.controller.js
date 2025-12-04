@@ -56,6 +56,16 @@ export const createSR = async (req, res, next) => {
       return res.status(400).json({ message: "Phone must be 10-15 digits" });
     }
 
+    // Determine if user is authenticated
+    const isAuthenticated = req.user && req.user.id;
+
+    // For guest/web portal: Name is required
+    if (!isAuthenticated && !name) {
+      return res.status(400).json({
+        message: "Name is required for service request creation",
+      });
+    }
+
     // For call center: Check if user exists by phone
     if (req.user?.role === "CALL_CENTER") {
       const existingUser = await prisma.user.findUnique({ where: { phone } });
@@ -146,9 +156,6 @@ export const createSR = async (req, res, next) => {
     let isGuest = true; // Default to guest
     let finalSource = source || "WEB_PORTAL";
 
-    // Determine if user is authenticated
-    const isAuthenticated = req.user && req.user.id;
-
     // Handle call center scheduledAt → preferredDate mapping
     let finalPreferredDate = preferredDate;
     let finalDescription = description;
@@ -213,6 +220,7 @@ export const createSR = async (req, res, next) => {
       let guestUser = await prisma.user.findUnique({ where: { phone } });
 
       if (!guestUser) {
+        // Create new guest user with provided name
         guestUser = await prisma.user.create({
           data: {
             phone,
@@ -222,7 +230,16 @@ export const createSR = async (req, res, next) => {
             role: "CUSTOMER",
           },
         });
-        console.log(`👤 Created guest user: ${phone}`);
+        console.log(`👤 Created guest user: ${phone} (${name})`);
+      } else {
+        // Update existing guest user's name if provided and different
+        if (name && guestUser.name !== name) {
+          guestUser = await prisma.user.update({
+            where: { phone },
+            data: { name },
+          });
+          console.log(`👤 Updated guest user name: ${phone} → ${name}`);
+        }
       }
 
       customerId = guestUser.id;
@@ -230,7 +247,9 @@ export const createSR = async (req, res, next) => {
       finalSource = "WEB_PORTAL";
       createdById = null; // No authenticated creator
 
-      console.log(`🌐 Guest user ${phone} creating SR (isGuest: true)`);
+      console.log(
+        `🌐 Guest user ${phone} (${guestUser.name}) creating SR (isGuest: true)`
+      );
     }
 
     const sr = await prisma.serviceRequest.create({
@@ -284,6 +303,9 @@ export const createSR = async (req, res, next) => {
       srId: sr.id, // Include srId property
       status: sr.status, // Explicitly include status
       isGuest: sr.isGuest, // Explicitly include guest status for clarity
+      customerName: sr.customer?.name, // Customer name from the request
+      preferredAppointmentDate: sr.preferredDate, // Customer's requested date
+      preferredAppointmentTime: sr.preferredTime, // Customer's requested time
     };
 
     // Real-time notification for new service request
@@ -426,20 +448,20 @@ export const listSR = async (req, res, next) => {
       const paymentSummary =
         latestWO && latestWO.payments && latestWO.payments.length > 0
           ? {
-            totalAmount: latestWO.payments.reduce(
-              (sum, p) => sum + (p.amount || 0),
-              0
-            ),
-            paidAmount: latestWO.payments
-              .filter((p) => p.status === "VERIFIED")
-              .reduce((sum, p) => sum + (p.amount || 0), 0),
-            paymentStatus: latestWO.payments.some(
-              (p) => p.status === "VERIFIED"
-            )
-              ? "PAID"
-              : "PENDING",
-            paymentMethod: latestWO.payments[0]?.method || null,
-          }
+              totalAmount: latestWO.payments.reduce(
+                (sum, p) => sum + (p.amount || 0),
+                0
+              ),
+              paidAmount: latestWO.payments
+                .filter((p) => p.status === "VERIFIED")
+                .reduce((sum, p) => sum + (p.amount || 0), 0),
+              paymentStatus: latestWO.payments.some(
+                (p) => p.status === "VERIFIED"
+              )
+                ? "PAID"
+                : "PENDING",
+              paymentMethod: latestWO.payments[0]?.method || null,
+            }
           : null;
 
       return {
@@ -455,10 +477,10 @@ export const listSR = async (req, res, next) => {
         assignedTechnician:
           latestWO && latestWO.technician
             ? {
-              id: latestWO.technician.id,
-              name: latestWO.technician.name,
-              phone: latestWO.technician.phone,
-            }
+                id: latestWO.technician.id,
+                name: latestWO.technician.name,
+                phone: latestWO.technician.phone,
+              }
             : null,
         technicianRating:
           latestWO && latestWO.review ? latestWO.review.rating : null,
@@ -592,19 +614,19 @@ export const getMySRs = async (req, res, next) => {
       const paymentSummary =
         latestWO && latestWO.payments && latestWO.payments.length > 0
           ? {
-            totalAmount: latestWO.payments.reduce(
-              (sum, p) => sum + (p.amount || 0),
-              0
-            ),
-            paidAmount: latestWO.payments
-              .filter((p) => p.status === "VERIFIED")
-              .reduce((sum, p) => sum + (p.amount || 0), 0),
-            paymentStatus: latestWO.payments.some(
-              (p) => p.status === "VERIFIED"
-            )
-              ? "PAID"
-              : "PENDING",
-          }
+              totalAmount: latestWO.payments.reduce(
+                (sum, p) => sum + (p.amount || 0),
+                0
+              ),
+              paidAmount: latestWO.payments
+                .filter((p) => p.status === "VERIFIED")
+                .reduce((sum, p) => sum + (p.amount || 0), 0),
+              paymentStatus: latestWO.payments.some(
+                (p) => p.status === "VERIFIED"
+              )
+                ? "PAID"
+                : "PENDING",
+            }
           : null;
 
       return {
@@ -714,8 +736,8 @@ export const getSRById = async (req, res, next) => {
     const latestWO =
       sr.workOrders && sr.workOrders.length > 0
         ? sr.workOrders.reduce((latest, wo) =>
-          wo.createdAt > latest.createdAt ? wo : latest
-        )
+            wo.createdAt > latest.createdAt ? wo : latest
+          )
         : null;
 
     // Determine user-friendly status
@@ -760,30 +782,30 @@ export const getSRById = async (req, res, next) => {
     const paymentSummary =
       latestWO && latestWO.payments && latestWO.payments.length > 0
         ? {
-          totalAmount: latestWO.payments.reduce(
-            (sum, p) => sum + (p.amount || 0),
-            0
-          ),
-          paidAmount: latestWO.payments
-            .filter((p) => p.status === "VERIFIED")
-            .reduce((sum, p) => sum + (p.amount || 0), 0),
-          pendingAmount: latestWO.payments
-            .filter((p) => p.status !== "VERIFIED")
-            .reduce((sum, p) => sum + (p.amount || 0), 0),
-          paymentStatus: latestWO.payments.some(
-            (p) => p.status === "VERIFIED"
-          )
-            ? "PAID"
-            : "PENDING",
-          payments: latestWO.payments.map((p) => ({
-            id: p.id,
-            amount: p.amount,
-            status: p.status,
-            paymentMethod: p.method, // preserve API response key
-            transactionId: p.transactionRef, // map underlying field to expected key
-            createdAt: p.createdAt,
-          })),
-        }
+            totalAmount: latestWO.payments.reduce(
+              (sum, p) => sum + (p.amount || 0),
+              0
+            ),
+            paidAmount: latestWO.payments
+              .filter((p) => p.status === "VERIFIED")
+              .reduce((sum, p) => sum + (p.amount || 0), 0),
+            pendingAmount: latestWO.payments
+              .filter((p) => p.status !== "VERIFIED")
+              .reduce((sum, p) => sum + (p.amount || 0), 0),
+            paymentStatus: latestWO.payments.some(
+              (p) => p.status === "VERIFIED"
+            )
+              ? "PAID"
+              : "PENDING",
+            payments: latestWO.payments.map((p) => ({
+              id: p.id,
+              amount: p.amount,
+              status: p.status,
+              paymentMethod: p.method, // preserve API response key
+              transactionId: p.transactionRef, // map underlying field to expected key
+              createdAt: p.createdAt,
+            })),
+          }
         : null;
 
     const response = {
@@ -801,10 +823,10 @@ export const getSRById = async (req, res, next) => {
       technicianRating:
         latestWO && latestWO.review
           ? {
-            rating: latestWO.review.rating,
-            comment: latestWO.review.comment,
-            createdAt: latestWO.review.createdAt,
-          }
+              rating: latestWO.review.rating,
+              comment: latestWO.review.comment,
+              createdAt: latestWO.review.createdAt,
+            }
           : null,
       paymentSummary,
     };
@@ -868,7 +890,8 @@ export const cancelSR = async (req, res, next) => {
       data: {
         status: "CANCELLED",
         description: finalReason
-          ? `${sr.description || ""
+          ? `${
+              sr.description || ""
             }\n\nCancellation Reason: ${finalReason}`.trim()
           : sr.description,
         updatedAt: new Date(),
@@ -985,8 +1008,9 @@ export const rejectSR = async (req, res, next) => {
       },
       data: {
         status: "REJECTED",
-        description: `${sr.description || ""
-          }\n\nRejection Reason: ${finalReason}`.trim(),
+        description: `${
+          sr.description || ""
+        }\n\nRejection Reason: ${finalReason}`.trim(),
         updatedAt: new Date(),
       },
       include: {

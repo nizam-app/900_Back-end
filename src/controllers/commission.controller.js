@@ -99,25 +99,55 @@ export const getTechnicianDashboard = async (req, res, next) => {
   try {
     const technicianId = req.user.id;
 
-    const [wallet, totalEarned, totalPaid, allCommissions, totalJobsCompleted] =
-      await Promise.all([
-        prisma.wallet.findUnique({ where: { technicianId } }),
-        prisma.commission.aggregate({
-          where: { technicianId, status: "EARNED" },
-          _sum: { amount: true },
-        }),
-        prisma.commission.aggregate({
-          where: { technicianId, status: "PAID" },
-          _sum: { amount: true },
-        }),
-        prisma.commission.aggregate({
-          where: { technicianId },
-          _sum: { amount: true },
-        }),
-        prisma.workOrder.count({
-          where: { technicianId, status: "COMPLETED" },
-        }),
-      ]);
+    const [
+      wallet,
+      totalEarned,
+      totalPaid,
+      allCommissions,
+      completedJobs,
+      completedJobsWithPayments,
+    ] = await Promise.all([
+      prisma.wallet.findUnique({ where: { technicianId } }),
+      prisma.commission.aggregate({
+        where: { technicianId, status: "EARNED" },
+        _sum: { amount: true },
+      }),
+      prisma.commission.aggregate({
+        where: { technicianId, status: "PAID" },
+        _sum: { amount: true },
+      }),
+      prisma.commission.aggregate({
+        where: { technicianId },
+        _sum: { amount: true },
+      }),
+      prisma.workOrder.count({
+        where: {
+          technicianId,
+          status: { in: ["COMPLETED_PENDING_PAYMENT", "PAID_VERIFIED"] },
+        },
+      }),
+      prisma.workOrder.findMany({
+        where: {
+          technicianId,
+          status: { in: ["COMPLETED_PENDING_PAYMENT", "PAID_VERIFIED"] },
+        },
+        include: {
+          payments: {
+            where: { status: "VERIFIED" },
+          },
+        },
+      }),
+    ]);
+
+    // Calculate total job payments
+    let totalJobPayments = 0;
+    for (const job of completedJobsWithPayments) {
+      const jobPayment = job.payments.reduce(
+        (sum, payment) => sum + (payment.amount || 0),
+        0
+      );
+      totalJobPayments += jobPayment;
+    }
 
     // Handle wallet balance validation
     const currentBalance = wallet?.balance || 0;
@@ -139,7 +169,17 @@ export const getTechnicianDashboard = async (req, res, next) => {
       totalPaid: paidAmount,
       pendingPayout: earnedAmount, // Only earned commissions are pending
       totalAllTimeEarnings: totalAmount,
-      totalJobsCompleted,
+      totalJobsCompleted: completedJobs,
+      breakdown: {
+        jobsCompleted: {
+          count: completedJobs,
+          totalAmount: totalJobPayments,
+        },
+        commission: {
+          amount: earnedAmount,
+        },
+        total: totalJobPayments + earnedAmount,
+      },
     };
 
     // Add warning for negative balance
@@ -238,15 +278,23 @@ export const requestPayout = async (req, res, next) => {
 export const getPayoutRequests = async (req, res, next) => {
   try {
     const { status, technicianId } = req.query;
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
     const where = {};
 
-    if (status) {
-      where.status = status;
+    // If technician is requesting, only show their own requests
+    if (userRole === "TECH_INTERNAL" || userRole === "TECH_FREELANCER") {
+      where.technicianId = userId;
+    } else {
+      // Admin/Dispatcher can filter by technicianId
+      if (technicianId) {
+        where.technicianId = Number(technicianId);
+      }
     }
 
-    if (technicianId) {
-      where.technicianId = Number(technicianId);
+    if (status) {
+      where.status = status;
     }
 
     const requests = await prisma.payoutRequest.findMany({

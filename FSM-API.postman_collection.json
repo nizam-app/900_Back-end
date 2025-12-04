@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "fsm-api-collection-2025-v3",
 		"name": "FSM System API - Complete Collection",
-		"description": "Complete Field Service Management API Collection - Updated Dec 3, 2025 with Technician Profile Enhancements, Dashboard Stats, Jobs Filtering, and Complete WO fixes. Includes all endpoints: Reviews, Dispatch Center, Time Management, Payments, Commissions, and enhanced technician features.",
+		"description": "Complete Field Service Management API Collection - Updated Dec 4, 2025 with 3-Step Freelancer Registration Flow, Technician Profile Enhancements, Dashboard Stats, Jobs Filtering, and Complete WO fixes. Includes all endpoints: Authentication, Reviews, Dispatch Center, Time Management, Payments, Commissions, and enhanced technician features.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -10,7 +10,7 @@
 			"name": "Authentication & OTP",
 			"item": [
 				{
-					"name": "Send OTP",
+					"name": "Send OTP (Step 1 for Registration)",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -21,7 +21,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"phone\": \"+8801718981009\",\n  \"type\": \"REGISTRATION\"\n}"
+							"raw": "{\n  \"phone\": \"+8801718981009\",\n  \"name\": \"John Freelancer\",\n  \"type\": \"REGISTRATION\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/otp/send",
@@ -34,11 +34,11 @@
 								"send"
 							]
 						},
-						"description": "Send OTP for phone verification. Types: REGISTRATION, LOGIN, PASSWORD_RESET, VERIFICATION\n\nTESTED & WORKING (Dec 2, 2025)\n\nPhone Format (Bangladesh):\n- +8801718981009 (recommended - with country code)\n- 8801718981009 (works - auto-formatted)\n- 01718981009 (works - auto-converted to 8801718981009)\n\nResponse includes:\n- OTP code (for testing/development)\n- Expiry time (5 minutes)\n- SMS status (sent/failed)\n\nNote: OTP is stored in database and valid for 5 minutes. SMS delivery depends on BulkGate credits."
+						"description": "**STEP 1 OF 3: Enter Name & Phone Number**\n\nSend OTP for phone verification. Used for registration, login, password reset, and verification.\n\n**UPDATED:** Dec 4, 2025 - Now accepts `name` parameter for REGISTRATION type\n\n**3-Step Freelancer Registration Flow:**\nThis is Step 1 where user enters their full name and phone number.\n\n**Request Body:**\n- phone (required): Phone number (10-15 digits)\n- name (required for REGISTRATION): Full name of the freelancer\n- type (required): REGISTRATION, LOGIN, PASSWORD_RESET, or VERIFICATION\n\n**Phone Format (Bangladesh):**\n- +8801718981009 (recommended - with country code)\n- 8801718981009 (works - auto-formatted)\n- 01718981009 (works - auto-converted to 8801718981009)\n\n**Success Response:**\n- code: OTP code (for testing/development)\n- tempToken: Temporary token (valid 10 minutes)\n- expiresAt: OTP expiry time (5 minutes)\n- smsStatus: sent/failed\n\n**What Happens:**\n1. OTP code generated (6 digits, valid 5 minutes)\n2. SMS sent to phone number\n3. Temporary token created (valid 10 minutes)\n4. User's name stored temporarily for Step 3\n5. Proceed to Step 2: Verify OTP\n\nTESTED & WORKING (Dec 4, 2025)"
 					}
 				},
 				{
-					"name": "Verify OTP",
+					"name": "Verify OTP (Step 2 for Registration)",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -62,11 +62,39 @@
 								"verify"
 							]
 						},
-						"description": "Verify OTP code sent to phone number\n\nTESTED & WORKING (Dec 2, 2025)\n\nRequirements:\n- Use the SAME phone format as Send OTP\n- 6-digit code must match exactly\n- Must be verified within 5 minutes\n- Type must match the Send OTP request\n\nSuccess Response:\n- verified: true\n- tempToken: Temporary token for registration (valid 10 minutes)\n- tempTokenExpiry: Token expiration time\n\nUse the tempToken to complete registration with /api/auth/set-password endpoint."
+						"description": "**STEP 2 OF 3: Verify Phone Number**\n\nVerify the 6-digit OTP code sent to the phone number.\n\n**UPDATED:** Dec 4, 2025 - Part of 3-step freelancer registration flow\n\n**Request Body:**\n- phone (required): Same phone number from Step 1\n- code (required): 6-digit OTP code\n- type (required): Must match Step 1 (REGISTRATION)\n\n**Requirements:**\n- Use the SAME phone format as Send OTP\n- 6-digit code must match exactly\n- Must be verified within 5 minutes\n- Type must match the Send OTP request\n\n**Success Response:**\n- verified: true\n- tempToken: Temporary token for Step 3 (valid 10 minutes)\n- phone: Verified phone number\n\n**What Happens:**\n1. OTP code is validated\n2. OTP is marked as used (one-time use)\n3. Temporary token returned for Step 3\n4. Phone number is verified\n\n**Next Step:** Proceed to Step 3: Set Password using the returned tempToken\n\nTESTED & WORKING (Dec 4, 2025)"
 					}
 				},
 				{
-					"name": "Register User",
+					"name": "Set Password (Step 3 - Complete Registration)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"+8801718981009\",\n  \"password\": \"test123\",\n  \"tempToken\": \"temp_1733305200000_abc123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/set-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"set-password"
+							]
+						},
+						"description": "**STEP 3 OF 3: Set Password & Create Account**\n\n**NEW:** Dec 4, 2025 - Complete freelancer registration flow\n\nCreate a secure password to complete registration. This endpoint creates the account and logs the user in automatically.\n\n**Request Body:**\n- phone (required): Same phone from Steps 1 & 2\n- password (required): Password (minimum 6 characters)\n- tempToken (required): Temp token from Step 2\n\n**Success Response (201 Created):**\n{\n  token: JWT token (valid 7 days),\n  user: { id, name, phone, email, role: TECH_FREELANCER },\n  message: \"Account created successfully! Welcome to FSM.\"\n}\n\n**What Happens:**\n1. Password validated (min 6 characters)\n2. Temp token verified\n3. Name from Step 1 retrieved\n4. User account created (TECH_FREELANCER)\n5. Technician profile created (40% commission)\n6. Wallet initialized (balance: 0)\n7. JWT token generated\n8. User automatically logged in\n\n**Error Responses:**\n- Invalid or expired temporary token (400)\n- Password must be at least 6 characters long (400)\n- Phone already registered (400)\n\n**After Registration:**\nUser is logged in and can access protected endpoints with the JWT token.\n\nTESTED & WORKING (Dec 4, 2025)\n\n**Complete Flow:**\n1. POST /api/otp/send (name + phone)\n2. POST /api/otp/verify (OTP code)\n3. POST /api/auth/set-password (password + tempToken)\n4. User registered and logged in!"
+					}
+				},
+				{
+					"name": "Register User (Legacy)",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -90,7 +118,7 @@
 								"register"
 							]
 						},
-						"description": "Register new user. Roles: CUSTOMER, TECH_FREELANCER, TECH_INTERNAL, DISPATCHER, CALL_CENTER, ADMIN"
+						"description": "**LEGACY ENDPOINT** - Direct registration (not recommended for freelancers)\n\nRegister new user directly without OTP verification. For freelancers, use the 3-step flow instead:\n1. Send OTP (Step 1)\n2. Verify OTP (Step 2)\n3. Set Password (Step 3)\n\nRoles: CUSTOMER, TECH_FREELANCER, TECH_INTERNAL, DISPATCHER, CALL_CENTER, ADMIN\n\n**Note:** This endpoint bypasses OTP verification and should only be used for admin/internal user creation."
 					}
 				},
 				{
@@ -491,7 +519,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Jane Customer\",\n  \"phone\": \"8888888888\",\n  \"address\": \"456 Oak Street, Downtown\",\n  \"latitude\": -1.292066,\n  \"longitude\": 36.821946,\n  \"categoryId\": 1,\n  \"subserviceId\": 1,\n  \"serviceId\": 1,\n  \"description\": \"AC not cooling properly\",\n  \"paymentType\": \"MOBILE_MONEY\",\n  \"priority\": \"HIGH\"\n}"
+							"raw": "{\n  \"name\": \"Jane Customer\",\n  \"phone\": \"8888888888\",\n  \"address\": \"456 Oak Street, Downtown\",\n  \"latitude\": -1.292066,\n  \"longitude\": 36.821946,\n  \"categoryId\": 1,\n  \"subserviceId\": 1,\n  \"serviceId\": 1,\n  \"description\": \"AC not cooling properly\",\n  \"paymentType\": \"MOBILE_MONEY\",\n  \"priority\": \"HIGH\",\n  \"preferredDate\": \"2025-12-10T10:00:00Z\",\n  \"preferredTime\": \"Morning\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/sr",
@@ -503,7 +531,7 @@
 								"sr"
 							]
 						},
-						"description": "Create service request with GPS coordinates. Returns srId and status explicitly."
+						"description": "Guest/Web Portal SR creation. **REQUIRED**: name, phone, address, categoryId, subserviceId. **OPTIONAL**: preferredDate (ISO 8601 format), preferredTime (e.g., 'Morning', 'Afternoon', 'Evening'). Response includes srId, status, customerName, and appointment details."
 					}
 				},
 				{
@@ -537,7 +565,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"address\": \"789 Service Street, Nairobi\",\n  \"latitude\": -1.286389,\n  \"longitude\": 36.817223,\n  \"categoryId\": 1,\n  \"subserviceId\": 1,\n  \"serviceId\": 1,\n  \"description\": \"Refrigerator not cooling\",\n  \"paymentType\": \"CASH\",\n  \"priority\": \"MEDIUM\"\n}"
+							"raw": "{\n  \"address\": \"789 Service Street, Nairobi\",\n  \"latitude\": -1.286389,\n  \"longitude\": 36.817223,\n  \"categoryId\": 1,\n  \"subserviceId\": 1,\n  \"serviceId\": 1,\n  \"description\": \"Refrigerator not cooling\",\n  \"paymentType\": \"CASH\",\n  \"priority\": \"MEDIUM\",\n  \"preferredDate\": \"2025-12-15T14:00:00Z\",\n  \"preferredTime\": \"Afternoon\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/sr",
@@ -549,7 +577,7 @@
 								"sr"
 							]
 						},
-						"description": "Authenticated customer creates SR. GPS coordinates auto-saved to customer profile."
+						"description": "Authenticated customer creates SR. **REQUIRED**: phone, address, categoryId, subserviceId (name from auth token). **OPTIONAL**: preferredDate (ISO 8601 format), preferredTime (e.g., 'Morning', 'Afternoon', 'Evening'). GPS coordinates auto-saved to customer profile."
 					}
 				},
 				{
@@ -1613,7 +1641,7 @@
 								"dashboard"
 							]
 						},
-						"description": "✅ ENHANCED - Technician Financial Dashboard\n\n**UI: This Month Breakdown Section**\n\nDisplays monthly performance summary:\n```\nJobs Completed\n28 jobs                    $6,450\n\nCommission\nEarnings rate              $320\n\nTotal                      $6,770\n```\n\n**API Response Structure:**\n```json\n{\n  \"walletBalance\": 6770,\n  \"totalEarned\": 320,\n  \"totalPaid\": 0,\n  \"pendingPayout\": 320,\n  \"totalAllTimeEarnings\": 320,\n  \"totalJobsCompleted\": 28\n}\n```\n\n**Field Mapping:**\n• **Jobs Completed:** totalJobsCompleted (28 jobs)\n• **Jobs Value:** Sum of all completed job payments ($6,450)\n  - Get from: `GET /api/wos?technicianId={id}&status=COMPLETED`\n  - Sum: payments[].amount\n\n• **Commission Earnings:** totalEarned ($320)\n  - Your earnings at commission rate (typically 15%)\n  - Status: EARNED (available in wallet)\n\n• **Total:** walletBalance ($6,770)\n  - Jobs Value + Commission = $6,450 + $320 = $6,770\n  - Available for payout request\n\n**Response Fields:**\n• walletBalance: Current available balance\n• totalEarned: Total earned commissions (EARNED status)\n• totalPaid: Already withdrawn amount (PAID status)\n• pendingPayout: Same as totalEarned (available for withdrawal)\n• totalAllTimeEarnings: Lifetime total (all statuses)\n• totalJobsCompleted: Count of COMPLETED work orders\n\n**Usage:**\n1. Display \"28 jobs\" from totalJobsCompleted\n2. Calculate jobs value by summing work order payments\n3. Display \"$320\" from totalEarned (commission earnings)\n4. Display \"$6,770\" from walletBalance (total available)\n\n**Note:** Commission rate is stored in technicianProfile.commissionRate (default 15%)\n\n**Status:** ✅ PRODUCTION READY"
+						"description": "✅ FIXED (Dec 4, 2025) - Technician Financial Dashboard with Complete Breakdown\n\n**UI: This Month Breakdown Section**\n\nDisplays monthly performance summary:\n```\nJobs Completed\n28 jobs                    $6,450\n\nCommission\nEarnings rate              $320\n\nTotal                      $6,770\n```\n\n**API Response Structure:**\n```json\n{\n  \"walletBalance\": 6770,\n  \"totalEarned\": 320,\n  \"totalPaid\": 0,\n  \"pendingPayout\": 320,\n  \"totalAllTimeEarnings\": 320,\n  \"totalJobsCompleted\": 28,\n  \"breakdown\": {\n    \"jobsCompleted\": {\n      \"count\": 28,\n      \"totalAmount\": 6450\n    },\n    \"commission\": {\n      \"amount\": 320\n    },\n    \"total\": 6770\n  }\n}\n```\n\n**Field Mapping (UPDATED Dec 4):**\n• **Jobs Completed:** breakdown.jobsCompleted.count (28 jobs)\n• **Jobs Value:** breakdown.jobsCompleted.totalAmount ($6,450)\n  - Automatically calculated from verified payments\n  - Sum of all VERIFIED payments for completed work orders\n\n• **Commission Earnings:** breakdown.commission.amount ($320)\n  - Your earnings at commission rate (typically 15-40%)\n  - Status: EARNED (available in wallet)\n\n• **Total:** breakdown.total ($6,770)\n  - Jobs Value + Commission = $6,450 + $320 = $6,770\n  - Available for payout request\n\n**Response Fields:**\n• walletBalance: Current available balance\n• totalEarned: Total earned commissions (EARNED status)\n• totalPaid: Already withdrawn amount (PAID status)\n• pendingPayout: Same as totalEarned (available for withdrawal)\n• totalAllTimeEarnings: Lifetime total (all statuses)\n• totalJobsCompleted: Count of completed work orders\n• **breakdown** (NEW): Complete breakdown with jobs, commission, and total\n\n**Usage:**\n1. Display \"28 jobs\" from breakdown.jobsCompleted.count\n2. Display \"$6,450\" from breakdown.jobsCompleted.totalAmount\n3. Display \"$320\" from breakdown.commission.amount\n4. Display \"$6,770\" from breakdown.total\n\n**What Was Fixed (Dec 4, 2025):**\n✅ Added complete breakdown object with all values\n✅ Backend now calculates job payment totals automatically\n✅ No need to make separate API calls for job values\n✅ Single endpoint provides all dashboard data\n\n**Status:** ✅ FIXED & TESTED (Dec 4, 2025)"
 					}
 				},
 				{
@@ -1658,6 +1686,37 @@
 							]
 						},
 						"description": "✅ ENHANCED - Request early payout with payment method\n\n**UI: Request Early Payout Modal**\n\n**Amount Available:** $141.00 (wallet balance)\n- Jobs completed: 7\n- Commission rate: 15%\n\n**Payment Method Selection:**\n\n**Request Body:**\n```json\n{\n  \"amount\": 100,\n  \"reason\": \"Need funds for expenses\",\n  \"paymentMethod\": \"BANK_ACCOUNT\"\n}\n```\n\n**Fields:**\n• amount (required): Payout amount ≤ wallet balance\n• reason (optional): Reason for early payout\n• paymentMethod (required): BANK_ACCOUNT or MOBILE_BANKING\n\n**How Backend Selects Bank Account:**\n\n1. **Technician Profile Setup** (done once):\n   - Bank Account: bankAccountNumber, bankName, bankAccountHolder\n   - Mobile Banking: mobileBankingNumber, mobileBankingType (BKASH/NAGAD/ROCKET)\n\n2. **Payout Request** (each time):\n   - Technician selects payment method in UI\n   - Backend validates method is configured\n   - Stores last 4 digits for display (\"****1234\")\n\n3. **Admin Processing:**\n   - Admin sees full account details from profile\n   - Transfers funds to selected account\n   - Updates status to APPROVED\n\n**Payment Options:**\n• `BANK_ACCOUNT` → Uses profile.bankAccountNumber\n• `MOBILE_BANKING` → Uses profile.mobileBankingNumber\n\n**Response:**\n```json\n{\n  \"id\": 1,\n  \"amount\": 100,\n  \"status\": \"PENDING\",\n  \"paymentMethod\": \"BANK_ACCOUNT\",\n  \"bankAccountLast4\": \"1234\"\n}\n```\n\n**Validation:**\n- Checks payment method is configured\n- Validates sufficient balance\n- Returns 400 if account not set up\n\n**Status:** ✅ PRODUCTION READY"
+					}
+				},
+				{
+					"name": "Get My Payout Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{techToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/commissions/my-payout-requests?status=PENDING",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"commissions",
+								"my-payout-requests"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "PENDING",
+									"description": "PENDING | APPROVED | REJECTED"
+								}
+							]
+						},
+						"description": "✅ NEW (Dec 4, 2025) - Get Technician's Own Payout Requests\n\n**UI: Time Off Requests Section** (Profile Screen)\n\nDisplays technician's payout requests:\n```\nTime Off Requests    →\n2 pending\n```\n\n**API Response:**\n```json\n[\n  {\n    \"id\": 1,\n    \"technicianId\": 5,\n    \"amount\": 100,\n    \"status\": \"PENDING\",\n    \"reason\": \"Need funds for expenses\",\n    \"paymentMethod\": \"BANK_ACCOUNT\",\n    \"bankAccountLast4\": \"1234\",\n    \"createdAt\": \"2025-12-04T10:00:00Z\",\n    \"reviewedAt\": null,\n    \"reviewedBy\": null\n  },\n  {\n    \"id\": 2,\n    \"technicianId\": 5,\n    \"amount\": 200,\n    \"status\": \"APPROVED\",\n    \"reason\": \"Emergency expenses\",\n    \"paymentMethod\": \"MOBILE_BANKING\",\n    \"bankAccountLast4\": \"5678\",\n    \"createdAt\": \"2025-12-03T14:00:00Z\",\n    \"reviewedAt\": \"2025-12-03T15:30:00Z\",\n    \"reviewedBy\": {\n      \"id\": 1,\n      \"name\": \"Admin User\"\n    }\n  }\n]\n```\n\n**Query Parameters:**\n• status (optional): PENDING, APPROVED, REJECTED\n  - Default: all statuses\n\n**Features:**\n- Shows only technician's own requests\n- Includes payment method details\n- Shows review status and reviewer info\n- Sorted by creation date (newest first)\n\n**UI Display:**\n```\nTime Off Requests          →\n2 pending\n\nRequest #1\n$100 - PENDING\nRequested: Dec 4, 2025\nReason: Need funds for expenses\nPayment: Bank ****1234\n\nRequest #2\n$200 - APPROVED\nRequested: Dec 3, 2025\nReviewed by: Admin User\nPayment: Mobile ****5678\n```\n\n**Authorization:** Technician only (TECH_INTERNAL, TECH_FREELANCER)\n\n**Status:** ✅ NEW (Dec 4, 2025)"
 					}
 				},
 				{
@@ -1854,6 +1913,30 @@
 							]
 						},
 						"description": "✅ NEW (Dec 3, 2025) - Complete Earnings Summary with Breakdown\n\n**Response Structure:**\n```json\n{\n  \"totalBonuses\": {\n    \"amount\": 12500,\n    \"increaseRate\": 25.5,\n    \"increaseText\": \"+25.5% from last month\"\n  },\n  \"breakdown\": {\n    \"today\": 1800,\n    \"thisWeek\": 5400,\n    \"thisWeekPercentage\": 40,\n    \"thisMonth\": 12500\n  },\n  \"availableBonus\": {\n    \"amount\": 5400,\n    \"jobsCount\": 6,\n    \"jobsText\": \"6 jobs\",\n    \"bonusText\": \"40% bonus\",\n    \"payoutInfo\": \"Regular payout: Every Monday\"\n  },\n  \"bonusRate\": {\n    \"rate\": 0.4,\n    \"ratePercentage\": 40,\n    \"type\": \"Commission\",\n    \"description\": \"Earn 40% commission on every verified job completion...\"\n  },\n  \"monthlySalary\": {\n    \"baseSalary\": 0,\n    \"thisMonthBonus\": 12500,\n    \"total\": 12500,\n    \"isFreelancer\": true\n  },\n  \"recentBonuses\": [\n    {\n      \"id\": 1,\n      \"jobName\": \"HVAC Repair\",\n      \"customerName\": \"Michael Johnson\",\n      \"date\": \"2025-12-03T14:00:00Z\",\n      \"jobPayment\": 900,\n      \"bonus\": 360,\n      \"status\": \"BOOKED\",\n      \"woNumber\": \"WO-1234567891\"\n    }\n  ]\n}\n```\n\n**Field Descriptions:**\n\n**totalBonuses:**\n- All-time earnings with month-over-month growth rate\n\n**breakdown:**\n- Today, this week, this month earnings\n- Current bonus/commission percentage\n\n**availableBonus:**\n- This week's earnings available for payout\n- Number of jobs contributing to bonus\n- Payout schedule information\n\n**bonusRate:**\n- Current commission/bonus rate\n- Type (Commission for freelancers, Bonus for internal)\n- Detailed description\n\n**monthlySalary:**\n- Base salary (internal staff only)\n- This month's bonus earnings\n- Total monthly earnings\n\n**recentBonuses:**\n- Last 10 bonus transactions\n- Job details, customer, payment amounts\n\n**UI Display:**\n```\n💰 Total Bonuses: $12,500\n   +25.5% from last month\n\n📊 Breakdown:\n   Today: $1,800\n   This Week: $5,400 (40%)\n   This Month: $12,500\n\n📅 Recent Transactions:\n   HVAC Repair - Michael Johnson\n   Today, 2:00 PM - $360\n```\n\n**Authorization:** Technician only (TECH_FREELANCER, TECH_INTERNAL)\n\n**Status:** ✅ PRODUCTION READY (Added Dec 3, 2025)"
+					}
+				},
+				{
+					"name": "Technician Work History (NEW Dec 4)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{techToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/technician/work-history",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technician",
+								"work-history"
+							]
+						},
+						"description": "✅ NEW (Dec 4, 2025) - Complete Work History\n\n**UI: Work History Section** (Profile Screen)\n\nDisplays complete work history with all completed jobs:\n```\nWork History    →\nView\n```\n\n**API Response:**\n```json\n{\n  \"summary\": {\n    \"totalJobs\": 45,\n    \"totalEarnings\": 8500,\n    \"averageRating\": 4.7,\n    \"totalReviews\": 38\n  },\n  \"workOrders\": [\n    {\n      \"id\": 1,\n      \"woNumber\": \"WO-1234567890\",\n      \"completedAt\": \"2025-12-04T14:30:00Z\",\n      \"status\": \"PAID_VERIFIED\",\n      \"customer\": {\n        \"id\": 3,\n        \"name\": \"Jane Smith\",\n        \"phone\": \"8888888888\"\n      },\n      \"category\": {\n        \"id\": 1,\n        \"name\": \"HVAC Services\"\n      },\n      \"service\": {\n        \"id\": 1,\n        \"name\": \"AC Repair\"\n      },\n      \"subservice\": {\n        \"id\": 1,\n        \"name\": \"AC Not Cooling\"\n      },\n      \"address\": \"123 Main St, City\",\n      \"payment\": {\n        \"amount\": 500,\n        \"status\": \"VERIFIED\",\n        \"verifiedAt\": \"2025-12-04T15:00:00Z\"\n      },\n      \"commission\": {\n        \"amount\": 200,\n        \"status\": \"EARNED\"\n      },\n      \"review\": {\n        \"id\": 1,\n        \"rating\": 5,\n        \"comment\": \"Excellent service!\",\n        \"createdAt\": \"2025-12-04T16:00:00Z\"\n      },\n      \"notes\": \"Replaced compressor and cleaned filters\"\n    }\n  ]\n}\n```\n\n**Features:**\n- Complete work history with all completed jobs\n- Summary statistics (total jobs, earnings, ratings)\n- Detailed job information\n- Customer details and contact\n- Service hierarchy (category → service → subservice)\n- Payment and commission details\n- Customer reviews and ratings\n- Completion notes\n\n**UI Display:**\n```\n📊 Work History Summary\n\nTotal Jobs: 45\nTotal Earnings: $8,500\nAverage Rating: ⭐ 4.7 (38 reviews)\n\n━━━━━━━━━━━━━━━━━━━━━━━\n\nRecent Jobs:\n\n1. HVAC Services - AC Repair\n   WO-1234567890\n   Jane Smith | Dec 4, 2025\n   Payment: $500 | Commission: $200\n   ⭐⭐⭐⭐⭐ \"Excellent service!\"\n\n2. Plumbing - Pipe Repair\n   WO-1234567889\n   John Doe | Dec 3, 2025\n   Payment: $300 | Commission: $120\n   ⭐⭐⭐⭐ \"Good work\"\n```\n\n**Authorization:** Technician only (TECH_INTERNAL, TECH_FREELANCER)\n\n**Status:** ✅ NEW (Dec 4, 2025)"
 					}
 				}
 			]

@@ -46,4 +46,11 @@ router.get("/wallet", technicianController.getWallet);
  */
 router.get("/earnings", technicianController.getEarnings);
 
+/**
+ * @route   GET /api/technician/work-history
+ * @desc    Get technician's complete work history with all work orders
+ * @access  Private - Technicians only
+ */
+router.get("/work-history", technicianController.getWorkHistory);
+
 export default router;

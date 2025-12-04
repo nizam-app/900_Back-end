@@ -83,7 +83,7 @@ export const getTechnicianDashboard = async (technicianId) => {
           gte: startOfWeek,
         },
         status: {
-          in: ["BOOKED", "PAID_OUT"],
+          in: ["EARNED", "PAID"],
         },
       },
       _sum: {
@@ -96,7 +96,7 @@ export const getTechnicianDashboard = async (technicianId) => {
       where: {
         technicianId,
         status: {
-          in: ["BOOKED", "PAID_OUT"],
+          in: ["EARNED", "PAID"],
         },
       },
       _sum: {
@@ -121,22 +121,29 @@ export const getTechnicianDashboard = async (technicianId) => {
  * Get technician's work orders by status
  */
 export const getTechnicianJobs = async (technicianId, statusFilter) => {
-  const where = {
-    technicianId,
-  };
+  const where = {};
 
   // Map UI status to database statuses
-  if (statusFilter === "incoming") {
-    // Incoming: Newly assigned jobs that haven't been accepted yet
-    where.status = "ASSIGNED";
-  } else if (statusFilter === "active") {
-    // Active: Jobs that are accepted or in progress
-    where.status = { in: ["ACCEPTED", "IN_PROGRESS"] };
-  } else if (statusFilter === "done") {
-    // Done: Completed jobs (all completion statuses)
-    where.status = {
-      in: ["COMPLETED_PENDING_PAYMENT", "PAID_VERIFIED"],
-    };
+  if (statusFilter === "available") {
+    // Available: Unassigned work orders that technicians can claim
+    where.technicianId = null;
+    where.status = "UNASSIGNED";
+  } else {
+    // For all other statuses, filter by technicianId
+    where.technicianId = technicianId;
+
+    if (statusFilter === "incoming") {
+      // Incoming: Newly assigned jobs that haven't been accepted yet
+      where.status = "ASSIGNED";
+    } else if (statusFilter === "active") {
+      // Active: Jobs that are accepted or in progress
+      where.status = { in: ["ACCEPTED", "IN_PROGRESS"] };
+    } else if (statusFilter === "done") {
+      // Done: Completed jobs (all completion statuses)
+      where.status = {
+        in: ["COMPLETED_PENDING_PAYMENT", "PAID_VERIFIED"],
+      };
+    }
   }
 
   const workOrders = await prisma.workOrder.findMany({
@@ -344,7 +351,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       where: {
         technicianId,
         createdAt: { gte: startOfDay },
-        status: { in: ["BOOKED", "PAID_OUT"] },
+        status: { in: ["EARNED", "PAID"] },
       },
       _sum: { amount: true },
     }),
@@ -354,7 +361,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       where: {
         technicianId,
         createdAt: { gte: startOfWeek },
-        status: { in: ["BOOKED", "PAID_OUT"] },
+        status: { in: ["EARNED", "PAID"] },
       },
       _sum: { amount: true },
     }),
@@ -364,7 +371,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       where: {
         technicianId,
         createdAt: { gte: startOfMonth },
-        status: { in: ["BOOKED", "PAID_OUT"] },
+        status: { in: ["EARNED", "PAID"] },
       },
       _sum: { amount: true },
     }),
@@ -374,7 +381,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       where: {
         technicianId,
         createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
-        status: { in: ["BOOKED", "PAID_OUT"] },
+        status: { in: ["EARNED", "PAID"] },
       },
       _sum: { amount: true },
     }),
@@ -383,7 +390,7 @@ export const getTechnicianEarnings = async (technicianId) => {
     prisma.commission.aggregate({
       where: {
         technicianId,
-        status: { in: ["BOOKED", "PAID_OUT"] },
+        status: { in: ["EARNED", "PAID"] },
       },
       _sum: { amount: true },
     }),
@@ -393,7 +400,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       where: {
         technicianId,
         createdAt: { gte: startOfWeek },
-        status: { in: ["BOOKED", "PAID_OUT"] },
+        status: { in: ["EARNED", "PAID"] },
       },
     }),
 
@@ -401,7 +408,7 @@ export const getTechnicianEarnings = async (technicianId) => {
     prisma.commission.findMany({
       where: {
         technicianId,
-        status: { in: ["BOOKED", "PAID_OUT"] },
+        status: { in: ["EARNED", "PAID"] },
       },
       include: {
         workOrder: {
@@ -504,4 +511,128 @@ export const getTechnicianEarnings = async (technicianId) => {
   };
 
   return earnings;
+};
+
+/**
+ * Get technician work history
+ */
+export const getWorkHistory = async (technicianId) => {
+  // Get all completed work orders for the technician
+  const workOrders = await prisma.workOrder.findMany({
+    where: {
+      technicianId: technicianId,
+      status: {
+        in: ["COMPLETED", "PAID_VERIFIED"],
+      },
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      service: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      subservice: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      payments: {
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+          verifiedAt: true,
+        },
+      },
+      commissions: {
+        select: {
+          id: true,
+          amount: true,
+          status: true,
+          createdAt: true,
+        },
+      },
+      review: {
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+        },
+      },
+    },
+    orderBy: {
+      completedAt: "desc",
+    },
+  });
+
+  // Format the work history
+  const formattedHistory = workOrders.map((wo) => {
+    const payment = wo.payments[0];
+    const commission = wo.commissions[0];
+
+    return {
+      id: wo.id,
+      woNumber: wo.woNumber,
+      completedAt: wo.completedAt,
+      status: wo.status,
+      customer: wo.customer,
+      category: wo.category,
+      service: wo.service,
+      subservice: wo.subservice,
+      address: wo.address,
+      payment: payment
+        ? {
+            amount: payment.amount,
+            status: payment.status,
+            verifiedAt: payment.verifiedAt,
+          }
+        : null,
+      commission: commission
+        ? {
+            amount: commission.amount,
+            status: commission.status,
+          }
+        : null,
+      review: wo.review,
+      notes: wo.completionNotes,
+    };
+  });
+
+  // Calculate summary statistics
+  const totalJobs = workOrders.length;
+  const totalEarnings = workOrders.reduce((sum, wo) => {
+    const commission = wo.commissions[0];
+    return sum + (commission?.amount || 0);
+  }, 0);
+  const averageRating =
+    workOrders
+      .filter((wo) => wo.review)
+      .reduce((sum, wo) => sum + (wo.review?.rating || 0), 0) /
+      workOrders.filter((wo) => wo.review).length || 0;
+
+  return {
+    summary: {
+      totalJobs,
+      totalEarnings,
+      averageRating: averageRating ? parseFloat(averageRating.toFixed(2)) : 0,
+      totalReviews: workOrders.filter((wo) => wo.review).length,
+    },
+    workOrders: formattedHistory,
+  };
 };

@@ -47,7 +47,7 @@ export const getJobs = async (req, res, next) => {
     }
 
     // Validate status parameter
-    const validStatuses = ["incoming", "active", "done"];
+    const validStatuses = ["available", "incoming", "active", "done"];
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({
         message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
@@ -146,6 +146,30 @@ export const getEarnings = async (req, res, next) => {
     if (err.message === "Technician profile not found") {
       return res.status(404).json({ message: err.message });
     }
+    next(err);
+  }
+};
+
+/**
+ * Get technician work history
+ */
+export const getWorkHistory = async (req, res, next) => {
+  try {
+    const technicianId = req.user.id;
+
+    // Verify user is a technician
+    if (
+      req.user.role !== "TECH_INTERNAL" &&
+      req.user.role !== "TECH_FREELANCER"
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Technicians only." });
+    }
+
+    const workHistory = await technicianService.getWorkHistory(technicianId);
+    return res.json(workHistory);
+  } catch (err) {
     next(err);
   }
 };

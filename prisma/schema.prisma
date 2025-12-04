@@ -95,34 +95,31 @@ model Category {
   updatedAt       DateTime         @updatedAt
   services        Service[]
   serviceRequests ServiceRequest[]
-  subservices     Subservice[]
-  workOrders      WorkOrder[]
-}
-
-model Subservice {
-  id              Int              @id @default(autoincrement())
-  categoryId      Int
-  name            String
-  description     String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  services        Service[]
-  serviceRequests ServiceRequest[]
-  category        Category         @relation(fields: [categoryId], references: [id])
   workOrders      WorkOrder[]
 }
 
 model Service {
   id              Int              @id @default(autoincrement())
   categoryId      Int
-  subserviceId    Int
   name            String
   description     String?
   baseRate        Float?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   category        Category         @relation(fields: [categoryId], references: [id])
-  subservice      Subservice       @relation(fields: [subserviceId], references: [id])
+  subservices     Subservice[]
+  serviceRequests ServiceRequest[]
+  workOrders      WorkOrder[]
+}
+
+model Subservice {
+  id              Int              @id @default(autoincrement())
+  serviceId       Int
+  name            String
+  description     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  service         Service          @relation(fields: [serviceId], references: [id])
   serviceRequests ServiceRequest[]
   workOrders      WorkOrder[]
 }
