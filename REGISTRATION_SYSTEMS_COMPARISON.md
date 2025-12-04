@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # Registration Systems Comparison
 
 ## Overview
@@ -15,11 +17,12 @@ Both use 3-step OTP verification but create different user types.
 
 **User Type:** TECH_FREELANCER  
 **Access:** Public registration via mobile app  
-**Compensation:** 40% commission per job  
+**Compensation:** 40% commission per job
 
 ### Flow
 
 #### Step 1: Send OTP
+
 ```http
 POST /api/otp/send
 {
@@ -30,6 +33,7 @@ POST /api/otp/send
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -41,6 +45,7 @@ POST /api/otp/send
 ```
 
 #### Step 2: Verify OTP
+
 ```http
 POST /api/otp/verify
 {
@@ -51,6 +56,7 @@ POST /api/otp/verify
 ```
 
 **Response:**
+
 ```json
 {
   "verified": true,
@@ -60,6 +66,7 @@ POST /api/otp/verify
 ```
 
 #### Step 3: Set Password
+
 ```http
 POST /api/auth/set-password
 {
@@ -70,6 +77,7 @@ POST /api/auth/set-password
 ```
 
 **Response:**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -122,6 +130,7 @@ Wallet {
 ### Flow
 
 #### Step 1: Initiate Registration
+
 ```http
 POST /api/employee/register/initiate
 {
@@ -132,6 +141,7 @@ POST /api/employee/register/initiate
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -145,6 +155,7 @@ POST /api/employee/register/initiate
 **Note:** Employee ID is stored in OTP metadata for Step 3.
 
 #### Step 2: Verify OTP
+
 ```http
 POST /api/employee/register/verify-otp
 {
@@ -154,6 +165,7 @@ POST /api/employee/register/verify-otp
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -165,6 +177,7 @@ POST /api/employee/register/verify-otp
 ```
 
 #### Step 3: Complete Registration
+
 ```http
 POST /api/employee/register/complete
 {
@@ -177,6 +190,7 @@ POST /api/employee/register/complete
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -198,6 +212,7 @@ POST /api/employee/register/complete
 ```
 
 #### Resend OTP (Optional)
+
 ```http
 POST /api/employee/register/resend-otp
 {
@@ -206,6 +221,7 @@ POST /api/employee/register/resend-otp
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -244,17 +260,17 @@ Wallet {
 
 ## Key Differences
 
-| Feature | Freelancer | Internal Employee |
-|---------|-----------|-------------------|
-| **Role** | TECH_FREELANCER | TECH_INTERNAL |
-| **Registration Path** | `/api/otp/*` + `/api/auth/set-password` | `/api/employee/register/*` |
-| **Employee ID** | Not required | Required (EMP-XXXX-XXX) |
-| **Commission Rate** | 40% | 0% (not used) |
-| **Bonus Rate** | 5% (not used) | 5% |
-| **Payment Model** | Per-job commission | Fixed salary + bonus |
-| **Profile Type** | FREELANCER | INTERNAL |
-| **OTP Metadata** | Only name | Name + employeeId |
-| **Access Level** | Technician features | Technician + internal features |
+| Feature               | Freelancer                              | Internal Employee              |
+| --------------------- | --------------------------------------- | ------------------------------ |
+| **Role**              | TECH_FREELANCER                         | TECH_INTERNAL                  |
+| **Registration Path** | `/api/otp/*` + `/api/auth/set-password` | `/api/employee/register/*`     |
+| **Employee ID**       | Not required                            | Required (EMP-XXXX-XXX)        |
+| **Commission Rate**   | 40%                                     | 0% (not used)                  |
+| **Bonus Rate**        | 5% (not used)                           | 5%                             |
+| **Payment Model**     | Per-job commission                      | Fixed salary + bonus           |
+| **Profile Type**      | FREELANCER                              | INTERNAL                       |
+| **OTP Metadata**      | Only name                               | Name + employeeId              |
+| **Access Level**      | Technician features                     | Technician + internal features |
 
 ---
 
@@ -323,15 +339,17 @@ Employee ID: EMP-2025-001
 ## Backend Implementation
 
 ### Freelancer Registration
+
 - **Controller:** `src/controllers/auth.controller.js`
-- **Routes:** 
+- **Routes:**
   - `POST /api/otp/send` (OTP controller)
   - `POST /api/otp/verify` (OTP controller)
   - `POST /api/auth/set-password` (Auth controller)
 
 ### Internal Employee Registration
+
 - **Controller:** `src/controllers/employee.controller.js`
-- **Routes:** 
+- **Routes:**
   - `POST /api/employee/register/initiate`
   - `POST /api/employee/register/verify-otp`
   - `POST /api/employee/register/complete`
@@ -342,11 +360,13 @@ Employee ID: EMP-2025-001
 ## Testing
 
 ### Test Freelancer Registration
+
 ```bash
 node test-freelancer-registration.js
 ```
 
 ### Test Employee Registration
+
 ```bash
 node test-employee-registration.js
 ```
@@ -356,6 +376,7 @@ node test-employee-registration.js
 ## Postman Collection
 
 ### Freelancer Registration
+
 - **Section:** "Authentication & OTP"
 - **Endpoints:**
   1. Send OTP (Step 1 for Registration)
@@ -363,6 +384,7 @@ node test-employee-registration.js
   3. Set Password (Step 3 - Complete Registration)
 
 ### Internal Employee Registration
+
 - **Section:** "Employee Registration (Internal Team)"
 - **Endpoints:**
   1. Step 1: Initiate Registration
@@ -375,6 +397,7 @@ node test-employee-registration.js
 ## Database Records
 
 ### Freelancer Example
+
 ```sql
 -- User table
 INSERT INTO User (role, name, phone) VALUES ('TECH_FREELANCER', 'John Freelancer', '1718981009');
@@ -388,6 +411,7 @@ INSERT INTO Wallet (technicianId, balance) VALUES (2, 0);
 ```
 
 ### Internal Employee Example
+
 ```sql
 -- User table
 INSERT INTO User (role, name, phone) VALUES ('TECH_INTERNAL', 'John Internal', '1718981000');
@@ -409,6 +433,6 @@ INSERT INTO Wallet (technicianId, balance) VALUES (4, 0);
 ✅ Both use 3-step OTP verification  
 ✅ Both auto-login after registration  
 ✅ Both create wallet with 0 balance  
-✅ Postman collection updated with all endpoints  
+✅ Postman collection updated with all endpoints
 
 **Status:** Both systems fully implemented and tested (Dec 4, 2025)

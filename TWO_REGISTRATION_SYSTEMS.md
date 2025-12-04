@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # Two Registration Systems - Quick Reference
 
 ## December 4, 2025 Update
@@ -8,16 +10,16 @@ The FSM system now supports **TWO** distinct technician registration flows.
 
 ## 🎯 Quick Comparison
 
-| | Freelancer (One) | Internal Tech (Two) |
-|---|---|---|
-| **Who** | External contractors | Company employees |
-| **Access** | Public (mobile app) | Internal portal |
-| **Endpoints** | `/api/otp/*` + `/api/auth/*` | `/api/employee/register/*` |
-| **Steps** | 3 (OTP → Verify → Password) | 3 (Details → Verify → Password) |
-| **Role** | TECH_FREELANCER | TECH_INTERNAL |
-| **Rate** | 40% commission | 5% bonus |
-| **Employee ID** | ❌ Not required | ✅ Required |
-| **Payment** | Per-job commission | Salary + bonus |
+|                 | Freelancer (One)             | Internal Tech (Two)             |
+| --------------- | ---------------------------- | ------------------------------- |
+| **Who**         | External contractors         | Company employees               |
+| **Access**      | Public (mobile app)          | Internal portal                 |
+| **Endpoints**   | `/api/otp/*` + `/api/auth/*` | `/api/employee/register/*`      |
+| **Steps**       | 3 (OTP → Verify → Password)  | 3 (Details → Verify → Password) |
+| **Role**        | TECH_FREELANCER              | TECH_INTERNAL                   |
+| **Rate**        | 40% commission               | 5% bonus                        |
+| **Employee ID** | ❌ Not required              | ✅ Required                     |
+| **Payment**     | Per-job commission           | Salary + bonus                  |
 
 ---
 
@@ -26,11 +28,12 @@ The FSM system now supports **TWO** distinct technician registration flows.
 **"One is Freelancer"**
 
 ### API Flow
+
 ```
 POST /api/otp/send
 → name, phone
 
-POST /api/otp/verify  
+POST /api/otp/verify
 → phone, code
 
 POST /api/auth/set-password
@@ -38,12 +41,14 @@ POST /api/auth/set-password
 ```
 
 ### Creates
+
 - Role: `TECH_FREELANCER`
 - Type: `FREELANCER`
 - Commission: `40%`
 - No employee ID
 
 ### Postman Section
+
 **"Authentication & OTP"** (first 3 endpoints)
 
 ---
@@ -53,6 +58,7 @@ POST /api/auth/set-password
 **"Two is Internal Tech"**
 
 ### API Flow
+
 ```
 POST /api/employee/register/initiate
 → name, employeeId, phone
@@ -65,12 +71,14 @@ POST /api/employee/register/complete
 ```
 
 ### Creates
+
 - Role: `TECH_INTERNAL`
 - Type: `INTERNAL`
 - Bonus: `5%`
 - Employee ID: `EMP-2025-XXX`
 
 ### Postman Section
+
 **"Employee Registration (Internal Team)"** (4 endpoints)
 
 ---
@@ -78,6 +86,7 @@ POST /api/employee/register/complete
 ## 📱 Example Requests
 
 ### Freelancer (One)
+
 ```bash
 # Step 1
 curl -X POST http://localhost:4000/api/otp/send \
@@ -108,6 +117,7 @@ curl -X POST http://localhost:4000/api/auth/set-password \
 ```
 
 ### Internal Tech (Two)
+
 ```bash
 # Step 1
 curl -X POST http://localhost:4000/api/employee/register/initiate \
@@ -143,6 +153,7 @@ curl -X POST http://localhost:4000/api/employee/register/complete \
 ## 🎨 UI Mockups
 
 ### One: Freelancer (Mobile App)
+
 ```
 ┌─────────────────────────┐
 │  Create Your Account    │
@@ -160,6 +171,7 @@ curl -X POST http://localhost:4000/api/employee/register/complete \
 ```
 
 ### Two: Internal Tech (Portal)
+
 ```
 ┌─────────────────────────┐
 │ Internal Team Portal    │
@@ -186,6 +198,7 @@ curl -X POST http://localhost:4000/api/employee/register/complete \
 ## 💾 Database Comparison
 
 ### After Freelancer Registration
+
 ```sql
 User {
   id: 5,
@@ -205,6 +218,7 @@ TechnicianProfile {
 ```
 
 ### After Internal Tech Registration
+
 ```sql
 User {
   id: 17,
@@ -229,11 +243,13 @@ TechnicianProfile {
 ## 📦 Files
 
 ### Freelancer Registration
+
 - Routes: `src/routes/otp.routes.js`, `src/routes/auth.routes.js`
 - Controllers: `src/controllers/otp.controller.js`, `src/controllers/auth.controller.js`
 - Test: `test-freelancer-registration.js`
 
 ### Internal Tech Registration
+
 - Routes: `src/routes/employee.routes.js`
 - Controller: `src/controllers/employee.controller.js`
 - Test: `test-employee-registration.js`
@@ -243,6 +259,7 @@ TechnicianProfile {
 ## ✅ Status
 
 Both registration systems are:
+
 - ✅ Fully implemented
 - ✅ Tested with OTP delivery
 - ✅ Documented in Postman
