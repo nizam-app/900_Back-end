@@ -44,7 +44,7 @@ const formatPhoneNumber = (phone) => {
 };
 
 // ✅ Send OTP to phone number
-export const sendOTP = async (phone, type, name = null) => {
+export const sendOTP = async (phone, type, name = null, role = null) => {
   try {
     // Generate OTP code
     const code = generateOTPCode();
@@ -61,6 +61,9 @@ export const sendOTP = async (phone, type, name = null) => {
     console.log(`📱 Formatted phone (SMS): ${formattedPhone}`);
     if (name) {
       console.log(`👤 Registration name: ${name}`);
+    }
+    if (role) {
+      console.log(`👤 Registration role: ${role}`);
     }
 
     // Check if user exists
@@ -106,7 +109,14 @@ export const sendOTP = async (phone, type, name = null) => {
       .substring(7)}`;
     const tempTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Save OTP to database with normalized phone, temp token, and optional name
+    // Save OTP to database with normalized phone, temp token, and optional name/role
+    const metadata = {};
+    if (name) metadata.name = name;
+    if (role) metadata.role = role;
+
+    console.log(`📋 Storing metadata in OTP:`, metadata);
+    console.log(`📋 JSON stringified:`, JSON.stringify(metadata));
+
     const otpRecord = await prisma.oTP.create({
       data: {
         phone: normalizedPhone,
@@ -116,13 +126,17 @@ export const sendOTP = async (phone, type, name = null) => {
         userId: user?.id,
         tempToken,
         tempTokenExpiry,
-        metadataJson: name ? JSON.stringify({ name }) : null, // Store name for registration flow
+        metadataJson:
+          Object.keys(metadata).length > 0 ? JSON.stringify(metadata) : null, // Store name and role for registration flow
       },
     });
 
     // Always log OTP code for debugging
     console.log(`📱 OTP for ${normalizedPhone}: ${code}`);
     console.log(`🔑 Temp token: ${tempToken}`);
+    console.log(
+      `✅ OTP record created with metadata: ${otpRecord.metadataJson}`
+    );
 
     // Build response
     const response = {
@@ -205,14 +219,30 @@ export const verifyOTPByCode = async (phone, code, type) => {
       },
     });
 
-    // If user doesn't exist and it's a LOGIN or REGISTRATION type, create a basic user account
-    if (!user && (type === "LOGIN" || type === "REGISTRATION")) {
-      console.log(`👤 Creating new user account for ${otp.phone}`);
+    // If user doesn't exist and it's a LOGIN type, create a basic account with specified role
+    // For REGISTRATION type, don't auto-create - wait for setPassword endpoint with role
+    if (!user && type === "LOGIN") {
+      // Get role from metadata if stored during Send OTP
+      let loginRole = "CUSTOMER"; // Default role for login
+      if (otp.metadataJson) {
+        try {
+          const metadata = JSON.parse(otp.metadataJson);
+          if (metadata.role) {
+            loginRole = metadata.role;
+          }
+        } catch (e) {
+          console.log("Could not parse OTP metadata for role");
+        }
+      }
+
+      console.log(
+        `👤 Creating new ${loginRole} account for login: ${otp.phone}`
+      );
       user = await prisma.user.create({
         data: {
           phone: otp.phone,
           passwordHash: "", // Empty password, user can set it later
-          role: "CUSTOMER",
+          role: loginRole,
           name: otp.phone, // Use phone as default name
         },
         select: {
@@ -223,7 +253,7 @@ export const verifyOTPByCode = async (phone, code, type) => {
           role: true,
         },
       });
-      console.log(`✅ Created new user account with ID: ${user.id}`);
+      console.log(`✅ Created new ${loginRole} account with ID: ${user.id}`);
     }
 
     // Generate JWT token for authenticated session
@@ -240,20 +270,12 @@ export const verifyOTPByCode = async (phone, code, type) => {
       console.log(`🔑 Generated JWT token for user ${user.id}`);
     }
 
-    // Generate temporary token (valid for 10 minutes)
-    const tempToken = `temp_${Date.now()}_${Math.random()
-      .toString(36)
-      .substring(7)}`;
-    const tempTokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    // Use the existing tempToken from the OTP record (it already has metadata!)
+    const tempToken = otp.tempToken;
+    const tempTokenExpiry = otp.tempTokenExpiry;
 
-    // Store temp token in OTP record
-    await prisma.oTP.update({
-      where: { id: otp.id },
-      data: {
-        tempToken,
-        tempTokenExpiry,
-      },
-    });
+    console.log(`🔑 Using existing temp token from OTP: ${tempToken}`);
+    console.log(`📋 OTP metadata preserved: ${otp.metadataJson}`);
 
     const response = {
       message: "OTP verified successfully. You can now set your password.",
@@ -263,9 +285,13 @@ export const verifyOTPByCode = async (phone, code, type) => {
       tempTokenExpiry,
     };
 
-    // Add JWT token and user info if user exists
-    if (jwtToken && user) {
+    // Add JWT token if generated (for LOGIN or existing users)
+    if (jwtToken) {
       response.token = jwtToken;
+    }
+
+    // Add user info only for LOGIN type (not REGISTRATION)
+    if (user && type === "LOGIN") {
       response.user = {
         id: user.id,
         name: user.name,

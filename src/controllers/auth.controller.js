@@ -57,7 +57,7 @@ export const setPassword = async (req, res, next) => {
       name,
       email,
       tempToken,
-      role: role || "TECH_FREELANCER", // Default to freelancer for registration flow
+      role, // Don't default here! Let the service retrieve from metadata
     });
     return res.status(201).json(result);
   } catch (err) {

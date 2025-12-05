@@ -5,17 +5,34 @@ import * as otpService from "../services/otp.service.js";
 
 export const sendOTP = async (req, res, next) => {
   try {
-    const { phone, type, name } = req.body;
+    const { phone, type, name, role } = req.body;
 
     if (!phone || !type) {
       return res.status(400).json({ message: "Phone and type are required" });
     }
 
-    // For REGISTRATION type, name is required (Step 1 of freelancer registration)
+    // For REGISTRATION type, name and role are required
     if (type === "REGISTRATION" && !name) {
       return res
         .status(400)
         .json({ message: "Name is required for registration" });
+    }
+
+    // Validate role if provided
+    if (role) {
+      const validRoles = [
+        "CUSTOMER",
+        "TECH_FREELANCER",
+        "TECH_INTERNAL",
+        "DISPATCHER",
+        "CALL_CENTER",
+        "ADMIN",
+      ];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({
+          message: `Invalid role. Must be one of: ${validRoles.join(", ")}`,
+        });
+      }
     }
 
     // Validate phone format (10-15 digits)
@@ -40,7 +57,7 @@ export const sendOTP = async (req, res, next) => {
       });
     }
 
-    const result = await otpService.sendOTP(phone, type, name);
+    const result = await otpService.sendOTP(phone, type, name, role);
 
     return res.json(result);
   } catch (err) {

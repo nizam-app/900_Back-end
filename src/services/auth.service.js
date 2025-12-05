@@ -13,7 +13,7 @@ export const setPasswordAfterOTP = async (userData) => {
   // Normalize phone number
   const normalizedPhone = normalizePhoneForDB(phone);
 
-  // Verify temporary token
+  // Verify temporary token - get the LATEST matching OTP record
   const otpRecord = await prisma.oTP.findFirst({
     where: {
       phone: normalizedPhone,
@@ -31,15 +31,48 @@ export const setPasswordAfterOTP = async (userData) => {
     throw new Error("Invalid or expired temporary token");
   }
 
-  // Get name from OTP metadata if not provided (from Step 1)
+  console.log(`🔍 Found OTP record:`, {
+    id: otpRecord.id,
+    phone: otpRecord.phone,
+    type: otpRecord.type,
+    metadataJson: otpRecord.metadataJson,
+    createdAt: otpRecord.createdAt,
+  });
+
+  // Get name and role from OTP metadata if not provided (from Step 1)
   let finalName = name;
-  if (!finalName && otpRecord.metadataJson) {
+  let finalRole = role;
+
+  console.log(`📋 Request params - name: ${name}, role: ${role}`);
+
+  if (otpRecord.metadataJson) {
     try {
       const metadata = JSON.parse(otpRecord.metadataJson);
-      finalName = metadata.name;
+      console.log(`📋 Parsed metadata from OTP:`, metadata);
+
+      // Use metadata values if not explicitly provided in the request
+      if (!finalName) finalName = metadata.name;
+      if (!finalRole) finalRole = metadata.role;
+
+      console.log(
+        `📋 After metadata check - finalName: ${finalName}, finalRole: ${finalRole}`
+      );
     } catch (e) {
-      console.log("Could not parse OTP metadata");
+      console.log("❌ Could not parse OTP metadata:", e);
     }
+  } else {
+    console.log(
+      `⚠️  WARNING: OTP record has NO metadata! metadataJson is null/empty`
+    );
+    console.log(`⚠️  This means role was not stored in Step 1 (Send OTP)`);
+  }
+
+  console.log(`📋 Final name: ${finalName}`);
+  console.log(`📋 Final role: ${finalRole}`);
+
+  // If finalRole is still undefined/null after checking metadata, log warning
+  if (!finalRole) {
+    console.log(`⚠️  WARNING: No role found! Will default to TECH_FREELANCER`);
   }
 
   const existing = await prisma.user.findUnique({
@@ -52,12 +85,19 @@ export const setPasswordAfterOTP = async (userData) => {
   }
 
   const hash = await bcrypt.hash(password, 10);
-  const userRole = role || "TECH_FREELANCER"; // Default to freelancer
+  const userRole = finalRole || "TECH_FREELANCER"; // Use role from OTP metadata or parameter, default to freelancer
+
+  console.log(`👤 Creating/updating user with role: ${userRole}`);
 
   let user;
 
-  // If guest user exists (no password), upgrade them to registered user
+  // If guest user exists (no password or empty password), upgrade them to registered user with new role
   if (existing && (!existing.passwordHash || existing.passwordHash === "")) {
+    console.log(
+      `👤 Existing user found - ID: ${existing.id}, Current role: ${existing.role}`
+    );
+    console.log(`👤 Updating to new role: ${userRole}`);
+
     user = await prisma.user.update({
       where: { id: existing.id },
       data: {
@@ -65,11 +105,11 @@ export const setPasswordAfterOTP = async (userData) => {
         passwordHash: hash,
         name: finalName || existing.name,
         email: email || existing.email,
-        role: userRole,
+        role: userRole, // UPDATE THE ROLE from metadata
       },
     });
 
-    console.log(`👤 Guest user upgraded to registered: ${phone}`);
+    console.log(`✅ User upgraded - ID: ${user.id}, New role: ${user.role}`);
   } else {
     // Create new user
     user = await prisma.user.create({
