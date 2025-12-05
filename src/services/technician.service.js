@@ -166,13 +166,13 @@ export const getTechnicianJobs = async (technicianId, statusFilter) => {
         select: {
           id: true,
           name: true,
+          baseRate: true,
         },
       },
       service: {
         select: {
           id: true,
           name: true,
-          baseRate: true,
         },
       },
       technician: {
@@ -194,7 +194,7 @@ export const getTechnicianJobs = async (technicianId, statusFilter) => {
 
   // Calculate bonus for each work order
   const jobsWithBonus = workOrders.map((wo) => {
-    const basePayment = wo.service?.baseRate || 0;
+    const basePayment = wo.subservice?.baseRate || 0;
     const rate =
       wo.technician?.role === "TECH_FREELANCER"
         ? wo.technician?.technicianProfile?.commissionRate || 0
@@ -455,7 +455,7 @@ export const getTechnicianEarnings = async (technicianId) => {
       "Service",
     customerName: commission.workOrder?.customer?.name || "Customer",
     date: commission.createdAt,
-    jobPayment: commission.workOrder?.service?.baseRate || 0,
+    jobPayment: commission.workOrder?.subservice?.baseRate || 0,
     bonus: commission.amount,
     status: commission.status,
     woNumber: commission.workOrder?.woNumber,

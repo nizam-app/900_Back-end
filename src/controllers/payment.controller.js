@@ -149,11 +149,11 @@ export const uploadPaymentProof = async (req, res, next) => {
       console.log(
         `💰 Using manual amount: ₹${finalAmount} for WO ${wo.woNumber}`
       );
-    } else if (wo.service?.baseRate) {
-      // Auto-fetch from service base rate
-      finalAmount = wo.service.baseRate;
+    } else if (wo.subservice?.baseRate) {
+      // Auto-fetch from subservice base rate
+      finalAmount = wo.subservice.baseRate;
       console.log(
-        `💰 Auto-fetched amount from service: ₹${finalAmount} for ${wo.service.name}`
+        `💰 Auto-fetched amount from subservice: ₹${finalAmount} for ${wo.subservice.name}`
       );
     } else {
       return res.status(400).json({

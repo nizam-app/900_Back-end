@@ -51,10 +51,10 @@ export const getWOById = async (req, res, next) => {
           select: { id: true, name: true, description: true },
         },
         service: {
-          select: { id: true, name: true, description: true, baseRate: true },
+          select: { id: true, name: true, description: true },
         },
         subservice: {
-          select: { id: true, name: true, description: true },
+          select: { id: true, name: true, description: true, baseRate: true },
         },
         serviceRequest: {
           select: {
@@ -954,7 +954,7 @@ export const completeWO = async (req, res, next) => {
         materialsUsed: parsedMaterials ? JSON.stringify(parsedMaterials) : null,
       },
       include: {
-        service: {
+        subservice: {
           select: {
             baseRate: true,
           },
@@ -975,7 +975,7 @@ export const completeWO = async (req, res, next) => {
     // Calculate bonus/commission
     let bonusCalculation = null;
     if (updated.technician?.technicianProfile) {
-      const basePayment = updated.service?.baseRate || 0;
+      const basePayment = updated.subservice?.baseRate || 0;
       const rate =
         updated.technician.role === "TECH_FREELANCER"
           ? updated.technician.technicianProfile.commissionRate
