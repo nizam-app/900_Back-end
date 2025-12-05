@@ -1,48 +1,40 @@
+/** @format */
+
 // src/controllers/callcenter.controller.js
-import { prisma } from '../prisma.js';
-import bcrypt from 'bcryptjs';
+import { prisma } from "../prisma.js";
+import bcrypt from "bcryptjs";
 
 // ✅ Create new customer (Call Center & Admin only)
 export const createCustomer = async (req, res, next) => {
   try {
-    const {
-      name,
-      phone,
-      email,
-      password,
-      address,
-      latitude,
-      longitude,
-    } = req.body;
+    const { name, phone, email, password, address, latitude, longitude } =
+      req.body;
 
     // Validate required fields
     if (!phone || !name) {
-      return res.status(400).json({ message: 'Phone and name are required' });
+      return res.status(400).json({ message: "Phone and name are required" });
     }
 
     // Validate phone format (10-15 digits)
     if (!/^\d{10,15}$/.test(phone)) {
-      return res.status(400).json({ message: 'Phone must be 10-15 digits' });
+      return res.status(400).json({ message: "Provide a valid phone number" });
     }
 
     // Validate email if provided
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ message: 'Invalid email format' });
+      return res.status(400).json({ message: "Invalid email format" });
     }
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [
-          { phone },
-          email ? { email } : { phone: 'never-match' },
-        ],
+        OR: [{ phone }, email ? { email } : { phone: "never-match" }],
       },
     });
 
     if (existingUser) {
-      return res.status(400).json({ 
-        message: 'Customer already exists with this phone or email' 
+      return res.status(400).json({
+        message: "Customer already exists with this phone or email",
       });
     }
 
@@ -50,22 +42,23 @@ export const createCustomer = async (req, res, next) => {
     if (latitude !== undefined || longitude !== undefined) {
       const lat = parseFloat(latitude);
       const lng = parseFloat(longitude);
-      
+
       if (isNaN(lat) || isNaN(lng)) {
-        return res.status(400).json({ message: 'Invalid latitude or longitude values' });
+        return res
+          .status(400)
+          .json({ message: "Invalid latitude or longitude values" });
       }
 
       if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        return res.status(400).json({ 
-          message: 'Latitude must be between -90 and 90, longitude between -180 and 180' 
+        return res.status(400).json({
+          message:
+            "Latitude must be between -90 and 90, longitude between -180 and 180",
         });
       }
     }
 
     // Hash password if provided, otherwise use empty string
-    const passwordHash = password 
-      ? await bcrypt.hash(password, 10) 
-      : '';
+    const passwordHash = password ? await bcrypt.hash(password, 10) : "";
 
     // Create customer
     const customer = await prisma.user.create({
@@ -74,7 +67,7 @@ export const createCustomer = async (req, res, next) => {
         phone,
         email: email || null,
         passwordHash,
-        role: 'CUSTOMER',
+        role: "CUSTOMER",
         homeAddress: address || null,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
@@ -96,8 +89,8 @@ export const createCustomer = async (req, res, next) => {
     await prisma.auditLog.create({
       data: {
         userId: req.user.id,
-        action: 'CUSTOMER_CREATED',
-        entityType: 'USER',
+        action: "CUSTOMER_CREATED",
+        entityType: "USER",
         entityId: customer.id,
         metadataJson: JSON.stringify({ createdBy: req.user.role }),
       },
@@ -115,8 +108,8 @@ export const getWOTechnicianInfo = async (req, res, next) => {
     const woIdParam = req.params.woId;
 
     // Find WO by either numeric ID or woNumber
-    const whereClause = isNaN(woIdParam) 
-      ? { woNumber: woIdParam } 
+    const whereClause = isNaN(woIdParam)
+      ? { woNumber: woIdParam }
       : { id: Number(woIdParam) };
 
     const wo = await prisma.workOrder.findUnique({
@@ -158,7 +151,7 @@ export const getWOTechnicianInfo = async (req, res, next) => {
     });
 
     if (!wo) {
-      return res.status(404).json({ message: 'Work Order not found' });
+      return res.status(404).json({ message: "Work Order not found" });
     }
 
     if (!wo.technician) {
@@ -166,7 +159,7 @@ export const getWOTechnicianInfo = async (req, res, next) => {
         woNumber: wo.woNumber,
         status: wo.status,
         assigned: false,
-        message: 'No technician assigned yet',
+        message: "No technician assigned yet",
       });
     }
 
@@ -174,8 +167,13 @@ export const getWOTechnicianInfo = async (req, res, next) => {
     let distance = null;
     let estimatedArrivalMinutes = null;
 
-    if (wo.latitude && wo.longitude && wo.technician.lastLatitude && wo.technician.lastLongitude) {
-      const { calculateDistance } = await import('../utils/location.js');
+    if (
+      wo.latitude &&
+      wo.longitude &&
+      wo.technician.lastLatitude &&
+      wo.technician.lastLongitude
+    ) {
+      const { calculateDistance } = await import("../utils/location.js");
       distance = calculateDistance(
         wo.latitude,
         wo.longitude,
@@ -204,12 +202,17 @@ export const getWOTechnicianInfo = async (req, res, next) => {
         status: wo.technician.technicianProfile?.status,
         locationStatus: wo.technician.locationStatus,
         lastLocationUpdate: wo.technician.locationUpdatedAt,
-        currentLocation: wo.technician.lastLatitude && wo.technician.lastLongitude ? {
-          latitude: wo.technician.lastLatitude,
-          longitude: wo.technician.lastLongitude,
-        } : null,
+        currentLocation:
+          wo.technician.lastLatitude && wo.technician.lastLongitude
+            ? {
+                latitude: wo.technician.lastLatitude,
+                longitude: wo.technician.lastLongitude,
+              }
+            : null,
         distanceFromJob: distance ? `${distance.toFixed(2)} km` : null,
-        estimatedArrival: estimatedArrivalMinutes ? `${estimatedArrivalMinutes} minutes` : null,
+        estimatedArrival: estimatedArrivalMinutes
+          ? `${estimatedArrivalMinutes} minutes`
+          : null,
       },
       customer: wo.customer,
     });

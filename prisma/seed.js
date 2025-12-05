@@ -208,8 +208,8 @@ async function main() {
 
   console.log("✅ Created categories");
 
-  // Create Subservices
-  const hvacRepair = await prisma.subservice.upsert({
+  // Create Services (Category → Service - no baseRate)
+  const hvacRepair = await prisma.service.upsert({
     where: { id: 1 },
     update: {},
     create: {
@@ -219,7 +219,7 @@ async function main() {
     },
   });
 
-  const hvacInstall = await prisma.subservice.upsert({
+  const hvacInstall = await prisma.service.upsert({
     where: { id: 2 },
     update: {},
     create: {
@@ -229,7 +229,7 @@ async function main() {
     },
   });
 
-  const electricalRepair = await prisma.subservice.upsert({
+  const electricalRepair = await prisma.service.upsert({
     where: { id: 3 },
     update: {},
     create: {
@@ -239,46 +239,75 @@ async function main() {
     },
   });
 
-  console.log("✅ Created subservices");
+  const plumbingRepair = await prisma.service.upsert({
+    where: { id: 4 },
+    update: {},
+    create: {
+      categoryId: plumbing.id,
+      name: "Plumbing Repair",
+      description: "General plumbing repairs",
+    },
+  });
 
-  // Create Services
-  await prisma.service.upsert({
+  console.log("✅ Created services");
+
+  // Create Subservices (Service → Subservice with baseRate)
+  const acNotCooling = await prisma.subservice.upsert({
     where: { id: 1 },
     update: {},
     create: {
-      categoryId: hvac.id,
-      subserviceId: hvacRepair.id,
+      serviceId: hvacRepair.id,
       name: "AC Not Cooling",
       description: "Fix air conditioner cooling issues",
       baseRate: 500,
     },
   });
 
-  await prisma.service.upsert({
+  const acFilterCleaning = await prisma.subservice.upsert({
     where: { id: 2 },
     update: {},
     create: {
-      categoryId: hvac.id,
-      subserviceId: hvacRepair.id,
+      serviceId: hvacRepair.id,
       name: "AC Filter Cleaning",
       description: "Clean and replace AC filters",
       baseRate: 200,
     },
   });
 
-  await prisma.service.upsert({
+  const splitAcInstall = await prisma.subservice.upsert({
     where: { id: 3 },
     update: {},
     create: {
-      categoryId: hvac.id,
-      subserviceId: hvacInstall.id,
+      serviceId: hvacInstall.id,
       name: "Split AC Installation",
       description: "Install new split AC unit",
       baseRate: 2000,
     },
   });
 
-  console.log("✅ Created services");
+  const electricalOutlet = await prisma.subservice.upsert({
+    where: { id: 4 },
+    update: {},
+    create: {
+      serviceId: electricalRepair.id,
+      name: "Outlet Repair",
+      description: "Fix electrical outlet issues",
+      baseRate: 300,
+    },
+  });
+
+  const plumbingLeak = await prisma.subservice.upsert({
+    where: { id: 5 },
+    update: {},
+    create: {
+      serviceId: plumbingRepair.id,
+      name: "Pipe Leak Repair",
+      description: "Fix leaking pipes",
+      baseRate: 400,
+    },
+  });
+
+  console.log("✅ Created subservices");
 
   // Create sample customer
   const customerPassword = await bcrypt.hash("customer123", 10);
@@ -410,8 +439,8 @@ async function main() {
       customerId: customer.id,
       createdById: callCenter.id,
       categoryId: hvac.id,
-      subserviceId: hvacRepair.id,
-      serviceId: 1,
+      serviceId: hvacRepair.id,
+      subserviceId: acNotCooling.id,
       description: "AC not cooling properly, making strange noise",
       priority: "HIGH",
       address: "123 Customer Lane, Nairobi",
@@ -432,7 +461,7 @@ async function main() {
       srNumber: "SR-" + (Date.now() + 1),
       customerId: customer2.id,
       categoryId: electrical.id,
-      subserviceId: electricalRepair.id,
+      serviceId: electricalRepair.id,
       description: "Power outlet not working in bedroom",
       priority: "MEDIUM",
       address: "789 Smith Road, Nairobi",
@@ -452,8 +481,8 @@ async function main() {
       srNumber: "SR-" + (Date.now() + 2),
       customerId: customer3.id,
       categoryId: hvac.id,
-      subserviceId: hvacInstall.id,
-      serviceId: 3,
+      serviceId: hvacInstall.id,
+      subserviceId: splitAcInstall.id,
       description: "Need new AC installation in living room",
       priority: "LOW",
       address: "456 Johnson Ave, Nairobi",
@@ -478,8 +507,8 @@ async function main() {
       technicianId: techInternal.id,
       dispatcherId: dispatcher.id,
       categoryId: hvac.id,
-      subserviceId: hvacRepair.id,
-      serviceId: 1,
+      serviceId: hvacRepair.id,
+      subserviceId: acNotCooling.id,
       address: sr1.address,
       latitude: sr1.latitude,
       longitude: sr1.longitude,
@@ -514,8 +543,8 @@ async function main() {
       technicianId: techFreelancer.id,
       dispatcherId: dispatcher.id,
       categoryId: hvac.id,
-      subserviceId: hvacRepair.id,
-      serviceId: 2,
+      serviceId: hvacRepair.id,
+      subserviceId: acFilterCleaning.id,
       address: "789 Smith Road, Nairobi",
       latitude: -1.295,
       longitude: 36.82,
@@ -540,8 +569,7 @@ async function main() {
       technicianId: techFreelancer.id,
       dispatcherId: dispatcher.id,
       categoryId: electrical.id,
-      subserviceId: electricalRepair.id,
-      serviceId: 3,
+      serviceId: electricalRepair.id,
       address: "456 Johnson Ave, Nairobi",
       latitude: -1.28,
       longitude: 36.815,
@@ -565,8 +593,7 @@ async function main() {
       technicianId: techFreelancer.id,
       dispatcherId: dispatcher.id,
       categoryId: plumbing.id,
-      subserviceId: 3,
-      serviceId: 3,
+      serviceId: plumbingRepair.id,
       address: "123 Customer Lane, Nairobi",
       latitude: -1.286389,
       longitude: 36.817223,
@@ -595,8 +622,8 @@ async function main() {
       technicianId: techFreelancer.id,
       dispatcherId: dispatcher.id,
       categoryId: hvac.id,
-      subserviceId: hvacRepair.id,
-      serviceId: 1,
+      serviceId: hvacRepair.id,
+      subserviceId: acNotCooling.id,
       address: "789 Smith Road, Nairobi",
       latitude: -1.295,
       longitude: 36.82,
@@ -1004,7 +1031,7 @@ async function main() {
       srNumber: "SR-" + (Date.now() + 3),
       customerId: customer.id,
       categoryId: plumbing.id,
-      subserviceId: electricalRepair.id,
+      serviceId: plumbingRepair.id,
       description: "Leaking pipe under kitchen sink",
       priority: "HIGH",
       address: "123 Customer Lane, Nairobi",
@@ -1025,8 +1052,8 @@ async function main() {
       customerId: customer3.id,
       createdById: callCenter.id,
       categoryId: hvac.id,
-      subserviceId: hvacRepair.id,
-      serviceId: 1,
+      serviceId: hvacRepair.id,
+      subserviceId: acNotCooling.id,
       description: "AC making loud noise, need urgent check",
       priority: "HIGH",
       address: "456 Johnson Ave, Nairobi",
@@ -1051,7 +1078,7 @@ async function main() {
       srNumber: "SR-" + (Date.now() + 5),
       customerId: customer2.id,
       categoryId: electrical.id,
-      subserviceId: electricalRepair.id,
+      serviceId: electricalRepair.id,
       description: "All lights flickering in living room",
       priority: "MEDIUM",
       address: "789 Smith Road, Nairobi",
@@ -1072,8 +1099,8 @@ async function main() {
       customerId: customer.id,
       createdById: callCenter.id,
       categoryId: hvac.id,
-      subserviceId: hvacInstall.id,
-      serviceId: 3,
+      serviceId: hvacInstall.id,
+      subserviceId: splitAcInstall.id,
       description: "Guest request: Install AC in bedroom",
       priority: "LOW",
       address: "Hotel Grande, Downtown Nairobi",
@@ -1099,8 +1126,8 @@ async function main() {
       technicianId: techInternal.id,
       dispatcherId: dispatcher.id,
       categoryId: hvac.id,
-      subserviceId: hvacRepair.id,
-      serviceId: 1,
+      serviceId: hvacRepair.id,
+      subserviceId: acNotCooling.id,
       address: sr5.address,
       latitude: sr5.latitude,
       longitude: sr5.longitude,
@@ -1122,8 +1149,8 @@ async function main() {
       technicianId: tech2.id,
       dispatcherId: dispatcher.id,
       categoryId: hvac.id,
-      subserviceId: hvacInstall.id,
-      serviceId: 3,
+      serviceId: hvacInstall.id,
+      subserviceId: splitAcInstall.id,
       address: "123 Customer Lane, Nairobi",
       latitude: -1.286389,
       longitude: 36.817223,
@@ -1157,7 +1184,7 @@ async function main() {
       customerId: customer2.id,
       dispatcherId: dispatcher.id,
       categoryId: electrical.id,
-      subserviceId: electricalRepair.id,
+      serviceId: electricalRepair.id,
       address: sr2.address,
       latitude: sr2.latitude,
       longitude: sr2.longitude,
@@ -1178,7 +1205,7 @@ async function main() {
       technicianId: techFreelancer.id,
       dispatcherId: dispatcher.id,
       categoryId: plumbing.id,
-      subserviceId: electricalRepair.id,
+      serviceId: plumbingRepair.id,
       address: sr4.address,
       latitude: sr4.latitude,
       longitude: sr4.longitude,

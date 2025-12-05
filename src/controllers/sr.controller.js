@@ -53,7 +53,7 @@ export const createSR = async (req, res, next) => {
 
     // Validate phone format (10 digits)
     if (!/^\d{10,15}$/.test(phone)) {
-      return res.status(400).json({ message: "Phone must be 10-15 digits" });
+      return res.status(400).json({ message: "Provide a valid phone number" });
     }
 
     // Determine if user is authenticated
@@ -159,11 +159,9 @@ export const createSR = async (req, res, next) => {
       }
       // Verify subservice belongs to the service
       if (subservice.serviceId !== Number(serviceId)) {
-        return res
-          .status(400)
-          .json({
-            message: "Subservice does not belong to the specified service",
-          });
+        return res.status(400).json({
+          message: "Subservice does not belong to the specified service",
+        });
       }
     }
 
@@ -1094,7 +1092,7 @@ export const searchCustomer = async (req, res, next) => {
 
     // Validate phone format
     if (!/^\d{10,15}$/.test(phone)) {
-      return res.status(400).json({ message: "Phone must be 10-15 digits" });
+      return res.status(400).json({ message: "Provide a valid phone number" });
     }
 
     // Search for customer by phone

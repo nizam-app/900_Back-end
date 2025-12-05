@@ -661,12 +661,12 @@ export const respondWO = async (req, res, next) => {
       });
     }
 
-    // Require reason when declining
-    if (action === "DECLINE" && !declineReason) {
-      return res.status(400).json({
-        message: "Decline reason is required when declining a work order",
-      });
-    }
+    // Decline reason is optional but recommended
+    // if (action === "DECLINE" && !declineReason) {
+    //   return res.status(400).json({
+    //     message: "Decline reason is required when declining a work order",
+    //   });
+    // }
 
     const wo = await prisma.workOrder.findUnique({
       where: whereClause,
