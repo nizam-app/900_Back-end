@@ -1,5 +1,7 @@
+/** @format */
+
 // src/services/category.service.js
-import { prisma } from '../prisma.js';
+import { prisma } from "../prisma.js";
 
 // ✅ List all categories with subservices and services
 export const findAllCategories = async () => {
@@ -11,7 +13,7 @@ export const findAllCategories = async () => {
         },
       },
     },
-    orderBy: { name: 'asc' },
+    orderBy: { name: "asc" },
   });
 
   return categories;
@@ -31,8 +33,8 @@ export const createNewCategory = async (categoryData, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'CATEGORY_CREATED',
-      entityType: 'CATEGORY',
+      action: "CATEGORY_CREATED",
+      entityType: "CATEGORY",
       entityId: category.id,
     },
   });
@@ -55,8 +57,8 @@ export const updateCategoryById = async (categoryId, updates, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'CATEGORY_UPDATED',
-      entityType: 'CATEGORY',
+      action: "CATEGORY_UPDATED",
+      entityType: "CATEGORY",
       entityId: category.id,
     },
   });
@@ -73,13 +75,13 @@ export const deleteCategoryById = async (categoryId, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'CATEGORY_DELETED',
-      entityType: 'CATEGORY',
+      action: "CATEGORY_DELETED",
+      entityType: "CATEGORY",
       entityId: categoryId,
     },
   });
 
-  return { message: 'Category deleted successfully' };
+  return { message: "Category deleted successfully" };
 };
 
 // ✅ Create subservice (Admin only)
@@ -97,8 +99,8 @@ export const createNewSubservice = async (subserviceData, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'SUBSERVICE_CREATED',
-      entityType: 'SUBSERVICE',
+      action: "SUBSERVICE_CREATED",
+      entityType: "SUBSERVICE",
       entityId: subservice.id,
     },
   });
@@ -121,8 +123,8 @@ export const updateSubserviceById = async (subserviceId, updates, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'SUBSERVICE_UPDATED',
-      entityType: 'SUBSERVICE',
+      action: "SUBSERVICE_UPDATED",
+      entityType: "SUBSERVICE",
       entityId: subservice.id,
     },
   });
@@ -139,13 +141,13 @@ export const deleteSubserviceById = async (subserviceId, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'SUBSERVICE_DELETED',
-      entityType: 'SUBSERVICE',
+      action: "SUBSERVICE_DELETED",
+      entityType: "SUBSERVICE",
       entityId: subserviceId,
     },
   });
 
-  return { message: 'Subservice deleted successfully' };
+  return { message: "Subservice deleted successfully" };
 };
 
 // ✅ Create service (Admin only)
@@ -164,8 +166,8 @@ export const createNewService = async (serviceData, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'SERVICE_CREATED',
-      entityType: 'SERVICE',
+      action: "SERVICE_CREATED",
+      entityType: "SERVICE",
       entityId: service.id,
     },
   });
@@ -188,8 +190,8 @@ export const updateServiceById = async (serviceId, updates, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'SERVICE_UPDATED',
-      entityType: 'SERVICE',
+      action: "SERVICE_UPDATED",
+      entityType: "SERVICE",
       entityId: service.id,
     },
   });
@@ -206,11 +208,11 @@ export const deleteServiceById = async (serviceId, adminId) => {
   await prisma.auditLog.create({
     data: {
       userId: adminId,
-      action: 'SERVICE_DELETED',
-      entityType: 'SERVICE',
+      action: "SERVICE_DELETED",
+      entityType: "SERVICE",
       entityId: serviceId,
     },
   });
 
-  return { message: 'Service deleted successfully' };
+  return { message: "Service deleted successfully" };
 };
