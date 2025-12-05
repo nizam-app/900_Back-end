@@ -5,11 +5,15 @@ import { prisma } from "../prisma.js";
 export const listCategories = async (req, res, next) => {
   try {
     const categories = await prisma.category.findMany({
+      where: { isActive: true }, // Only return active categories
       include: {
         services: {
           include: {
-            subservices: true,
+            subservices: {
+              orderBy: { name: "asc" },
+            },
           },
+          orderBy: { name: "asc" },
         },
       },
       orderBy: { name: "asc" },
