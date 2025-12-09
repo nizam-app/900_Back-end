@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "fsm-api-collection-2025-v4",
-		"name": "FSM System API - Complete Collection (Dec 4, 2025)",
-		"description": "🎉 **MAJOR UPDATE - December 4, 2025**\n\n## 🆕 What's Fixed Today:\n\n### 1️⃣ Service Hierarchy Restructure ✅\n**Problem:** API returned wrong order (Category → Subservice → Service)\n**Fixed:** Corrected to Category → Service → Subservice\n- Created data-preserving migration\n- Updated schema relationships\n- Fixed category controller\n- All existing data preserved\n\n### 2️⃣ Technician Profile Endpoints ✅\n**Added:** Two new profile screen endpoints\n- `GET /api/commissions/my-payout-requests` - Time Off Requests list\n- `GET /api/technician/work-history` - Complete work history with stats\n- Both include detailed job information and summaries\n\n### 3️⃣ Internal Employee Registration System ✅\n**Added:** Complete 3-step registration for internal team\n- `POST /api/employee/register/initiate` - Step 1: Employee details + OTP\n- `POST /api/employee/register/verify-otp` - Step 2: Verify phone\n- `POST /api/employee/register/complete` - Step 3: Set password & create account\n- `POST /api/employee/register/resend-otp` - Resend OTP if needed\n- Creates TECH_INTERNAL role with 5% bonus rate\n- Requires employee ID (stored in profile)\n\n## 📋 Two Registration Systems:\n\n**System 1: Freelancer Registration (Public)**\n- Endpoints: `/api/otp/*` + `/api/auth/set-password`\n- Role: TECH_FREELANCER\n- Rate: 40% commission\n- Employee ID: Not required\n- Section: \"Authentication & OTP\"\n\n**System 2: Internal Employee Registration (Portal)**\n- Endpoints: `/api/employee/register/*`\n- Role: TECH_INTERNAL\n- Rate: 5% bonus + salary\n- Employee ID: Required (EMP-XXXX-XXX)\n- Section: \"Employee Registration (Internal Team)\"\n\n## 📊 Collection Stats:\n- Total Sections: 15\n- Total Endpoints: 112\n- New Endpoints Today: 6\n- Updated Endpoints: 3\n\n## ✅ All Systems Operational:\n- Service hierarchy correct\n- Profile endpoints working\n- Employee registration tested\n- OTP delivery confirmed\n- Server running on port 4000\n\n**Status:** Production Ready | **Date:** December 4, 2025",
+		"_postman_id": "fsm-api-collection-2025-v5",
+		"name": "FSM System API - Complete Collection (Dec 9, 2025)",
+		"description": "🎉 **MAJOR UPDATE - December 9, 2025**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Payout Management System ✅\n**Added:** Complete payout management for admin dashboard\n- `GET /api/payouts/summary` - Dashboard overview\n- `GET /api/payouts/pending-commissions` - List pending commissions/bonuses\n- `GET /api/payouts/early-requests` - Early payout requests\n- `POST /api/payouts/batches` - Create weekly payout batch\n- `GET /api/payouts/batches` - List payout batches\n- `GET /api/payouts/history` - Completed payout history\n- `PATCH /api/payouts/batches/:id/process` - Process batch\n- `PATCH /api/payouts/early-requests/:id/approve` - Approve early payout\n- `PATCH /api/payouts/early-requests/:id/reject` - Reject early payout\n- Weekly batches automatically scheduled for Mondays\n- Early payout request approval workflow\n\n### 2️⃣ Technician Management System ✅\n**Added:** Complete technician management for admin\n- `GET /api/technicians/overview` - Statistics & distribution\n- `GET /api/technicians/directory` - List with filters\n- `GET /api/technicians/:id` - Detailed profile\n- `POST /api/technicians` - Create new technician\n- `PATCH /api/technicians/:id` - Update technician\n- `PATCH /api/technicians/:id/block` - Block/unblock\n- `PATCH /api/technicians/:id/documents` - Upload documents\n- `GET /api/technicians/export` - Export to CSV\n- Supports both freelancers and employees\n- Document upload (photo, ID, permits, degrees)\n- Comprehensive filtering and search\n\n### 3️⃣ Recent Services API ✅\n**Added:** Customer dashboard endpoint\n- `GET /api/sr/recent` - Recent completed services\n- Shows last 5 services with completion status\n- Optimized for customer dashboard UI\n\n### 4️⃣ Schema Improvements ✅\n**Updated:** Category model\n- Added `image` field to categories\n- Migration applied successfully\n- Seed data updated with image URLs\n\n### 5️⃣ Bug Fixes ✅\n**Fixed:** Multiple issues\n- Phone validation now accepts international formats\n- Service/Subservice creation endpoints updated\n- BaseRate moved to Subservice level (completed Dec 5)\n- Payment calculations fixed\n- Technician earnings endpoint role-based naming\n\n## 📋 Previous Updates:\n\n**December 4, 2025:**\n- Service hierarchy restructure (Category → Service → Subservice)\n- Technician profile endpoints\n- Internal employee registration system\n\n## 📊 Collection Stats:\n- Total Sections: 17 (+2)\n- Total Endpoints: 130 (+18)\n- New Endpoints Today: 18\n- Updated Endpoints: 3\n\n## ✅ All Systems Operational:\n- Payout management ready\n- Technician management ready\n- Service hierarchy correct\n- Profile endpoints working\n- Employee registration tested\n- OTP delivery confirmed\n- Server running on port 4000\n\n**Status:** Production Ready | **Date:** December 9, 2025",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -3775,6 +3775,637 @@
 							]
 						},
 						"description": "Get all technician locations for dispatch map view"
+					}
+				}
+			]
+		},
+		{
+			"name": "Payout Management (Admin)",
+			"item": [
+				{
+					"name": "Get Payout Summary",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/payouts/summary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payouts",
+								"summary"
+							]
+						},
+						"description": "Get payout dashboard summary with pending commissions, early requests, next payout date, and total paid this month.\n\n**Response:**\n- pendingCommissions: Amount and count of commissions ready for payout\n- earlyPayoutRequests: Amount and count of pending early payout requests\n- nextPayoutDate: Next Monday (YYYY-MM-DD)\n- totalPaidThisMonth: Total amount paid in current month\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Get Pending Commissions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/payouts/pending-commissions?type=COMMISSION&search=",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payouts",
+								"pending-commissions"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "COMMISSION",
+									"description": "COMMISSION or BONUS (optional)"
+								},
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search by technician name or WO number (optional)"
+								}
+							]
+						},
+						"description": "Get list of all pending commissions and bonuses ready for weekly payout.\n\n**Query Parameters:**\n- type: Filter by COMMISSION or BONUS\n- search: Search by technician name or work order number\n\n**Response:** Array of pending commissions with work order, technician, service, payment, and amount details.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Get Early Payout Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/payouts/early-requests",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payouts",
+								"early-requests"
+							]
+						},
+						"description": "Get list of all pending early payout requests from technicians.\n\n**Response:** Array with technician info, requested amount, reason, payment method, and request date.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Create Weekly Payout Batch",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/payouts/batches",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payouts",
+								"batches"
+							]
+						},
+						"description": "Create a new weekly payout batch for all pending commissions. Automatically groups by technician and schedules for next Monday.\n\n**Response:**\n- scheduledFor: Next Monday date\n- totalAmount: Total payout amount\n- totalCommissions: Number of commissions included\n- payouts: Array of payouts created per technician\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Get Payout Batches",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/payouts/batches?status=SCHEDULED",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payouts",
+								"batches"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "SCHEDULED",
+									"description": "SCHEDULED, COMPLETED, or FAILED (optional)"
+								}
+							]
+						},
+						"description": "Get list of payout batches with optional status filter.\n\n**Query Parameters:**\n- status: Filter by SCHEDULED, COMPLETED, or FAILED\n\n**Response:** Array of payout batches with technician, amount, commission count, type, status, and dates.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Get Payout History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/payouts/history?startDate=2025-11-01&endDate=2025-12-31",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payouts",
+								"history"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2025-11-01",
+									"description": "Start date YYYY-MM-DD (optional)"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-12-31",
+									"description": "End date YYYY-MM-DD (optional)"
+								}
+							]
+						},
+						"description": "Get completed payout history with optional date range filter.\n\n**Query Parameters:**\n- startDate: Filter from date (YYYY-MM-DD)\n- endDate: Filter to date (YYYY-MM-DD)\n\n**Response:** Array of completed payouts with technician, amount, commission count, and processed date.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Process Payout Batch",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/payouts/batches/:id/process",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payouts",
+								"batches",
+								":id",
+								"process"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Payout batch ID"
+								}
+							]
+						},
+						"description": "Mark a scheduled payout batch as completed. Updates all linked commissions to PAID status.\n\n**Path Parameters:**\n- id: Payout batch ID\n\n**Response:** Updated payout with COMPLETED status and processed date.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Approve Early Payout Request",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/payouts/early-requests/:id/approve",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payouts",
+								"early-requests",
+								":id",
+								"approve"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Early payout request ID"
+								}
+							]
+						},
+						"description": "Approve and process an early payout request. Creates immediate payout and updates commissions to PAID.\n\n**Path Parameters:**\n- id: Payout request ID\n\n**Response:** Created payout with COMPLETED status.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Reject Early Payout Request",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/payouts/early-requests/:id/reject",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"payouts",
+								"early-requests",
+								":id",
+								"reject"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Early payout request ID"
+								}
+							]
+						},
+						"description": "Reject an early payout request.\n\n**Path Parameters:**\n- id: Payout request ID\n\n**Response:** Updated request with REJECTED status.\n\n**Admin only**"
+					}
+				}
+			]
+		},
+		{
+			"name": "Technician Management (Admin)",
+			"item": [
+				{
+					"name": "Get Technician Overview",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/overview?specialization=All",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								"overview"
+							],
+							"query": [
+								{
+									"key": "specialization",
+									"value": "All",
+									"description": "All, Electrical, General, HVAC, or Plumbing"
+								}
+							]
+						},
+						"description": "Get technician overview statistics with distribution by specialization and employment type.\n\n**Query Parameters:**\n- specialization: Filter by All, Electrical, General, HVAC, or Plumbing\n\n**Response:**\n- total: Total technician count\n- bySpecialization: Count by each specialization\n- byType: Count by FREELANCER and INTERNAL\n- specializationPercentages: Percentage breakdown for pie chart\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Get Technicians Directory",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/directory?search=&specialization=All&type=All&status=ACTIVE",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								"directory"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search by name, phone, or email"
+								},
+								{
+									"key": "specialization",
+									"value": "All",
+									"description": "Filter by specialization"
+								},
+								{
+									"key": "type",
+									"value": "All",
+									"description": "FREELANCER or INTERNAL"
+								},
+								{
+									"key": "status",
+									"value": "ACTIVE",
+									"description": "ACTIVE or INACTIVE"
+								}
+							]
+						},
+						"description": "Get paginated list of all technicians with filtering and search.\n\n**Query Parameters:**\n- search: Search by name, phone, or email\n- specialization: Filter by specialization\n- type: Filter by FREELANCER or INTERNAL\n- status: Filter by ACTIVE or INACTIVE\n\n**Response:** Array of technicians with full details including rates, work statistics, and contact info.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Get Technician Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Technician user ID"
+								}
+							]
+						},
+						"description": "Get detailed information about a specific technician including profile, documents, work history, and recent commissions.\n\n**Path Parameters:**\n- id: Technician user ID\n\n**Response:** Complete technician profile with statistics, recent work orders, and commission history.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Create Technician",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Ahmed Hassan\",\n  \"phone\": \"+971501111111\",\n  \"email\": \"ahmed@serviopro.com\",\n  \"joinDate\": \"2025-12-09\",\n  \"specialization\": \"Electrical\",\n  \"type\": \"Freelancer\",\n  \"commissionRate\": 0.10,\n  \"homeAddress\": \"Dubai Marina\",\n  \"academicTitle\": \"BSc. Electrical Engineering\",\n  \"isForeigner\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians"
+							]
+						},
+						"description": "Create a new technician (freelancer or employee).\n\n**Request Body:**\n- name: Full name (required)\n- phone: Phone number (required, must be unique)\n- email: Email address (optional)\n- joinDate: Join date ISO format (optional)\n- specialization: ELECTRICAL, GENERAL, HVAC, or PLUMBING (required)\n- type: FREELANCER or INTERNAL (required)\n- commissionRate: 0.0 to 1.0 for freelancers (optional, defaults to global rate)\n- bonusRate: 0.0 to 1.0 for employees (optional, defaults to global rate)\n- baseSalary: Monthly salary for employees (optional)\n- homeAddress: Home address (optional)\n- academicTitle: Academic qualifications (optional)\n- isForeigner: Requires residence permit (optional, default: false)\n\n**Response:** Created technician with temporary password.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Update Technician",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Ahmed Hassan (Updated)\",\n  \"email\": \"ahmed.updated@serviopro.com\",\n  \"commissionRate\": 0.12,\n  \"academicTitle\": \"BSc. MSc. Electrical Engineering\",\n  \"status\": \"ACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Technician user ID"
+								}
+							]
+						},
+						"description": "Update technician information.\n\n**Path Parameters:**\n- id: Technician user ID\n\n**Request Body (all optional):**\n- name: Full name\n- email: Email address\n- specialization: ELECTRICAL, GENERAL, HVAC, or PLUMBING\n- commissionRate: 0.0 to 1.0\n- bonusRate: 0.0 to 1.0\n- baseSalary: Monthly salary\n- homeAddress: Home address\n- academicTitle: Academic qualifications\n- status: ACTIVE or INACTIVE\n\n**Response:** Updated technician details.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Block/Unblock Technician",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"isBlocked\": true,\n  \"reason\": \"Policy violation - unprofessional behavior\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/:id/block",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								":id",
+								"block"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Technician user ID"
+								}
+							]
+						},
+						"description": "Block or unblock a technician.\n\n**Path Parameters:**\n- id: Technician user ID\n\n**Request Body:**\n- isBlocked: true to block, false to unblock (required)\n- reason: Reason for blocking (required when isBlocked=true)\n\n**Response:** Updated technician with block status.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Upload Technician Documents",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "photoUrl",
+									"type": "file",
+									"src": [],
+									"description": "Personal photo (max 5MB)"
+								},
+								{
+									"key": "idCardUrl",
+									"type": "file",
+									"src": [],
+									"description": "ID card/passport (max 5MB)"
+								},
+								{
+									"key": "residencePermitUrl",
+									"type": "file",
+									"src": [],
+									"description": "Residence permit (max 5MB)"
+								},
+								{
+									"key": "degreesUrl",
+									"type": "file",
+									"src": [],
+									"description": "Degrees/certificates (max 5 files, 5MB each)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/:id/documents",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								":id",
+								"documents"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Technician user ID"
+								}
+							]
+						},
+						"description": "Upload technician documents (photo, ID, permits, degrees).\n\n**Content-Type:** multipart/form-data\n\n**Form Fields:**\n- photoUrl: Personal photo (image/jpeg, image/png, image/webp, max 5MB)\n- idCardUrl: ID card or passport (image/jpeg, image/png, application/pdf, max 5MB)\n- residencePermitUrl: Residence permit for foreigners (image/jpeg, image/png, application/pdf, max 5MB)\n- degreesUrl: Academic degrees and certificates (max 5 files, 5MB each)\n\n**Response:** Updated profile with document URLs.\n\n**Admin only**"
+					}
+				},
+				{
+					"name": "Export Technicians CSV",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/export?specialization=All&type=All",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								"export"
+							],
+							"query": [
+								{
+									"key": "specialization",
+									"value": "All",
+									"description": "Filter by specialization"
+								},
+								{
+									"key": "type",
+									"value": "All",
+									"description": "Filter by FREELANCER or INTERNAL"
+								}
+							]
+						},
+						"description": "Export technicians data to CSV file.\n\n**Query Parameters:**\n- specialization: Filter by specialization (optional)\n- type: Filter by FREELANCER or INTERNAL (optional)\n\n**Response:** CSV file download with technician data.\n\n**Headers:** ID, Name, Phone, Email, Specialization, Type, Status, Commission Rate, Bonus Rate, Base Salary, Total Jobs, Join Date\n\n**Admin only**"
 					}
 				}
 			]
