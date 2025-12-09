@@ -39,31 +39,31 @@ const OTP_API_CONFIG = {
 const isTestPhoneNumber = (phone) => {
   if (!phone) return true;
 
-  const cleaned = phone.replace(/[^\d]/g, '');
+  const cleaned = phone.replace(/[^\d]/g, "");
 
   // Common test patterns
   const testPatterns = [
-    /^0+$/,           // All zeros: 0000000000
-    /^1+$/,           // All ones: 1111111111
-    /^2+$/,           // All twos: 2222222222
-    /^3+$/,           // All threes: 3333333333
-    /^4+$/,           // All fours: 4444444444
-    /^5+$/,           // All fives: 5555555555
-    /^6+$/,           // All sixes: 6666666666
-    /^7+$/,           // All sevens: 7777777777
-    /^8+$/,           // All eights: 8888888888
-    /^9+$/,           // All nines: 9999999999
-    /^(123)+$/,       // Repeating 123
-    /^1234567890$/,   // Sequential
+    /^0+$/, // All zeros: 0000000000
+    /^1+$/, // All ones: 1111111111
+    /^2+$/, // All twos: 2222222222
+    /^3+$/, // All threes: 3333333333
+    /^4+$/, // All fours: 4444444444
+    /^5+$/, // All fives: 5555555555
+    /^6+$/, // All sixes: 6666666666
+    /^7+$/, // All sevens: 7777777777
+    /^8+$/, // All eights: 8888888888
+    /^9+$/, // All nines: 9999999999
+    /^(123)+$/, // Repeating 123
+    /^1234567890$/, // Sequential
   ];
 
-  return testPatterns.some(pattern => pattern.test(cleaned));
+  return testPatterns.some((pattern) => pattern.test(cleaned));
 };
 
 /**
  * Normalize phone number to international format
  * Converts local numbers to international format with country code
- * 
+ *
  * @param {string} phone - Phone number in any format
  * @returns {string} Normalized phone number with + prefix
  */
@@ -71,30 +71,34 @@ const normalizePhoneNumber = (phone) => {
   if (!phone) return null;
 
   // Remove all non-digit characters except +
-  let cleaned = phone.replace(/[^\d+]/g, '');
+  let cleaned = phone.replace(/[^\d+]/g, "");
 
   // If already has country code with +, return as is
-  if (cleaned.startsWith('+')) {
+  if (cleaned.startsWith("+")) {
     return cleaned;
   }
 
   // If starts with 00, replace with +
-  if (cleaned.startsWith('00')) {
-    return '+' + cleaned.substring(2);
+  if (cleaned.startsWith("00")) {
+    return "+" + cleaned.substring(2);
   }
 
   // If starts with country code without +, add it
   // Kenya: 254, Bangladesh: 880, India: 91, etc.
-  if (cleaned.startsWith('254') || cleaned.startsWith('880') || cleaned.startsWith('91')) {
-    return '+' + cleaned;
+  if (
+    cleaned.startsWith("254") ||
+    cleaned.startsWith("880") ||
+    cleaned.startsWith("91")
+  ) {
+    return "+" + cleaned;
   }
 
   // Get default country code from env or use Kenya as default
-  const DEFAULT_COUNTRY_CODE = process.env.DEFAULT_COUNTRY_CODE || '254'; // Kenya
+  const DEFAULT_COUNTRY_CODE = process.env.DEFAULT_COUNTRY_CODE || "254"; // Kenya
 
   if (cleaned.length === 10) {
     // Remove leading 0 if present (e.g., 0712345678 -> 712345678)
-    if (cleaned.startsWith('0')) {
+    if (cleaned.startsWith("0")) {
       cleaned = cleaned.substring(1);
     }
     return `+${DEFAULT_COUNTRY_CODE}${cleaned}`;
@@ -107,11 +111,11 @@ const normalizePhoneNumber = (phone) => {
 
   // If number doesn't match patterns, return with + prefix if digits only
   if (/^\d+$/.test(cleaned)) {
-    return '+' + cleaned;
+    return "+" + cleaned;
   }
 
   console.warn(`⚠️ Could not normalize phone number: ${phone}`);
-  return cleaned.startsWith('+') ? cleaned : '+' + cleaned;
+  return cleaned.startsWith("+") ? cleaned : "+" + cleaned;
 };
 
 // ========================================
@@ -143,31 +147,43 @@ export const sendSMS = async (phone, text, options = {}) => {
       console.warn(`⚠️ Test/dummy phone number detected: ${phone}`);
 
       // In development mode, skip actual SMS sending
-      if (process.env.NODE_ENV === 'development' || process.env.SKIP_SMS_FOR_TEST_NUMBERS === 'true') {
-        console.log(`🧪 Development mode: Skipping SMS to test number ${formattedPhone}`);
+      if (
+        process.env.NODE_ENV === "development" ||
+        process.env.SKIP_SMS_FOR_TEST_NUMBERS === "true"
+      ) {
+        console.log(
+          `🧪 Development mode: Skipping SMS to test number ${formattedPhone}`
+        );
         console.log(`   Message: ${text.substring(0, 50)}...`);
         return {
           success: true,
-          messageId: 'TEST_' + Date.now(),
-          status: 'simulated',
+          messageId: "TEST_" + Date.now(),
+          status: "simulated",
           price: 0,
           credit: 0,
-          message: 'SMS skipped for test number (development mode)',
-          isTestNumber: true
+          message: "SMS skipped for test number (development mode)",
+          isTestNumber: true,
         };
       }
 
       // In production, warn but continue (will likely fail at API)
-      console.warn(`⚠️ Attempting to send to test number in production. This will likely fail.`);
+      console.warn(
+        `⚠️ Attempting to send to test number in production. This will likely fail.`
+      );
     }
 
     // Validate phone number format
-    if (!formattedPhone || !formattedPhone.startsWith('+') || formattedPhone.length < 10) {
+    if (
+      !formattedPhone ||
+      !formattedPhone.startsWith("+") ||
+      formattedPhone.length < 10
+    ) {
       console.error(`❌ Invalid phone number format: ${phone}`);
       return {
         success: false,
-        error: 'Invalid phone number format. Must be in international format (e.g., +254712345678)',
-        message: 'Invalid phone number'
+        error:
+          "Invalid phone number format. Must be in international format (e.g., +254712345678)",
+        message: "Invalid phone number",
       };
     }
 
@@ -233,10 +249,34 @@ export const sendSMS = async (phone, text, options = {}) => {
       };
     } else {
       console.error(`❌ Failed to send SMS to ${formattedPhone}:`, result);
+
+      // Extract detailed error message from BulkGate response
+      let errorMessage = "SMS sending failed";
+      if (result.error) {
+        if (typeof result.error === "string") {
+          errorMessage = result.error;
+        } else if (result.error.message) {
+          errorMessage = result.error.message;
+        } else if (result.error.type) {
+          errorMessage = `Error: ${result.error.type}`;
+        }
+      } else if (result.message) {
+        errorMessage = result.message;
+      }
+
+      // Check for specific error codes
+      if (
+        result.code === "invalid_phone_number" ||
+        errorMessage.includes("Invalid")
+      ) {
+        errorMessage = `Invalid phone number: ${formattedPhone}. BulkGate may not support this country code or the number format is incorrect.`;
+      }
+
       return {
         success: false,
-        error: result.error || "Failed to send SMS",
-        message: result.error || "SMS sending failed",
+        error: result.error || errorMessage,
+        message: errorMessage,
+        bulkgateResponse: result, // Include full response for debugging
       };
     }
   } catch (error) {
@@ -303,28 +343,34 @@ export const sendOTPViaBulkGate = async (phone, options = {}) => {
       console.warn(`⚠️ Test/dummy phone number detected for OTP: ${phone}`);
 
       // In development mode, return mock OTP
-      if (process.env.NODE_ENV === 'development' || process.env.SKIP_SMS_FOR_TEST_NUMBERS === 'true') {
-        console.log(`🧪 Development mode: Skipping OTP to test number ${formattedPhone}`);
+      if (
+        process.env.NODE_ENV === "development" ||
+        process.env.SKIP_SMS_FOR_TEST_NUMBERS === "true"
+      ) {
+        console.log(
+          `🧪 Development mode: Skipping OTP to test number ${formattedPhone}`
+        );
         console.log(`   Mock OTP: 123456 (use this for testing)`);
         return {
           success: true,
-          otpId: 'TEST_OTP_' + Date.now(),
-          status: 'simulated',
+          otpId: "TEST_OTP_" + Date.now(),
+          status: "simulated",
           expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
-          message: 'OTP skipped for test number (development mode). Use code: 123456',
+          message:
+            "OTP skipped for test number (development mode). Use code: 123456",
           isTestNumber: true,
-          mockCode: '123456'
+          mockCode: "123456",
         };
       }
     }
 
     // Validate phone number
-    if (!formattedPhone || !formattedPhone.startsWith('+')) {
+    if (!formattedPhone || !formattedPhone.startsWith("+")) {
       console.error(`❌ Invalid phone number for OTP: ${phone}`);
       return {
         success: false,
-        error: 'Invalid phone number format',
-        message: 'Phone number must be in international format'
+        error: "Invalid phone number format",
+        message: "Phone number must be in international format",
       };
     }
 
@@ -430,7 +476,8 @@ export const verifyOTPViaBulkGate = async (otpId, code) => {
     if (response.ok && result.data) {
       const isVerified = result.data.verified === true;
       console.log(
-        `${isVerified ? "✅" : "❌"} OTP verification: ${isVerified ? "SUCCESS" : "FAILED"
+        `${isVerified ? "✅" : "❌"} OTP verification: ${
+          isVerified ? "SUCCESS" : "FAILED"
         }`
       );
       return {
