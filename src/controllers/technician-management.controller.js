@@ -359,7 +359,8 @@ export const createTechnician = async (req, res, next) => {
       });
 
       // Default rates (removed global settings query - table doesn't exist)
-      const defaultCommissionRate = type.toUpperCase() === "FREELANCER" ? 0.4 : 0.0;
+      const defaultCommissionRate =
+        type.toUpperCase() === "FREELANCER" ? 0.4 : 0.0;
       const defaultBonusRate = 0.05;
 
       const profile = await tx.technicianProfile.create({
