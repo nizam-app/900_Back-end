@@ -310,7 +310,6 @@ export const createTechnician = async (req, res, next) => {
       baseSalary,
       homeAddress,
       academicTitle,
-      isForeigner,
     } = req.body;
 
     // Validation
@@ -359,10 +358,9 @@ export const createTechnician = async (req, res, next) => {
         },
       });
 
-      // Get global rates
-      const globalSettings = await tx.globalSetting.findFirst();
-      const defaultCommissionRate = globalSettings?.commissionRate || 0.1;
-      const defaultBonusRate = globalSettings?.bonusRate || 0.05;
+      // Default rates (removed global settings query - table doesn't exist)
+      const defaultCommissionRate = type.toUpperCase() === "FREELANCER" ? 0.4 : 0.0;
+      const defaultBonusRate = 0.05;
 
       const profile = await tx.technicianProfile.create({
         data: {
@@ -378,7 +376,6 @@ export const createTechnician = async (req, res, next) => {
             bonusRate !== undefined ? parseFloat(bonusRate) : defaultBonusRate,
           baseSalary: baseSalary ? parseFloat(baseSalary) : 0,
           academicTitle,
-          isForeigner: isForeigner || false,
         },
       });
 
