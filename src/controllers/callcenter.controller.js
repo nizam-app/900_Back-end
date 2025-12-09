@@ -18,13 +18,13 @@ export const createCustomer = async (req, res, next) => {
     // Validate phone format (allow +, digits, spaces, dashes, parentheses)
     // Clean phone: remove spaces, dashes, parentheses, and + prefix
     const cleanPhone = phone.replace(/[\s\-\(\)\+]/g, "");
-    
+
     // Strict validation: phone must be EXACTLY 8 digits
     if (!/^\d{8}$/.test(cleanPhone)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "Phone number must be exactly 8 digits",
         received: cleanPhone,
-        length: cleanPhone.length
+        length: cleanPhone.length,
       });
     }
 
@@ -36,7 +36,10 @@ export const createCustomer = async (req, res, next) => {
     // Check if user already exists with cleaned phone
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [{ phone: cleanPhone }, email ? { email } : { phone: "never-match" }],
+        OR: [
+          { phone: cleanPhone },
+          email ? { email } : { phone: "never-match" },
+        ],
       },
     });
 
