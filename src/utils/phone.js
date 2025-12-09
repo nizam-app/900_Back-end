@@ -13,7 +13,7 @@
  *   8801719912009 -> 1719912009
  *   01719912009 -> 1719912009
  *   1719912009 -> 1719912009
- * 
+ *
  * Note: This removes ALL country codes. For multi-country support,
  * you may want to store the full international number instead.
  */
@@ -33,8 +33,18 @@ export const normalizePhoneForDB = (phone) => {
 
   // Remove common country codes
   // Bangladesh: 880, Kenya: 254, India: 91, Netherlands: 31, USA/Canada: 1, UK: 44, UAE: 971, etc.
-  const countryCodes = ['880', '254', '971', '966', '91', '44', '86', '81', '82'];
-  
+  const countryCodes = [
+    "880",
+    "254",
+    "971",
+    "966",
+    "91",
+    "44",
+    "86",
+    "81",
+    "82",
+  ];
+
   for (const code of countryCodes) {
     if (cleaned.startsWith(code)) {
       // Make sure it's not part of the actual number (check length after removal)
@@ -47,12 +57,12 @@ export const normalizePhoneForDB = (phone) => {
   }
 
   // For USA/Canada (country code 1), be careful as it's a single digit
-  if (cleaned.startsWith('1') && cleaned.length >= 11) {
+  if (cleaned.startsWith("1") && cleaned.length >= 11) {
     cleaned = cleaned.substring(1);
   }
 
   // For Netherlands (country code 31)
-  if (cleaned.startsWith('31') && cleaned.length >= 11) {
+  if (cleaned.startsWith("31") && cleaned.length >= 11) {
     cleaned = cleaned.substring(2);
   }
 
@@ -151,7 +161,7 @@ export const isValidPhone = (phone) => {
   }
 
   // If it has + prefix, ensure format is correct
-  if (cleaned.startsWith('+')) {
+  if (cleaned.startsWith("+")) {
     return /^\+\d{8,15}$/.test(cleaned);
   }
 

@@ -269,7 +269,10 @@ export const sendSMS = async (phone, text, options = {}) => {
         errorMessage.includes("Invalid")
       ) {
         errorMessage = `Invalid phone number: ${formattedPhone}. Please verify the number is correct and in international format (e.g., +8801712345678). If the error persists, this country may not be supported by BulkGate.`;
-      } else if (result.code === "no_credit" || errorMessage.includes("credit")) {
+      } else if (
+        result.code === "no_credit" ||
+        errorMessage.includes("credit")
+      ) {
         errorMessage = `SMS service has no credits. Please add credits at https://portal.bulkgate.com`;
       }
 
