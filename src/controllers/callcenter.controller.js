@@ -16,7 +16,7 @@ export const createCustomer = async (req, res, next) => {
     }
 
     // Validate phone format (allow +, digits, spaces, dashes, parentheses)
-    const cleanPhone = phone.replace(/[\s\-()]/g, '');
+    const cleanPhone = phone.replace(/[\s\-()]/g, "");
     if (!/^\+?\d{10,15}$/.test(cleanPhone)) {
       return res.status(400).json({ message: "Provide a valid phone number" });
     }
