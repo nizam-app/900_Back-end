@@ -165,7 +165,7 @@ export const deleteSubservice = async (req, res, next) => {
 
 export const createService = async (req, res, next) => {
   try {
-    const { categoryId, name, description, baseRate } = req.body;
+    const { categoryId, name, description } = req.body;
 
     if (!categoryId || !name) {
       return res
@@ -178,7 +178,6 @@ export const createService = async (req, res, next) => {
         categoryId: Number(categoryId),
         name,
         description,
-        baseRate: baseRate ? Number(baseRate) : null,
       },
     });
 
@@ -191,14 +190,13 @@ export const createService = async (req, res, next) => {
 export const updateService = async (req, res, next) => {
   try {
     const serviceId = Number(req.params.id);
-    const { name, description, baseRate } = req.body;
+    const { name, description } = req.body;
 
     const service = await prisma.service.update({
       where: { id: serviceId },
       data: {
         name,
         description,
-        baseRate: baseRate ? Number(baseRate) : undefined,
       },
     });
 
