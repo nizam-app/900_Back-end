@@ -1365,7 +1365,9 @@ export const getRecentServices = async (req, res, next) => {
       serviceName: sr.subservice?.name || sr.service?.name || "Service",
       categoryName: sr.category?.name || "General Service",
       date: sr.workOrders[0]?.completedAt || sr.createdAt,
-      isCompleted: sr.status === "COMPLETED" || (sr.workOrders && sr.workOrders.length > 0),
+      isCompleted:
+        sr.status === "COMPLETED" ||
+        (sr.workOrders && sr.workOrders.length > 0),
     }));
 
     return res.json(formattedServices);
@@ -1373,4 +1375,3 @@ export const getRecentServices = async (req, res, next) => {
     next(err);
   }
 };
-
