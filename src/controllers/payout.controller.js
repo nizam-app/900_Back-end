@@ -235,7 +235,8 @@ export const createWeeklyBatch = async (req, res, next) => {
         };
       }
       technicianGroups[commission.technicianId].commissions.push(commission);
-      technicianGroups[commission.technicianId].totalAmount += commission.amount;
+      technicianGroups[commission.technicianId].totalAmount +=
+        commission.amount;
     });
 
     // Calculate next Monday
@@ -482,9 +483,7 @@ export const approveEarlyPayout = async (req, res, next) => {
     }
 
     if (request.status !== "PENDING") {
-      return res
-        .status(400)
-        .json({ message: "Request already processed" });
+      return res.status(400).json({ message: "Request already processed" });
     }
 
     // Get pending commissions for this technician

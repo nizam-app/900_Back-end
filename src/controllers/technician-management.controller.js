@@ -375,9 +375,7 @@ export const createTechnician = async (req, res, next) => {
               ? parseFloat(commissionRate)
               : defaultCommissionRate,
           bonusRate:
-            bonusRate !== undefined
-              ? parseFloat(bonusRate)
-              : defaultBonusRate,
+            bonusRate !== undefined ? parseFloat(bonusRate) : defaultBonusRate,
           baseSalary: baseSalary ? parseFloat(baseSalary) : 0,
           academicTitle,
           isForeigner: isForeigner || false,
