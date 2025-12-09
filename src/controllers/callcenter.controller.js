@@ -16,9 +16,16 @@ export const createCustomer = async (req, res, next) => {
     }
 
     // Validate phone format (allow +, digits, spaces, dashes, parentheses)
-    const cleanPhone = phone.replace(/[\s\-()]/g, "");
-    if (!/^\+?\d{10,15}$/.test(cleanPhone)) {
-      return res.status(400).json({ message: "Provide a valid phone number" });
+    // Clean phone: remove spaces, dashes, parentheses, and + prefix
+    const cleanPhone = phone.replace(/[\s\-\(\)\+]/g, "");
+    
+    // Strict validation: phone must be EXACTLY 8 digits
+    if (!/^\d{8}$/.test(cleanPhone)) {
+      return res.status(400).json({ 
+        message: "Phone number must be exactly 8 digits",
+        received: cleanPhone,
+        length: cleanPhone.length
+      });
     }
 
     // Validate email if provided
@@ -26,10 +33,10 @@ export const createCustomer = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
-    // Check if user already exists
+    // Check if user already exists with cleaned phone
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [{ phone }, email ? { email } : { phone: "never-match" }],
+        OR: [{ phone: cleanPhone }, email ? { email } : { phone: "never-match" }],
       },
     });
 
@@ -61,11 +68,11 @@ export const createCustomer = async (req, res, next) => {
     // Hash password if provided, otherwise use empty string
     const passwordHash = password ? await bcrypt.hash(password, 10) : "";
 
-    // Create customer
+    // Create customer with cleaned phone number
     const customer = await prisma.user.create({
       data: {
         name,
-        phone,
+        phone: cleanPhone, // Use cleaned phone (digits only, no formatting)
         email: email || null,
         passwordHash,
         role: "CUSTOMER",

@@ -3470,7 +3470,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"New Customer\",\n  \"phone\": \"7777777777\",\n  \"password\": \"customer123\",\n  \"homeAddress\": \"123 Main Street, Dhaka\",\n  \"latitude\": -1.286389,\n  \"longitude\": 36.817223\n}"
+							"raw": "{\n  \"name\": \"New Customer\",\n  \"phone\": \"77777777\",\n  \"password\": \"customer123\",\n  \"homeAddress\": \"123 Main Street, Dhaka\",\n  \"latitude\": -1.286389,\n  \"longitude\": 36.817223\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/callcenter/customers",

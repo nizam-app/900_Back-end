@@ -51,8 +51,8 @@ export const createSR = async (req, res, next) => {
       });
     }
 
-    // Validate phone format (10 digits)
-    if (!/^\d{10,15}$/.test(phone)) {
+    // Validate phone format (8-15 digits for international support)
+    if (!/^\d{8,15}$/.test(phone)) {
       return res.status(400).json({ message: "Provide a valid phone number" });
     }
 
@@ -1090,8 +1090,8 @@ export const searchCustomer = async (req, res, next) => {
       return res.status(400).json({ message: "Phone number is required" });
     }
 
-    // Validate phone format
-    if (!/^\d{10,15}$/.test(phone)) {
+    // Validate phone format (8-15 digits for international support)
+    if (!/^\d{8,15}$/.test(phone)) {
       return res.status(400).json({ message: "Provide a valid phone number" });
     }
 
