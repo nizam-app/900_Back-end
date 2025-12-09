@@ -11,38 +11,6 @@ const generateOTPCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Format phone number to international format with + prefix
-const formatPhoneNumber = (phone) => {
-  // Remove spaces, dashes, parentheses
-  let cleaned = phone.replace(/[\s\-\(\)]/g, "");
-
-  // If already has + prefix, just clean it up
-  if (cleaned.startsWith("+")) {
-    return cleaned;
-  }
-
-  // Remove the + sign if present to get just digits
-  cleaned = cleaned.replace(/^\+/, "");
-
-  // If starts with 0, replace with 880 (Bangladesh country code)
-  if (cleaned.startsWith("0")) {
-    cleaned = "880" + cleaned.substring(1);
-  }
-
-  // If starts with 88 but not 880, make it 880
-  if (cleaned.startsWith("88") && !cleaned.startsWith("880")) {
-    cleaned = "880" + cleaned.substring(2);
-  }
-
-  // If doesn't start with 880, add it
-  if (!cleaned.startsWith("880")) {
-    cleaned = "880" + cleaned;
-  }
-
-  // Return with + prefix for international format (required by BulkGate)
-  return "+" + cleaned;
-};
-
 // ✅ Send OTP to phone number
 export const sendOTP = async (phone, type, name = null, role = null) => {
   try {

@@ -75,45 +75,42 @@ const normalizePhoneNumber = (phone) => {
 
   // If already has country code with +, return as is
   if (cleaned.startsWith("+")) {
-    return cleaned;
+    // Validate it has digits after +
+    if (cleaned.length > 1 && /^\+\d+$/.test(cleaned)) {
+      return cleaned;
+    }
   }
 
-  // If starts with 00, replace with +
+  // If starts with 00, replace with + (international format)
   if (cleaned.startsWith("00")) {
     return "+" + cleaned.substring(2);
   }
 
-  // If starts with country code without +, add it
-  // Kenya: 254, Bangladesh: 880, India: 91, etc.
-  if (
-    cleaned.startsWith("254") ||
-    cleaned.startsWith("880") ||
-    cleaned.startsWith("91")
-  ) {
+  // If number already looks like international format without +, add it
+  // Common country codes: 1 (US/CA), 31 (NL), 44 (UK), 91 (IN), 254 (KE), 880 (BD), etc.
+  // If it's 11+ digits, assume it already has country code
+  if (cleaned.length >= 11 && /^\d+$/.test(cleaned)) {
     return "+" + cleaned;
   }
 
-  // Get default country code from env or use Kenya as default
-  const DEFAULT_COUNTRY_CODE = process.env.DEFAULT_COUNTRY_CODE || "254"; // Kenya
+  // Get default country code from env or use Bangladesh as default
+  const DEFAULT_COUNTRY_CODE = process.env.DEFAULT_COUNTRY_CODE || "880"; // Bangladesh
 
-  if (cleaned.length === 10) {
-    // Remove leading 0 if present (e.g., 0712345678 -> 712345678)
+  // Handle local numbers (9-10 digits) - add default country code
+  if (cleaned.length === 10 || cleaned.length === 9) {
+    // Remove leading 0 if present (common in many countries)
     if (cleaned.startsWith("0")) {
       cleaned = cleaned.substring(1);
     }
     return `+${DEFAULT_COUNTRY_CODE}${cleaned}`;
   }
 
-  // If 9 digits (without leading 0), add country code
-  if (cleaned.length === 9) {
-    return `+${DEFAULT_COUNTRY_CODE}${cleaned}`;
-  }
-
-  // If number doesn't match patterns, return with + prefix if digits only
+  // For any other digit-only string, try to add + prefix
   if (/^\d+$/.test(cleaned)) {
     return "+" + cleaned;
   }
 
+  // Last resort: return as is with + if not present
   console.warn(`⚠️ Could not normalize phone number: ${phone}`);
   return cleaned.startsWith("+") ? cleaned : "+" + cleaned;
 };
@@ -172,17 +169,19 @@ export const sendSMS = async (phone, text, options = {}) => {
       );
     }
 
-    // Validate phone number format
+    // Validate phone number format (international standard: + followed by 8-15 digits)
     if (
       !formattedPhone ||
       !formattedPhone.startsWith("+") ||
-      formattedPhone.length < 10
+      formattedPhone.length < 9 || // Minimum: +31612345 = 10 chars (8 digits)
+      formattedPhone.length > 16 || // Maximum: +123456789012345 = 16 chars (15 digits)
+      !/^\+\d{8,15}$/.test(formattedPhone) // Must be + followed by 8-15 digits
     ) {
       console.error(`❌ Invalid phone number format: ${phone}`);
       return {
         success: false,
         error:
-          "Invalid phone number format. Must be in international format (e.g., +254712345678)",
+          "Invalid phone number format. Must be international format with 8-15 digits (e.g., +8801712345678, +31612345678, +254712345678)",
         message: "Invalid phone number",
       };
     }
@@ -269,7 +268,9 @@ export const sendSMS = async (phone, text, options = {}) => {
         result.code === "invalid_phone_number" ||
         errorMessage.includes("Invalid")
       ) {
-        errorMessage = `Invalid phone number: ${formattedPhone}. BulkGate may not support this country code or the number format is incorrect.`;
+        errorMessage = `Invalid phone number: ${formattedPhone}. Please verify the number is correct and in international format (e.g., +8801712345678). If the error persists, this country may not be supported by BulkGate.`;
+      } else if (result.code === "no_credit" || errorMessage.includes("credit")) {
+        errorMessage = `SMS service has no credits. Please add credits at https://portal.bulkgate.com`;
       }
 
       return {
