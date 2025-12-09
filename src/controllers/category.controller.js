@@ -27,7 +27,7 @@ export const listCategories = async (req, res, next) => {
 
 export const createCategory = async (req, res, next) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, image } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: "Name is required" });
@@ -37,6 +37,7 @@ export const createCategory = async (req, res, next) => {
       data: {
         name,
         description,
+        image,
       },
     });
 
@@ -58,13 +59,14 @@ export const createCategory = async (req, res, next) => {
 export const updateCategory = async (req, res, next) => {
   try {
     const categoryId = Number(req.params.id);
-    const { name, description } = req.body;
+    const { name, description, image } = req.body;
 
     const category = await prisma.category.update({
       where: { id: categoryId },
       data: {
         name,
         description,
+        image,
       },
     });
 

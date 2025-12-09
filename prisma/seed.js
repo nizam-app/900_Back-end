@@ -185,6 +185,7 @@ async function main() {
     create: {
       name: "HVAC Services",
       description: "Heating, Ventilation, and Air Conditioning",
+      image: "https://example.com/images/hvac.jpg",
     },
   });
 
@@ -194,6 +195,7 @@ async function main() {
     create: {
       name: "Electrical Services",
       description: "All electrical repairs and installations",
+      image: "https://example.com/images/electrical.jpg",
     },
   });
 
@@ -203,6 +205,7 @@ async function main() {
     create: {
       name: "Plumbing Services",
       description: "Plumbing repairs and installations",
+      image: "https://example.com/images/plumbing.jpg",
     },
   });
 
