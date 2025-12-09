@@ -17,6 +17,7 @@ import {
   searchCustomer,
   rebookService,
   bookAgain,
+  getRecentServices,
 } from "../controllers/sr.controller.js";
 
 const router = Router();
@@ -31,6 +32,9 @@ router.get(
 
 // Customer / Guest create SR (optional auth - supports both authenticated and guest users)
 router.post("/", optionalAuth, createSR);
+
+// Get Recent Services - Simple list for dashboard
+router.get("/recent", authMiddleware, getRecentServices);
 
 // Get My SRs - Dedicated endpoint for customers with readable status
 router.get("/my", authMiddleware, requireRole("CUSTOMER"), getMySRs);

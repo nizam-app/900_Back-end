@@ -461,7 +461,7 @@ export const getTechnicianEarnings = async (technicianId) => {
     woNumber: commission.workOrder?.woNumber,
   }));
 
-  // Build response
+  // Build response with role-specific naming
   const earnings = {
     totalBonuses: {
       amount: totalAllTime,
@@ -507,7 +507,10 @@ export const getTechnicianEarnings = async (technicianId) => {
       total: (profile.baseSalary || 0) + thisMonth,
       isFreelancer,
     },
-    recentBonuses: formattedBonuses,
+    // Role-specific naming: Freelancers see "recentTransactions", Internal staff see "recentBonuses"
+    ...(isFreelancer
+      ? { recentTransactions: formattedBonuses }
+      : { recentBonuses: formattedBonuses }),
   };
 
   return earnings;

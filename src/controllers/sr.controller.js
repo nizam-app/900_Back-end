@@ -1309,3 +1309,68 @@ export const bookAgain = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * Get Recent Services for Customer Dashboard
+ * Returns last 5 completed services with simplified data
+ */
+export const getRecentServices = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const limit = parseInt(req.query.limit) || 5;
+
+    const recentSRs = await prisma.serviceRequest.findMany({
+      where: {
+        customerId: userId,
+        status: { in: ["COMPLETED", "CONVERTED_TO_WO"] },
+      },
+      include: {
+        category: {
+          select: {
+            name: true,
+          },
+        },
+        subservice: {
+          select: {
+            name: true,
+          },
+        },
+        service: {
+          select: {
+            name: true,
+          },
+        },
+        workOrders: {
+          where: {
+            status: "PAID_VERIFIED",
+          },
+          select: {
+            completedAt: true,
+          },
+          orderBy: {
+            completedAt: "desc",
+          },
+          take: 1,
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: limit,
+    });
+
+    const formattedServices = recentSRs.map((sr) => ({
+      id: sr.id,
+      srNumber: sr.srNumber,
+      serviceName: sr.subservice?.name || sr.service?.name || "Service",
+      categoryName: sr.category?.name || "General Service",
+      date: sr.workOrders[0]?.completedAt || sr.createdAt,
+      isCompleted: sr.status === "COMPLETED" || (sr.workOrders && sr.workOrders.length > 0),
+    }));
+
+    return res.json(formattedServices);
+  } catch (err) {
+    next(err);
+  }
+};
+
