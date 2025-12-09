@@ -90,7 +90,7 @@ model Category {
   id              Int              @id @default(autoincrement())
   name            String
   description     String?
-  image           String?          // Category image URL
+  image           String? // Category image URL
   isActive        Boolean          @default(true) // Active/Inactive toggle
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
