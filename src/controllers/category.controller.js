@@ -29,14 +29,14 @@ export const listCategories = async (req, res, next) => {
 export const createCategory = async (req, res, next) => {
   try {
     const { name, description } = req.body;
-    
+
     // Upload image to external service if provided
     let image = null;
     if (req.file) {
       try {
         image = await uploadImageToService(req.file);
       } catch (uploadErr) {
-        console.error('Image upload failed:', uploadErr);
+        console.error("Image upload failed:", uploadErr);
         // Continue without image if upload fails
       }
     }
@@ -72,14 +72,14 @@ export const updateCategory = async (req, res, next) => {
   try {
     const categoryId = Number(req.params.id);
     const { name, description } = req.body;
-    
+
     // Upload image to external service if new image provided
     let image = undefined;
     if (req.file) {
       try {
         image = await uploadImageToService(req.file);
       } catch (uploadErr) {
-        console.error('Image upload failed:', uploadErr);
+        console.error("Image upload failed:", uploadErr);
         // Continue without updating image if upload fails
       }
     }
