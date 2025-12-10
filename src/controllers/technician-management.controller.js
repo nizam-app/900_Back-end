@@ -430,6 +430,39 @@ export const updateTechnician = async (req, res, next) => {
       status,
     } = req.body;
 
+    // Check if email already exists for another user
+    if (email) {
+      const existingEmail = await prisma.user.findFirst({
+        where: {
+          email,
+          id: { not: Number(id) },
+        },
+      });
+      if (existingEmail) {
+        return res.status(400).json({
+          message: "Email already exists for another user",
+        });
+      }
+    }
+
+    // Check if technician exists
+    const existingTechnician = await prisma.user.findUnique({
+      where: { id: Number(id) },
+      include: { technicianProfile: true },
+    });
+
+    if (!existingTechnician) {
+      return res.status(404).json({
+        message: "Technician not found",
+      });
+    }
+
+    if (!existingTechnician.technicianProfile) {
+      return res.status(404).json({
+        message: "Technician profile not found. This user is not a technician.",
+      });
+    }
+
     const updateData = {};
     const profileUpdateData = {};
 
@@ -460,7 +493,7 @@ export const updateTechnician = async (req, res, next) => {
         });
       }
 
-      // Update profile
+      // Update profile (only if there are profile fields to update)
       if (Object.keys(profileUpdateData).length > 0) {
         await tx.technicianProfile.update({
           where: { userId: Number(id) },

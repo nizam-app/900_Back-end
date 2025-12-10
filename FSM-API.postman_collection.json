@@ -2105,15 +2105,27 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{adminToken}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Cleaning Services\",\n  \"description\": \"Professional cleaning services\"\n}"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Cleaning Services",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Professional cleaning services",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": ""
+								}
+							]
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/categories",
@@ -2125,7 +2137,7 @@
 								"categories"
 							]
 						},
-						"description": "Create new category (Admin only)"
+						"description": "Create new category with image (Admin only)\n\n**Request Body (form-data):**\n- `name` (required): Category name\n- `description` (optional): Category description\n- `image` (optional): Category image file (jpg, png, webp)\n\n**UPDATED:** Dec 10, 2025 - Changed to form-data for image upload"
 					}
 				},
 				{
