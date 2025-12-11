@@ -338,7 +338,9 @@ export const setDefaultRate = async (req, res, next) => {
     });
 
     return res.json({
-      message: `${rate.rateId} is now the default ${rate.type.toLowerCase()} rate for ${rate.techType.toLowerCase()}s`,
+      message: `${
+        rate.rateId
+      } is now the default ${rate.type.toLowerCase()} rate for ${rate.techType.toLowerCase()}s`,
       rate: {
         ...updated,
         ratePercentage: Math.round(updated.rate * 100),

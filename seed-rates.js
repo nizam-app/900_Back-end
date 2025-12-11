@@ -24,7 +24,7 @@ async function seedRates() {
       name: "Standard commission for freelance technicians",
       type: "COMMISSION",
       techType: "FREELANCER",
-      rate: 0.10, // 10%
+      rate: 0.1, // 10%
       isDefault: true,
       description: "Default commission rate for new freelance technicians",
     },
@@ -35,7 +35,8 @@ async function seedRates() {
       techType: "FREELANCER",
       rate: 0.12, // 12%
       isDefault: false,
-      description: "Higher commission for experienced freelancers with excellent ratings",
+      description:
+        "Higher commission for experienced freelancers with excellent ratings",
     },
   ];
 
@@ -65,7 +66,11 @@ async function seedRates() {
   for (const rate of [...commissionRates, ...bonusRates]) {
     const created = await prisma.rateStructure.create({ data: rate });
     console.log(`✓ Created ${created.rateId}: ${created.name}`);
-    console.log(`   Type: ${created.type} | TechType: ${created.techType} | Rate: ${created.rate * 100}%`);
+    console.log(
+      `   Type: ${created.type} | TechType: ${created.techType} | Rate: ${
+        created.rate * 100
+      }%`
+    );
     if (created.isDefault) {
       console.log(`   ⭐ Default rate for ${created.techType}`);
     }
