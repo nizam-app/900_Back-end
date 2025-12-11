@@ -48,8 +48,8 @@ const upload = multer({
   },
 });
 
-// All routes require Admin role
-router.use(authMiddleware, requireRole("ADMIN"));
+// All routes require Admin or Dispatcher role
+router.use(authMiddleware, requireRole("ADMIN", "DISPATCHER"));
 
 // Get overview statistics
 router.get("/overview", getTechnicianOverview);

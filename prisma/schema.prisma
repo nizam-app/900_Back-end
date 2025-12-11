@@ -381,6 +381,20 @@ model SystemConfig {
   updatedById                Int?
 }
 
+// Commission & Bonus Rate structures for admin management
+model RateStructure {
+  id          Int      @id @default(autoincrement())
+  rateId      String   @unique // e.g., RATE001, RATE002
+  name        String // e.g., "Standard commission for freelance technicians"
+  type        String // COMMISSION or BONUS
+  techType    String // FREELANCER or INTERNAL
+  rate        Float // e.g., 0.10 for 10%
+  isDefault   Boolean  @default(false) // Default rate for this tech type
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Review {
   id           Int      @id @default(autoincrement())
   woId         Int
