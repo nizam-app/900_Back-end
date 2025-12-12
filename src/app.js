@@ -32,6 +32,7 @@ import employeeRoutes from "./routes/employee.routes.js";
 import payoutRoutes from "./routes/payout.routes.js";
 import technicianManagementRoutes from "./routes/technician-management.routes.js";
 import rateRoutes from "./routes/rate.routes.js";
+import callCenterDashboardRoutes from "./routes/call-center.routes.js";
 
 const app = express();
 
@@ -100,6 +101,7 @@ app.use("/api/employee", employeeRoutes);
 app.use("/api/payouts", payoutRoutes);
 app.use("/api/technicians", technicianManagementRoutes);
 app.use("/api/rates", rateRoutes);
+app.use("/api/call-center", callCenterDashboardRoutes);
 
 app.get("/", (req, res) => {
   res.json({ status: "FSM backend running ok" });

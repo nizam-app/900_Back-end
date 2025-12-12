@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "fsm-api-collection-2025-v5.1",
-		"name": "FSM System API - Complete Collection (Dec 9, 2025 - Updated)",
-		"description": "🎉 **MAJOR UPDATE - December 9, 2025 (v5.1)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ International Phone Number Support ✅ **NEW**\n**Fixed:** Complete global phone number support\n- ✅ All 200+ countries now supported (Bangladesh, Netherlands, USA, UK, UAE, Kenya, India, Saudi Arabia, etc.)\n- ✅ Removed hardcoded Bangladesh-only restriction\n- ✅ Updated `formatPhoneForSMS()` - handles all international formats\n- ✅ Updated `normalizePhoneForDB()` - removes country codes from 10+ countries\n- ✅ Updated `isValidPhone()` - validates 8-15 digit numbers (ITU-T E.164 standard)\n- ✅ Enhanced error messages for invalid formats\n- ✅ Fixed bug where +31 (Netherlands) was becoming +88031 (invalid)\n- Examples that now work: +31612345678 (NL), +14155551234 (US), +971501234567 (UAE)\n\n### 2️⃣ Payout Management System ✅\n**Added:** Complete payout management for admin dashboard\n- `GET /api/payouts/summary` - Dashboard overview (Pending: $21,900, Early Requests: $1,000)\n- `GET /api/payouts/pending-commissions` - List pending commissions/bonuses (6 items ready)\n- `GET /api/payouts/early-requests` - Early payout requests (1 pending)\n- `POST /api/payouts/batches` - Create weekly payout batch\n- `GET /api/payouts/batches` - List payout batches (4 processed batches found)\n- `GET /api/payouts/history` - Completed payout history\n- `PATCH /api/payouts/batches/:id/process` - Process batch\n- `PATCH /api/payouts/early-requests/:id/approve` - Approve early payout\n- `PATCH /api/payouts/early-requests/:id/reject` - Reject early payout\n- Weekly batches automatically scheduled for Mondays (Next: Dec 15, 2025)\n- Early payout request approval workflow\n- **TESTED & WORKING** - All endpoints returning real data\n\n### 3️⃣ Technician Management System ✅\n**Added:** Complete technician management for admin\n- `GET /api/technicians/overview` - Statistics & distribution\n- `GET /api/technicians/directory` - List with filters\n- `GET /api/technicians/:id` - Detailed profile\n- `POST /api/technicians` - Create new technician\n- `PATCH /api/technicians/:id` - Update technician\n- `PATCH /api/technicians/:id/block` - Block/unblock\n- `PATCH /api/technicians/:id/documents` - Upload documents\n- `GET /api/technicians/export` - Export to CSV\n- Supports both freelancers (commission) and employees (salary + bonus)\n- Document upload (photo, ID, permits, degrees)\n- Comprehensive filtering and search\n\n### 4️⃣ Recent Services API ✅\n**Added:** Customer dashboard endpoint\n- `GET /api/sr/recent` - Recent completed services\n- Shows last 5 services with completion status\n- Optimized for customer dashboard UI\n\n### 5️⃣ Schema Improvements ✅\n**Updated:** Category model\n- Added `image` field to categories\n- Migration applied successfully\n- Seed data updated with image URLs\n\n### 6️⃣ Bug Fixes ✅\n**Fixed:** Multiple critical issues\n- ✅ Phone validation now accepts ALL international formats (8-15 digits)\n- ✅ Removed Bangladesh-only hardcoding in phone utilities\n- ✅ Fixed Netherlands (+31) being corrupted to +88031\n- ✅ Service/Subservice creation endpoints updated\n- ✅ BaseRate moved to Subservice level (completed Dec 5)\n- ✅ Payment calculations fixed\n- ✅ Technician earnings endpoint role-based naming\n- ✅ OTP service using updated phone utilities\n\n## 📋 Previous Updates:\n\n**December 4, 2025:**\n- Service hierarchy restructure (Category → Service → Subservice)\n- Technician profile endpoints\n- Internal employee registration system\n\n## 📊 Collection Stats:\n- Total Sections: 17 (includes Payout Management & Technician Management)\n- Total Endpoints: 130 (18 new today)\n- Countries Supported: 200+ (global coverage)\n- Files Updated Today: 4 (phone.js, otp.service.js, sms.service.js, postman collection)\n\n## ✅ All Systems Operational:\n- ✅ Global phone number support (200+ countries)\n- ✅ Payout management fully functional ($21,900 pending)\n- ✅ Technician management ready\n- ✅ Service hierarchy correct\n- ✅ Profile endpoints working\n- ✅ Employee registration tested\n- ✅ OTP delivery confirmed for all countries\n- ✅ Server running on port 4000\n\n## 🧪 Tested & Verified:\n- ✅ Netherlands +31612345678 → Works\n- ✅ USA +14155551234 → Works\n- ✅ Bangladesh +8801712345678 → Works\n- ✅ Kenya +254712345678 → Works\n- ✅ UAE +971501234567 → Works\n- ✅ Payout Summary API → Returning real data\n- ✅ Pending Commissions API → 6 items found\n- ✅ Early Payout Requests → 1 request pending\n\n**Status:** Production Ready | **Version:** 5.1 | **Date:** December 9, 2025",
+		"_postman_id": "fsm-api-collection-2025-v5.2",
+		"name": "FSM System API - Complete Collection (Dec 12, 2025 - Updated)",
+		"description": "🎉 **MAJOR UPDATE - December 12, 2025 (v5.2)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Commission & Bonus Rate Management ✅ **NEW**\n**Added:** Complete rate management system for admin\n- `GET /api/rates/summary` - Dashboard stats (Commission Rates: 2, Avg: 11%, Bonus Rates: 2, Avg: 5.5%)\n- `GET /api/rates` - List all rate structures with filters\n- `GET /api/rates/:id` - Get single rate details\n- `POST /api/rates` - Create commission/bonus rates\n- `PATCH /api/rates/:id` - Update rate structure\n- `DELETE /api/rates/:id` - Delete rate (with protection)\n- `PATCH /api/rates/:id/set-default` - Set as default rate\n- `GET /api/rates/default/:techType` - Get default rate for FREELANCER/INTERNAL\n- Supports multiple rate structures per type\n- Default rate auto-applied when creating technicians\n- Rate IDs auto-generated (RATE001, RATE002, etc.)\n- **TESTED & WORKING** - Seeded with initial data\n\n### 2️⃣ Technician Management Enhancements ✅\n**Updated:** Document upload system\n- ✅ External image service integration (https://img.mtscorporate.com)\n- ✅ No local file storage - all uploaded to CDN\n- ✅ Temporary files auto-deleted after upload\n- ✅ Password field added to technician creation\n- ✅ Email uniqueness validation\n- ✅ Dispatcher role access granted\n- Better error messages for missing profiles\n\n### 3️⃣ Previous Updates (Dec 9, 2025 - v5.1)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ International Phone Number Support ✅ **NEW**\n**Fixed:** Complete global phone number support\n- ✅ All 200+ countries now supported (Bangladesh, Netherlands, USA, UK, UAE, Kenya, India, Saudi Arabia, etc.)\n- ✅ Removed hardcoded Bangladesh-only restriction\n- ✅ Updated `formatPhoneForSMS()` - handles all international formats\n- ✅ Updated `normalizePhoneForDB()` - removes country codes from 10+ countries\n- ✅ Updated `isValidPhone()` - validates 8-15 digit numbers (ITU-T E.164 standard)\n- ✅ Enhanced error messages for invalid formats\n- ✅ Fixed bug where +31 (Netherlands) was becoming +88031 (invalid)\n- Examples that now work: +31612345678 (NL), +14155551234 (US), +971501234567 (UAE)\n\n### 2️⃣ Payout Management System ✅\n**Added:** Complete payout management for admin dashboard\n- `GET /api/payouts/summary` - Dashboard overview (Pending: $21,900, Early Requests: $1,000)\n- `GET /api/payouts/pending-commissions` - List pending commissions/bonuses (6 items ready)\n- `GET /api/payouts/early-requests` - Early payout requests (1 pending)\n- `POST /api/payouts/batches` - Create weekly payout batch\n- `GET /api/payouts/batches` - List payout batches (4 processed batches found)\n- `GET /api/payouts/history` - Completed payout history\n- `PATCH /api/payouts/batches/:id/process` - Process batch\n- `PATCH /api/payouts/early-requests/:id/approve` - Approve early payout\n- `PATCH /api/payouts/early-requests/:id/reject` - Reject early payout\n- Weekly batches automatically scheduled for Mondays (Next: Dec 15, 2025)\n- Early payout request approval workflow\n- **TESTED & WORKING** - All endpoints returning real data\n\n### 3️⃣ Technician Management System ✅\n**Added:** Complete technician management for admin\n- `GET /api/technicians/overview` - Statistics & distribution\n- `GET /api/technicians/directory` - List with filters\n- `GET /api/technicians/:id` - Detailed profile\n- `POST /api/technicians` - Create new technician\n- `PATCH /api/technicians/:id` - Update technician\n- `PATCH /api/technicians/:id/block` - Block/unblock\n- `PATCH /api/technicians/:id/documents` - Upload documents\n- `GET /api/technicians/export` - Export to CSV\n- Supports both freelancers (commission) and employees (salary + bonus)\n- Document upload (photo, ID, permits, degrees)\n- Comprehensive filtering and search\n\n### 4️⃣ Recent Services API ✅\n**Added:** Customer dashboard endpoint\n- `GET /api/sr/recent` - Recent completed services\n- Shows last 5 services with completion status\n- Optimized for customer dashboard UI\n\n### 5️⃣ Schema Improvements ✅\n**Updated:** Category model\n- Added `image` field to categories\n- Migration applied successfully\n- Seed data updated with image URLs\n\n### 6️⃣ Bug Fixes ✅\n**Fixed:** Multiple critical issues\n- ✅ Phone validation now accepts ALL international formats (8-15 digits)\n- ✅ Removed Bangladesh-only hardcoding in phone utilities\n- ✅ Fixed Netherlands (+31) being corrupted to +88031\n- ✅ Service/Subservice creation endpoints updated\n- ✅ BaseRate moved to Subservice level (completed Dec 5)\n- ✅ Payment calculations fixed\n- ✅ Technician earnings endpoint role-based naming\n- ✅ OTP service using updated phone utilities\n\n## 📋 Previous Updates:\n\n**December 4, 2025:**\n- Service hierarchy restructure (Category → Service → Subservice)\n- Technician profile endpoints\n- Internal employee registration system\n\n## 📊 Collection Stats:\n- Total Sections: 17 (includes Payout Management & Technician Management)\n- Total Endpoints: 130 (18 new today)\n- Countries Supported: 200+ (global coverage)\n- Files Updated Today: 4 (phone.js, otp.service.js, sms.service.js, postman collection)\n\n## ✅ All Systems Operational:\n- ✅ Global phone number support (200+ countries)\n- ✅ Payout management fully functional ($21,900 pending)\n- ✅ Technician management ready\n- ✅ Service hierarchy correct\n- ✅ Profile endpoints working\n- ✅ Employee registration tested\n- ✅ OTP delivery confirmed for all countries\n- ✅ Server running on port 4000\n\n## 🧪 Tested & Verified:\n- ✅ Netherlands +31612345678 → Works\n- ✅ USA +14155551234 → Works\n- ✅ Bangladesh +8801712345678 → Works\n- ✅ Kenya +254712345678 → Works\n- ✅ UAE +971501234567 → Works\n- ✅ Payout Summary API → Returning real data\n- ✅ Pending Commissions API → 6 items found\n- ✅ Early Payout Requests → 1 request pending\n\n**Status:** Production Ready | **Version:** 5.2 | **Date:** December 12, 2025\n\n## 🆕 Today's Additions (Dec 12):\n- ✅ Commission & Bonus Rate Management (12 endpoints)\n- ✅ Image upload to external CDN\n- ✅ Technician password field\n- ✅ Email validation on creation\n- ✅ Dispatcher access to technician management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -2456,6 +2456,30 @@
 					}
 				},
 				{
+					"name": "Get Technician Locations (Map View)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/technician-locations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"technician-locations"
+							]
+						},
+						"description": "✅ **NEW (Dec 12, 2025)** - Dynamic Technician Location Map\n\n**Purpose:** Get real-time technician locations with online/offline status for map visualization.\n\n**Authorization:** Requires ADMIN or DISPATCHER role\n\n**Response Structure:**\n```json\n{\n  \"success\": true,\n  \"summary\": {\n    \"total\": 12,\n    \"online\": 8,\n    \"offline\": 4,\n    \"withActiveJobs\": 5,\n    \"available\": 3\n  },\n  \"technicians\": [\n    {\n      \"id\": 5,\n      \"name\": \"Mike Freelancer\",\n      \"phone\": \"5555555555\",\n      \"email\": \"tech.freelancer@fsm.com\",\n      \"photoUrl\": \"https://img.mtscorporate.com/tech-photo.jpg\",\n      \"location\": {\n        \"latitude\": 23.8103,\n        \"longitude\": 90.4125\n      },\n      \"status\": {\n        \"isOnline\": true,\n        \"profileStatus\": \"ACTIVE\",\n        \"lastActivity\": \"2025-12-12T10:30:00Z\",\n        \"minutesSinceActivity\": 5\n      },\n      \"type\": \"FREELANCER\",\n      \"specialization\": \"Electrical\",\n      \"currentJob\": {\n        \"workOrderId\": 45,\n        \"serviceRequestId\": 23,\n        \"status\": \"IN_PROGRESS\",\n        \"priority\": \"HIGH\",\n        \"serviceName\": \"AC Installation\",\n        \"customerLocation\": {\n          \"address\": \"123 Main St, Dhaka\",\n          \"latitude\": 23.8156,\n          \"longitude\": 90.4217\n        },\n        \"scheduledDate\": \"2025-12-12T14:00:00Z\"\n      },\n      \"rating\": 4.8,\n      \"completedJobs\": 156\n    }\n  ],\n  \"mapConfig\": {\n    \"googleMapsApiKey\": \"AIzaSyCf5-pQ5-HPiojINTuJKf3EU0wJViRJ-Ck\",\n    \"defaultCenter\": {\n      \"latitude\": 23.8103,\n      \"longitude\": 90.4125\n    },\n    \"defaultZoom\": 12\n  }\n}\n```\n\n**Features:**\n\n**1. Online/Offline Detection:**\n- **Online:** Profile status ACTIVE + location available + activity within 15 minutes\n- **Offline:** Inactive status OR no location OR no recent activity\n- Real-time status updates based on last activity timestamp\n\n**2. Technician Data:**\n- `id`: User ID\n- `name`: Full name\n- `phone`: Contact number\n- `email`: Email address\n- `photoUrl`: Profile photo URL\n- `location`: Current GPS coordinates (lat/lng)\n- `type`: FREELANCER or INTERNAL\n- `specialization`: Skills/expertise\n- `rating`: Average rating (0-5)\n- `completedJobs`: Total completed jobs count\n\n**3. Status Information:**\n- `isOnline`: Boolean for map marker color (green=online, gray=offline)\n- `profileStatus`: ACTIVE, INACTIVE, or ON_BREAK\n- `lastActivity`: ISO timestamp of last action\n- `minutesSinceActivity`: Minutes since last activity\n\n**4. Current Job (if active):**\n- `workOrderId`: Current work order ID\n- `serviceRequestId`: Related SR ID\n- `status`: ASSIGNED or IN_PROGRESS\n- `priority`: HIGH, MEDIUM, or LOW\n- `serviceName`: Service being performed\n- `customerLocation`: Job site address and coordinates\n- `scheduledDate`: Scheduled completion time\n\n**5. Map Configuration:**\n- `googleMapsApiKey`: Google Maps API key for frontend\n- `defaultCenter`: Default map center (Dhaka, Bangladesh)\n- `defaultZoom`: Recommended zoom level (12)\n\n**6. Summary Statistics:**\n- `total`: Total technicians with location data\n- `online`: Count of online technicians (green markers)\n- `offline`: Count of offline technicians (gray markers)\n- `withActiveJobs`: Technicians currently on jobs\n- `available`: Online technicians without active jobs\n\n**Map Visualization:**\n\n**Marker Colors:**\n- 🟢 **Green:** Online & available (no active job)\n- 🔵 **Blue:** Online & busy (has active job)\n- ⚫ **Gray:** Offline\n\n**Marker Info Window:**\n```\n┌─────────────────────────────┐\n│ 📷 Mike Freelancer          │\n│ ⭐ 4.8 (156 jobs)           │\n│ 🔧 Electrical               │\n│                             │\n│ Status: Online              │\n│ Last Active: 5 min ago      │\n│                             │\n│ Current Job:                │\n│ AC Installation (HIGH)      │\n│ 📍 123 Main St, Dhaka       │\n│                             │\n│ [View Profile] [Call]       │\n└─────────────────────────────┘\n```\n\n**Use Cases:**\n1. **Dispatcher:** See available technicians nearby for assignment\n2. **Admin:** Monitor field team real-time locations\n3. **Manager:** Track technician activity and job progress\n4. **Operations:** Identify coverage gaps in service areas\n5. **Customer Service:** Provide ETA based on technician proximity\n\n**Online Threshold:** 15 minutes\n- Technicians active within last 15 min = Online\n- Technicians inactive >15 min = Offline\n- Adjustable in backend code\n\n**Location Sources:**\n1. User table: `latitude`, `longitude` (primary)\n2. TechnicianProfile table: `latitude`, `longitude` (fallback)\n3. No location data = Not shown on map\n\n**Refresh Recommendations:**\n- Auto-refresh every 30 seconds for real-time tracking\n- Show \"Last updated: X seconds ago\" timestamp\n- WebSocket support can be added for instant updates\n\n**Google Maps Integration:**\n```javascript\n// Frontend example\nconst response = await fetch('/api/admin/technician-locations');\nconst data = await response.json();\n\nconst map = new google.maps.Map(document.getElementById('map'), {\n  center: data.mapConfig.defaultCenter,\n  zoom: data.mapConfig.defaultZoom\n});\n\ndata.technicians.forEach(tech => {\n  const marker = new google.maps.Marker({\n    position: tech.location,\n    map: map,\n    title: tech.name,\n    icon: tech.status.isOnline ? greenIcon : grayIcon\n  });\n  \n  const infoWindow = new google.maps.InfoWindow({\n    content: `<strong>${tech.name}</strong><br>\n              ${tech.status.isOnline ? 'Online' : 'Offline'}<br>\n              ${tech.currentJob ? 'Busy' : 'Available'}`\n  });\n  \n  marker.addListener('click', () => {\n    infoWindow.open(map, marker);\n  });\n});\n```\n\n**Status:** ✅ PRODUCTION READY (Dec 12, 2025)\n\n**API Key:** AIzaSyCf5-pQ5-HPiojINTuJKf3EU0wJViRJ-Ck"
+					}
+				},
+				{
 					"name": "List All Users",
 					"request": {
 						"method": "GET",
@@ -3453,6 +3477,30 @@
 					}
 				},
 				{
+					"name": "Get Dashboard Stats (Call Center)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{callCenterToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/call-center/stats",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"call-center",
+								"stats"
+							]
+						},
+						"description": "✅ **NEW (Dec 12, 2025)** - Call Center Dashboard Statistics\n\n**Purpose:** Get overview statistics for call center agent dashboard.\n\n**Authorization:** Requires CALL_CENTER role\n\n**Response Structure:**\n```json\n{\n  \"success\": true,\n  \"stats\": {\n    \"totalServiceRequests\": {\n      \"count\": 12,\n      \"label\": \"All time SRs\"\n    },\n    \"pending\": {\n      \"count\": 6,\n      \"label\": \"Awaiting action\"\n    },\n    \"inProgress\": {\n      \"count\": 4,\n      \"label\": \"Being worked on\"\n    },\n    \"resolved\": {\n      \"count\": 2,\n      \"label\": \"Completed SRs\"\n    },\n    \"openSRsToday\": {\n      \"count\": 2,\n      \"label\": \"Opened today\"\n    },\n    \"avgTimeToDispatch\": {\n      \"hours\": 1.2,\n      \"label\": \"1.2 hrs\"\n    }\n  }\n}\n```\n\n**Statistics Explained:**\n\n**1. Total Service Requests:**\n- All SRs created in the system (all time)\n- Includes: OPEN, ASSIGNED, IN_PROGRESS, COMPLETED, CLOSED, CANCELLED\n\n**2. Pending:**\n- SRs with status: OPEN\n- Awaiting dispatcher assignment\n- Call center needs to handle these\n\n**3. In Progress:**\n- SRs with status: ASSIGNED or IN_PROGRESS\n- Currently being worked on by technicians\n- Work orders created and active\n\n**4. Resolved:**\n- SRs with status: COMPLETED or CLOSED\n- Jobs finished successfully\n- Customers satisfied\n\n**5. Open SRs Today:**\n- Count of SRs created today (00:00 to 23:59)\n- Shows daily workload\n- Today's date: December 12, 2025\n\n**6. Average Time to Dispatch:**\n- Time from SR creation to first work order assignment\n- Calculated from last 50 SRs with work orders\n- Lower = better efficiency\n- Example: 1.2 hrs = 1 hour 12 minutes\n\n**UI Mapping:**\n\n**Dashboard Cards:**\n1. **Total Service Requests** → Red icon, \"12 All time SRs\"\n2. **Pending** → Yellow icon, \"6 Awaiting action\"\n3. **In Progress** → Blue icon, \"4 Being worked on\"\n4. **Resolved** → Green icon with checkmark, \"2 Completed SRs\"\n\n**Bottom Metrics:**\n- **Open SRs Today:** 2 with trend arrow\n- **Avg Time to Dispatch:** 1.2 hrs with clock icon\n\n**Use Cases:**\n- Call center dashboard overview\n- Performance monitoring\n- Daily workload tracking\n- Efficiency metrics\n- Quick status check for management\n\n**Status:** ✅ PRODUCTION READY (Dec 12, 2025)"
+					}
+				},
+				{
 					"name": "Create Customer with GPS",
 					"event": [
 						{
@@ -4419,6 +4467,389 @@
 						},
 						"description": "Export technicians data to CSV file.\n\n**Query Parameters:**\n- specialization: Filter by specialization (optional)\n- type: Filter by FREELANCER or INTERNAL (optional)\n\n**Response:** CSV file download with technician data.\n\n**Headers:** ID, Name, Phone, Email, Specialization, Type, Status, Commission Rate, Bonus Rate, Base Salary, Total Jobs, Join Date\n\n**Admin only**"
 					}
+				}
+			]
+		},
+		{
+			"name": "Commission & Bonus Rates (Admin)",
+			"item": [
+				{
+					"name": "Get Rate Summary",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/rates/summary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates",
+								"summary"
+							]
+						},
+						"description": "**NEW:** December 12, 2025\n\nGet dashboard summary statistics for commission and bonus rates.\n\n**Response:**\n```json\n{\n  \"commissionRates\": {\n    \"count\": 2,\n    \"avgRate\": 11,\n    \"avgRateDisplay\": \"11.0%\"\n  },\n  \"bonusRates\": {\n    \"count\": 2,\n    \"avgRate\": 5.5,\n    \"avgRateDisplay\": \"5.5%\"\n  }\n}\n```\n\n**Use Case:** Display on admin dashboard overview\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Rate Structures",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/rates",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates"
+							]
+						},
+						"description": "**NEW:** December 12, 2025\n\nGet all commission and bonus rate structures.\n\n**Query Parameters (Optional):**\n- type: Filter by COMMISSION or BONUS\n- techType: Filter by FREELANCER or INTERNAL\n\n**Response:** Array of rate structures with formatted percentages\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Commission Rates (Freelancers)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/rates?type=COMMISSION&techType=FREELANCER",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "COMMISSION"
+								},
+								{
+									"key": "techType",
+									"value": "FREELANCER"
+								}
+							]
+						},
+						"description": "Get all commission rate structures for freelance technicians.\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Bonus Rates (Internal Employees)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/rates?type=BONUS&techType=INTERNAL",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "BONUS"
+								},
+								{
+									"key": "techType",
+									"value": "INTERNAL"
+								}
+							]
+						},
+						"description": "Get all bonus rate structures for internal employees.\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Rate Structure",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/rates/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Rate structure ID"
+								}
+							]
+						},
+						"description": "Get details of a specific rate structure.\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Commission Rate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Premium commission for senior freelance technicians\",\n  \"type\": \"COMMISSION\",\n  \"techType\": \"FREELANCER\",\n  \"rate\": 0.12,\n  \"isDefault\": false,\n  \"description\": \"Higher commission for experienced freelancers with excellent ratings\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/rates",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates"
+							]
+						},
+						"description": "**NEW:** December 12, 2025\n\nCreate a new commission rate structure for freelance technicians.\n\n**Request Body:**\n- name (required): Descriptive name\n- type (required): Must be \"COMMISSION\"\n- techType (required): Must be \"FREELANCER\"\n- rate (required): Rate as decimal (0.12 = 12%)\n- isDefault (optional): Set as default rate\n- description (optional): Additional details\n\n**Validation:**\n- Rate must be between 0 and 1\n- If isDefault=true, other defaults are unset\n- Auto-generates rateId (e.g., RATE005)\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Bonus Rate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Performance bonus for senior employees\",\n  \"type\": \"BONUS\",\n  \"techType\": \"INTERNAL\",\n  \"rate\": 0.06,\n  \"isDefault\": false,\n  \"description\": \"Higher bonus for senior internal employees\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/rates",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates"
+							]
+						},
+						"description": "Create a new bonus rate structure for internal employees.\n\n**Request Body:**\n- name (required): Descriptive name\n- type (required): Must be \"BONUS\"\n- techType (required): Must be \"INTERNAL\"\n- rate (required): Rate as decimal (0.06 = 6%)\n- isDefault (optional): Set as default rate\n- description (optional): Additional details\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rate Structure",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated standard commission\",\n  \"rate\": 0.15,\n  \"description\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/rates/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Rate structure ID"
+								}
+							]
+						},
+						"description": "Update an existing rate structure.\n\n**Request Body (all optional):**\n- name: Update name\n- rate: Update rate (0-1)\n- isDefault: Change default status\n- description: Update description\n\n**Note:** Cannot change type or techType after creation\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Rate Structure",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/rates/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "2",
+									"description": "Rate structure ID"
+								}
+							]
+						},
+						"description": "Delete a rate structure.\n\n**Protection:**\n- Cannot delete if it's the only rate for a tech type\n- If deleting a default rate, another rate is auto-promoted to default\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Set as Default Rate",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/rates/:id/set-default",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates",
+								":id",
+								"set-default"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "2",
+									"description": "Rate structure ID"
+								}
+							]
+						},
+						"description": "Set a rate structure as the default for its tech type.\n\n**What Happens:**\n- Unsets all other defaults for the same type\n- Sets this rate as default\n- Used when creating new technicians\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Default Rate for Freelancers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/rates/default/FREELANCER",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates",
+								"default",
+								"FREELANCER"
+							]
+						},
+						"description": "Get the default commission rate for freelance technicians.\n\n**Use Case:** Used when creating new freelance technicians to auto-fill commission rate\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Default Rate for Internal Employees",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/rates/default/INTERNAL",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"rates",
+								"default",
+								"INTERNAL"
+							]
+						},
+						"description": "Get the default bonus rate for internal employees.\n\n**Use Case:** Used when creating new internal employees to auto-fill bonus rate\n\n**Admin only**"
+					},
+					"response": []
 				}
 			]
 		}
