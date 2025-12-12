@@ -626,7 +626,8 @@ export const uploadTechnicianDocuments = async (req, res, next) => {
 
     if (!technician.technicianProfile) {
       return res.status(400).json({
-        message: "Technician profile not found. Please create the profile first.",
+        message:
+          "Technician profile not found. Please create the profile first.",
       });
     }
 
