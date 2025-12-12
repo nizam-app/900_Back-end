@@ -3,6 +3,8 @@
 // src/routes/technician-management.routes.js
 import { Router } from "express";
 import multer from "multer";
+import os from "os";
+import path from "path";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import {
   getTechnicianOverview,
@@ -17,13 +19,15 @@ import {
 
 const router = Router();
 
-// Configure multer for file uploads
+// Configure multer for temporary file storage (files will be uploaded to external service)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    // Use system temp directory instead of project folder
+    cb(null, os.tmpdir());
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
+    // Generate unique filename
+    cb(null, `temp-${Date.now()}-${Math.random().toString(36).substring(7)}-${file.originalname}`);
   },
 });
 

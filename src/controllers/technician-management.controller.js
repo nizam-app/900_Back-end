@@ -3,6 +3,7 @@
 // src/controllers/technician-management.controller.js
 import { prisma } from "../prisma.js";
 import bcrypt from "bcryptjs";
+import uploadImageToService from "../utils/imageUpload.js";
 
 /**
  * Get Technician Overview
@@ -578,26 +579,55 @@ export const uploadTechnicianDocuments = async (req, res, next) => {
     const { id } = req.params;
     const updateData = {};
 
-    // Process uploaded files
+    // Process uploaded files and upload to external service
     if (req.files) {
+      // Upload photo to external service
       if (req.files.photoUrl && req.files.photoUrl[0]) {
-        updateData.photoUrl = `/uploads/${req.files.photoUrl[0].filename}`;
+        const photoUrl = await uploadImageToService(req.files.photoUrl[0]);
+        updateData.photoUrl = photoUrl;
       }
+
+      // Upload ID card to external service
       if (req.files.idCardUrl && req.files.idCardUrl[0]) {
-        updateData.idCardUrl = `/uploads/${req.files.idCardUrl[0].filename}`;
+        const idCardUrl = await uploadImageToService(req.files.idCardUrl[0]);
+        updateData.idCardUrl = idCardUrl;
       }
+
+      // Upload residence permit to external service
       if (req.files.residencePermitUrl && req.files.residencePermitUrl[0]) {
-        updateData.residencePermitUrl = `/uploads/${req.files.residencePermitUrl[0].filename}`;
-      }
-      if (req.files.degreesUrl && req.files.degreesUrl.length > 0) {
-        updateData.degreesUrl = JSON.stringify(
-          req.files.degreesUrl.map((file) => `/uploads/${file.filename}`)
+        const residencePermitUrl = await uploadImageToService(
+          req.files.residencePermitUrl[0]
         );
+        updateData.residencePermitUrl = residencePermitUrl;
+      }
+
+      // Upload degrees/certificates to external service
+      if (req.files.degreesUrl && req.files.degreesUrl.length > 0) {
+        const degreeUrls = await Promise.all(
+          req.files.degreesUrl.map((file) => uploadImageToService(file))
+        );
+        updateData.degreesUrl = JSON.stringify(degreeUrls);
       }
     }
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ message: "No files uploaded" });
+    }
+
+    // Check if technician exists and has a profile
+    const technician = await prisma.user.findUnique({
+      where: { id: Number(id) },
+      include: { technicianProfile: true },
+    });
+
+    if (!technician) {
+      return res.status(404).json({ message: "Technician not found" });
+    }
+
+    if (!technician.technicianProfile) {
+      return res.status(400).json({
+        message: "Technician profile not found. Please create the profile first.",
+      });
     }
 
     const updated = await prisma.technicianProfile.update({
