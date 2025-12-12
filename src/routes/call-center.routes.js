@@ -7,6 +7,11 @@ import { authenticate, requireRole } from "../middleware/auth.js";
 const router = express.Router();
 
 // Get dashboard stats - accessible by CALL_CENTER, ADMIN, and DISPATCHER
-router.get("/stats", authenticate, requireRole("CALL_CENTER", "ADMIN", "DISPATCHER"), getCallCenterStats);
+router.get(
+  "/stats",
+  authenticate,
+  requireRole("CALL_CENTER", "ADMIN", "DISPATCHER"),
+  getCallCenterStats
+);
 
 export default router;
