@@ -356,7 +356,8 @@ export const createTechnician = async (req, res, next) => {
       type.toUpperCase() === "INTERNAL" ? "TECH_INTERNAL" : "TECH_FREELANCER";
 
     // Use provided password or generate temporary one
-    const tempPassword = password || `Tech${Math.random().toString(36).slice(-8)}`;
+    const tempPassword =
+      password || `Tech${Math.random().toString(36).slice(-8)}`;
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
     // Create user and profile in transaction
@@ -420,7 +421,9 @@ export const createTechnician = async (req, res, next) => {
         specialization: technician.technicianProfile.specialization,
         type: technician.technicianProfile.type,
         password: technician.tempPassword,
-        passwordNote: password ? "Custom password set" : "Temporary password generated",
+        passwordNote: password
+          ? "Custom password set"
+          : "Temporary password generated",
       },
     });
   } catch (err) {
