@@ -98,7 +98,9 @@ export const updateLocation = async (req, res, next) => {
       message: "Location updated successfully",
       updated: {
         coordinates: latitude && longitude ? true : false,
-        status: status || (!status && !latitude && !longitude ? "ONLINE" : "unchanged"),
+        status:
+          status ||
+          (!status && !latitude && !longitude ? "ONLINE" : "unchanged"),
         locationSource, // 'manual', 'auto-ip', or 'none'
       },
     });
