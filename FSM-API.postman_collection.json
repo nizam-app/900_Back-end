@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "fsm-api-collection-2025-v5.2",
-		"name": "FSM System API - Complete Collection (Dec 12, 2025 - Updated)",
-		"description": "🎉 **MAJOR UPDATE - December 12, 2025 (v5.2)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Commission & Bonus Rate Management ✅ **NEW**\n**Added:** Complete rate management system for admin\n- `GET /api/rates/summary` - Dashboard stats (Commission Rates: 2, Avg: 11%, Bonus Rates: 2, Avg: 5.5%)\n- `GET /api/rates` - List all rate structures with filters\n- `GET /api/rates/:id` - Get single rate details\n- `POST /api/rates` - Create commission/bonus rates\n- `PATCH /api/rates/:id` - Update rate structure\n- `DELETE /api/rates/:id` - Delete rate (with protection)\n- `PATCH /api/rates/:id/set-default` - Set as default rate\n- `GET /api/rates/default/:techType` - Get default rate for FREELANCER/INTERNAL\n- Supports multiple rate structures per type\n- Default rate auto-applied when creating technicians\n- Rate IDs auto-generated (RATE001, RATE002, etc.)\n- **TESTED & WORKING** - Seeded with initial data\n\n### 2️⃣ Technician Management Enhancements ✅\n**Updated:** Document upload system\n- ✅ External image service integration (https://img.mtscorporate.com)\n- ✅ No local file storage - all uploaded to CDN\n- ✅ Temporary files auto-deleted after upload\n- ✅ Password field added to technician creation\n- ✅ Email uniqueness validation\n- ✅ Dispatcher role access granted\n- Better error messages for missing profiles\n\n### 3️⃣ Previous Updates (Dec 9, 2025 - v5.1)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ International Phone Number Support ✅ **NEW**\n**Fixed:** Complete global phone number support\n- ✅ All 200+ countries now supported (Bangladesh, Netherlands, USA, UK, UAE, Kenya, India, Saudi Arabia, etc.)\n- ✅ Removed hardcoded Bangladesh-only restriction\n- ✅ Updated `formatPhoneForSMS()` - handles all international formats\n- ✅ Updated `normalizePhoneForDB()` - removes country codes from 10+ countries\n- ✅ Updated `isValidPhone()` - validates 8-15 digit numbers (ITU-T E.164 standard)\n- ✅ Enhanced error messages for invalid formats\n- ✅ Fixed bug where +31 (Netherlands) was becoming +88031 (invalid)\n- Examples that now work: +31612345678 (NL), +14155551234 (US), +971501234567 (UAE)\n\n### 2️⃣ Payout Management System ✅\n**Added:** Complete payout management for admin dashboard\n- `GET /api/payouts/summary` - Dashboard overview (Pending: $21,900, Early Requests: $1,000)\n- `GET /api/payouts/pending-commissions` - List pending commissions/bonuses (6 items ready)\n- `GET /api/payouts/early-requests` - Early payout requests (1 pending)\n- `POST /api/payouts/batches` - Create weekly payout batch\n- `GET /api/payouts/batches` - List payout batches (4 processed batches found)\n- `GET /api/payouts/history` - Completed payout history\n- `PATCH /api/payouts/batches/:id/process` - Process batch\n- `PATCH /api/payouts/early-requests/:id/approve` - Approve early payout\n- `PATCH /api/payouts/early-requests/:id/reject` - Reject early payout\n- Weekly batches automatically scheduled for Mondays (Next: Dec 15, 2025)\n- Early payout request approval workflow\n- **TESTED & WORKING** - All endpoints returning real data\n\n### 3️⃣ Technician Management System ✅\n**Added:** Complete technician management for admin\n- `GET /api/technicians/overview` - Statistics & distribution\n- `GET /api/technicians/directory` - List with filters\n- `GET /api/technicians/:id` - Detailed profile\n- `POST /api/technicians` - Create new technician\n- `PATCH /api/technicians/:id` - Update technician\n- `PATCH /api/technicians/:id/block` - Block/unblock\n- `PATCH /api/technicians/:id/documents` - Upload documents\n- `GET /api/technicians/export` - Export to CSV\n- Supports both freelancers (commission) and employees (salary + bonus)\n- Document upload (photo, ID, permits, degrees)\n- Comprehensive filtering and search\n\n### 4️⃣ Recent Services API ✅\n**Added:** Customer dashboard endpoint\n- `GET /api/sr/recent` - Recent completed services\n- Shows last 5 services with completion status\n- Optimized for customer dashboard UI\n\n### 5️⃣ Schema Improvements ✅\n**Updated:** Category model\n- Added `image` field to categories\n- Migration applied successfully\n- Seed data updated with image URLs\n\n### 6️⃣ Bug Fixes ✅\n**Fixed:** Multiple critical issues\n- ✅ Phone validation now accepts ALL international formats (8-15 digits)\n- ✅ Removed Bangladesh-only hardcoding in phone utilities\n- ✅ Fixed Netherlands (+31) being corrupted to +88031\n- ✅ Service/Subservice creation endpoints updated\n- ✅ BaseRate moved to Subservice level (completed Dec 5)\n- ✅ Payment calculations fixed\n- ✅ Technician earnings endpoint role-based naming\n- ✅ OTP service using updated phone utilities\n\n## 📋 Previous Updates:\n\n**December 4, 2025:**\n- Service hierarchy restructure (Category → Service → Subservice)\n- Technician profile endpoints\n- Internal employee registration system\n\n## 📊 Collection Stats:\n- Total Sections: 17 (includes Payout Management & Technician Management)\n- Total Endpoints: 130 (18 new today)\n- Countries Supported: 200+ (global coverage)\n- Files Updated Today: 4 (phone.js, otp.service.js, sms.service.js, postman collection)\n\n## ✅ All Systems Operational:\n- ✅ Global phone number support (200+ countries)\n- ✅ Payout management fully functional ($21,900 pending)\n- ✅ Technician management ready\n- ✅ Service hierarchy correct\n- ✅ Profile endpoints working\n- ✅ Employee registration tested\n- ✅ OTP delivery confirmed for all countries\n- ✅ Server running on port 4000\n\n## 🧪 Tested & Verified:\n- ✅ Netherlands +31612345678 → Works\n- ✅ USA +14155551234 → Works\n- ✅ Bangladesh +8801712345678 → Works\n- ✅ Kenya +254712345678 → Works\n- ✅ UAE +971501234567 → Works\n- ✅ Payout Summary API → Returning real data\n- ✅ Pending Commissions API → 6 items found\n- ✅ Early Payout Requests → 1 request pending\n\n**Status:** Production Ready | **Version:** 5.2 | **Date:** December 12, 2025\n\n## 🆕 Today's Additions (Dec 12):\n- ✅ Commission & Bonus Rate Management (12 endpoints)\n- ✅ Image upload to external CDN\n- ✅ Technician password field\n- ✅ Email validation on creation\n- ✅ Dispatcher access to technician management",
+		"_postman_id": "fsm-api-collection-2025-v5.3",
+		"name": "FSM System API - Complete Collection (Dec 14, 2025 - Updated)",
+		"description": "🎉 **MAJOR UPDATE - December 14, 2025 (v5.3)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Call Center Preferred Date Feature ✅ **NEW**\n**Added:** Call center agents can now enter customer's preferred service date/time\n- ✅ `preferredDate` field - Customer's preferred appointment date (ISO 8601 format)\n- ✅ `preferredTime` field - Time slot (Morning, Afternoon, Evening, or custom)\n- ✅ `scheduledAt` alternative field - Same as preferredDate for flexibility\n- ✅ `notes` field - Call center appointment notes\n- ✅ Works for new and existing customers\n- ✅ Dispatcher sees preferences when converting SR to WO\n- ✅ Better planning and customer satisfaction\n- **NEW ENDPOINT:** Create SR for Customer (Call Center) with complete documentation\n- **TESTED & WORKING** - Feature fully implemented\n\n### 2️⃣ Individual Commission & Bonus Rates ✅ **ENHANCED**\n**Updated:** Each technician can have custom commission and bonus rates\n- ✅ Set individual `commissionRate` per technician (0.0 to 1.0)\n- ✅ Set individual `bonusRate` per technician (0.0 to 1.0)\n- ✅ Update rates anytime via `PATCH /api/technicians/:id`\n- ✅ Performance-based rate adjustments\n- ✅ Training period lower rates\n- ✅ Senior technician higher rates\n- ✅ Rates stored in TechnicianProfile table\n- ✅ Past commissions unchanged, affects future jobs only\n- **ENHANCED DOCUMENTATION:** Create Technician and Update Technician endpoints\n- **TESTED & WORKING** - Already implemented, now better documented\n\n### 3️⃣ Previous Updates (Dec 12, 2025 - v5.2)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Commission & Bonus Rate Management ✅ **NEW**\n**Added:** Complete rate management system for admin\n- `GET /api/rates/summary` - Dashboard stats (Commission Rates: 2, Avg: 11%, Bonus Rates: 2, Avg: 5.5%)\n- `GET /api/rates` - List all rate structures with filters\n- `GET /api/rates/:id` - Get single rate details\n- `POST /api/rates` - Create commission/bonus rates\n- `PATCH /api/rates/:id` - Update rate structure\n- `DELETE /api/rates/:id` - Delete rate (with protection)\n- `PATCH /api/rates/:id/set-default` - Set as default rate\n- `GET /api/rates/default/:techType` - Get default rate for FREELANCER/INTERNAL\n- Supports multiple rate structures per type\n- Default rate auto-applied when creating technicians\n- Rate IDs auto-generated (RATE001, RATE002, etc.)\n- **TESTED & WORKING** - Seeded with initial data\n\n### 2️⃣ Technician Management Enhancements ✅\n**Updated:** Document upload system\n- ✅ External image service integration (https://img.mtscorporate.com)\n- ✅ No local file storage - all uploaded to CDN\n- ✅ Temporary files auto-deleted after upload\n- ✅ Password field added to technician creation\n- ✅ Email uniqueness validation\n- ✅ Dispatcher role access granted\n- Better error messages for missing profiles\n\n### 3️⃣ Previous Updates (Dec 9, 2025 - v5.1)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ International Phone Number Support ✅ **NEW**\n**Fixed:** Complete global phone number support\n- ✅ All 200+ countries now supported (Bangladesh, Netherlands, USA, UK, UAE, Kenya, India, Saudi Arabia, etc.)\n- ✅ Removed hardcoded Bangladesh-only restriction\n- ✅ Updated `formatPhoneForSMS()` - handles all international formats\n- ✅ Updated `normalizePhoneForDB()` - removes country codes from 10+ countries\n- ✅ Updated `isValidPhone()` - validates 8-15 digit numbers (ITU-T E.164 standard)\n- ✅ Enhanced error messages for invalid formats\n- ✅ Fixed bug where +31 (Netherlands) was becoming +88031 (invalid)\n- Examples that now work: +31612345678 (NL), +14155551234 (US), +971501234567 (UAE)\n\n### 2️⃣ Payout Management System ✅\n**Added:** Complete payout management for admin dashboard\n- `GET /api/payouts/summary` - Dashboard overview (Pending: $21,900, Early Requests: $1,000)\n- `GET /api/payouts/pending-commissions` - List pending commissions/bonuses (6 items ready)\n- `GET /api/payouts/early-requests` - Early payout requests (1 pending)\n- `POST /api/payouts/batches` - Create weekly payout batch\n- `GET /api/payouts/batches` - List payout batches (4 processed batches found)\n- `GET /api/payouts/history` - Completed payout history\n- `PATCH /api/payouts/batches/:id/process` - Process batch\n- `PATCH /api/payouts/early-requests/:id/approve` - Approve early payout\n- `PATCH /api/payouts/early-requests/:id/reject` - Reject early payout\n- Weekly batches automatically scheduled for Mondays (Next: Dec 15, 2025)\n- Early payout request approval workflow\n- **TESTED & WORKING** - All endpoints returning real data\n\n### 3️⃣ Technician Management System ✅\n**Added:** Complete technician management for admin\n- `GET /api/technicians/overview` - Statistics & distribution\n- `GET /api/technicians/directory` - List with filters\n- `GET /api/technicians/:id` - Detailed profile\n- `POST /api/technicians` - Create new technician\n- `PATCH /api/technicians/:id` - Update technician\n- `PATCH /api/technicians/:id/block` - Block/unblock\n- `PATCH /api/technicians/:id/documents` - Upload documents\n- `GET /api/technicians/export` - Export to CSV\n- Supports both freelancers (commission) and employees (salary + bonus)\n- Document upload (photo, ID, permits, degrees)\n- Comprehensive filtering and search\n\n### 4️⃣ Recent Services API ✅\n**Added:** Customer dashboard endpoint\n- `GET /api/sr/recent` - Recent completed services\n- Shows last 5 services with completion status\n- Optimized for customer dashboard UI\n\n### 5️⃣ Schema Improvements ✅\n**Updated:** Category model\n- Added `image` field to categories\n- Migration applied successfully\n- Seed data updated with image URLs\n\n### 6️⃣ Bug Fixes ✅\n**Fixed:** Multiple critical issues\n- ✅ Phone validation now accepts ALL international formats (8-15 digits)\n- ✅ Removed Bangladesh-only hardcoding in phone utilities\n- ✅ Fixed Netherlands (+31) being corrupted to +88031\n- ✅ Service/Subservice creation endpoints updated\n- ✅ BaseRate moved to Subservice level (completed Dec 5)\n- ✅ Payment calculations fixed\n- ✅ Technician earnings endpoint role-based naming\n- ✅ OTP service using updated phone utilities\n\n## 📋 Previous Updates:\n\n**December 4, 2025:**\n- Service hierarchy restructure (Category → Service → Subservice)\n- Technician profile endpoints\n- Internal employee registration system\n\n## 📊 Collection Stats:\n- Total Sections: 17 (includes Payout Management & Technician Management)\n- Total Endpoints: 130 (18 new today)\n- Countries Supported: 200+ (global coverage)\n- Files Updated Today: 4 (phone.js, otp.service.js, sms.service.js, postman collection)\n\n## ✅ All Systems Operational:\n- ✅ Global phone number support (200+ countries)\n- ✅ Payout management fully functional ($21,900 pending)\n- ✅ Technician management ready\n- ✅ Service hierarchy correct\n- ✅ Profile endpoints working\n- ✅ Employee registration tested\n- ✅ OTP delivery confirmed for all countries\n- ✅ Server running on port 4000\n\n## 🧪 Tested & Verified:\n- ✅ Netherlands +31612345678 → Works\n- ✅ USA +14155551234 → Works\n- ✅ Bangladesh +8801712345678 → Works\n- ✅ Kenya +254712345678 → Works\n- ✅ UAE +971501234567 → Works\n- ✅ Payout Summary API → Returning real data\n- ✅ Pending Commissions API → 6 items found\n- ✅ Early Payout Requests → 1 request pending\n\n**Status:** Production Ready | **Version:** 5.2 | **Date:** December 12, 2025\n\n## 🆕 Today's Additions (Dec 12):\n- ✅ Commission & Bonus Rate Management (12 endpoints)\n- ✅ Image upload to external CDN\n- ✅ Technician password field\n- ✅ Email validation on creation\n- ✅ Dispatcher access to technician management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -3547,6 +3547,52 @@
 					}
 				},
 				{
+					"name": "Create SR for Customer (Call Center)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"srId\", jsonData.serviceRequest.id);",
+									"    pm.environment.set(\"srNumber\", jsonData.serviceRequest.srNumber);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{callCenterToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"8801712345678\",\n  \"name\": \"John Customer\",\n  \"email\": \"john@example.com\",\n  \"address\": \"123 Main Street, Dhaka\",\n  \"latitude\": 23.8103,\n  \"longitude\": 90.4125,\n  \"categoryId\": 1,\n  \"serviceId\": 2,\n  \"subserviceId\": 3,\n  \"description\": \"AC not cooling properly, making strange noise\",\n  \"paymentType\": \"CASH\",\n  \"priority\": \"HIGH\",\n  \"preferredDate\": \"2025-12-20T10:00:00Z\",\n  \"preferredTime\": \"Morning\",\n  \"notes\": \"Customer prefers morning slot, has meeting in afternoon\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/sr",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sr"
+							]
+						},
+						"description": "✅ **NEW (Dec 14, 2025)** - Call Center Creates SR with Customer Preferred Date\n\n**Purpose:** Call center agent creates service request for customer with preferred appointment date/time.\n\n**Authorization:** Requires CALL_CENTER role\n\n**Request Body:**\n\n**Required Fields:**\n- `phone` - Customer phone number (8-15 digits)\n- `address` - Service location address\n- `categoryId` - Service category ID\n- `serviceId` - Service ID\n\n**Customer Info (Required if New Customer):**\n- `name` - Customer full name\n- `email` - Customer email address\n\n**Optional Scheduling Fields (✅ NEW):**\n- `preferredDate` - Customer's preferred service date (ISO 8601: \"2025-12-20T10:00:00Z\")\n- `preferredTime` - Time slot (\"Morning\", \"Afternoon\", \"Evening\", or custom)\n- `scheduledAt` - Alternative to preferredDate (same format)\n- `notes` - Call center appointment notes\n\n**Other Optional Fields:**\n- `subserviceId` - Specific subservice ID\n- `description` - Problem description\n- `latitude` - GPS latitude\n- `longitude` - GPS longitude\n- `paymentType` - \"CASH\" or \"MOBILE_MONEY\" (default: \"CASH\")\n- `priority` - \"LOW\", \"MEDIUM\", or \"HIGH\" (default: \"MEDIUM\")\n- `homeAddress` - Customer home address\n\n**Date Format:**\n- ISO 8601: `YYYY-MM-DDTHH:mm:ssZ`\n- Example: `2025-12-20T10:00:00Z` (December 20, 2025 at 10:00 AM UTC)\n- Bangladesh Time (GMT+6): Subtract 6 hours from local time\n  - Local: 10:00 AM → UTC: 04:00 AM → Format: \"2025-12-20T04:00:00Z\"\n\n**Common Time Slots:**\n- Morning: 08:00-12:00 (e.g., \"2025-12-20T09:00:00Z\")\n- Afternoon: 12:00-17:00 (e.g., \"2025-12-20T14:00:00Z\")\n- Evening: 17:00-21:00 (e.g., \"2025-12-20T18:00:00Z\")\n\n**Response:**\n```json\n{\n  \"message\": \"Service Request created successfully\",\n  \"serviceRequest\": {\n    \"id\": 42,\n    \"srNumber\": \"SR-1734192000000\",\n    \"customerId\": 15,\n    \"categoryId\": 1,\n    \"serviceId\": 2,\n    \"preferredDate\": \"2025-12-20T10:00:00.000Z\",\n    \"preferredTime\": \"Morning\",\n    \"status\": \"NEW\",\n    \"source\": \"CALL_CENTER\",\n    \"customer\": {\n      \"id\": 15,\n      \"name\": \"John Customer\",\n      \"phone\": \"8801712345678\"\n    }\n  }\n}\n```\n\n**Use Cases:**\n- Customer calls with specific date/time preference\n- Scheduling appointments in advance\n- Recording customer availability\n- Better planning for dispatchers\n- Higher customer satisfaction\n\n**Benefits:**\n✅ Customer convenience - request specific dates\n✅ Better planning - dispatchers know preferences\n✅ Clear communication - notes capture special requests\n✅ Audit trail - all preferences documented\n\n**Workflow:**\n1. Customer calls call center\n2. Agent asks for preferred date/time\n3. Agent creates SR with `preferredDate` and `preferredTime`\n4. Dispatcher sees preference when converting to WO\n5. Technician sees scheduled appointment in job list\n\n**Status:** ✅ PRODUCTION READY (Dec 14, 2025)\n\n**Documentation:** See CALL_CENTER_PREFERRED_DATE_FEATURE.md"
+					}
+				},
+				{
 					"name": "Get WO Technician Info",
 					"request": {
 						"method": "GET",
@@ -4277,7 +4323,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Ahmed Hassan\",\n  \"phone\": \"50111112\",\n  \"email\": \"ahmed.hassan@serviopro.com\",\n  \"joinDate\": \"2025-12-09\",\n  \"specialization\": \"Electrical\",\n  \"type\": \"Freelancer\",\n  \"commissionRate\": 0.10,\n  \"homeAddress\": \"Dubai Marina, UAE\",\n  \"academicTitle\": \"BSc. Electrical Engineering\"\n}"
+							"raw": "{\n  \"name\": \"Ahmed Hassan\",\n  \"phone\": \"50111112\",\n  \"email\": \"ahmed.hassan@serviopro.com\",\n  \"joinDate\": \"2025-12-09\",\n  \"specialization\": \"Electrical\",\n  \"type\": \"Freelancer\",\n  \"commissionRate\": 0.25,\n  \"bonusRate\": 0.05,\n  \"homeAddress\": \"Dubai Marina, UAE\",\n  \"academicTitle\": \"BSc. Electrical Engineering\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/technicians",
@@ -4289,7 +4335,7 @@
 								"technicians"
 							]
 						},
-						"description": "Create a new technician (freelancer or employee).\n\n**Request Body:**\n- name: Full name (required)\n- phone: Phone number (required, must be unique)\n- email: Email address (optional)\n- joinDate: Join date ISO format (optional)\n- specialization: ELECTRICAL, GENERAL, HVAC, or PLUMBING (required)\n- type: FREELANCER or INTERNAL (required)\n- commissionRate: 0.0 to 1.0 for freelancers (optional, defaults to global rate)\n- bonusRate: 0.0 to 1.0 for employees (optional, defaults to global rate)\n- baseSalary: Monthly salary for employees (optional)\n- homeAddress: Home address (optional)\n- academicTitle: Academic qualifications (optional)\n- isForeigner: Requires residence permit (optional, default: false)\n\n**Response:** Created technician with temporary password.\n\n**Admin only**"
+						"description": "✅ **UPDATED (Dec 14, 2025)** - Create technician with individual commission/bonus rates\n\n**Purpose:** Create a new technician (freelancer or employee) with custom commission and bonus rates.\n\n**Authorization:** Admin only\n\n**Request Body:**\n\n**Required Fields:**\n- `name` - Full name\n- `phone` - Phone number (must be unique)\n- `specialization` - ELECTRICAL, GENERAL, HVAC, or PLUMBING\n- `type` - FREELANCER or INTERNAL\n\n**Individual Rate Settings (✅ CUSTOM RATES):**\n- `commissionRate` - Individual commission rate for this technician (0.0 to 1.0)\n  - Example: 0.25 = 25% commission\n  - For FREELANCER type: Percentage of job payment earned\n  - Defaults to 0.40 (40%) if not specified\n- `bonusRate` - Individual bonus rate for this technician (0.0 to 1.0)\n  - Example: 0.05 = 5% bonus\n  - For INTERNAL type: Percentage bonus on top of base salary\n  - Defaults to 0.05 (5%) if not specified\n\n**Other Optional Fields:**\n- `email` - Email address\n- `password` - Custom password (generates temp password if not provided)\n- `joinDate` - Join date ISO format (e.g., \"2025-12-09\")\n- `baseSalary` - Monthly salary for INTERNAL employees\n- `homeAddress` - Home address\n- `academicTitle` - Academic qualifications\n\n**Rate Examples:**\n- High performer: `\"commissionRate\": 0.35` (35%)\n- Training period: `\"commissionRate\": 0.10` (10%)\n- Senior employee: `\"bonusRate\": 0.10` (10%)\n- Standard freelancer: `\"commissionRate\": 0.25` (25%)\n\n**Commission Calculation:**\n```\nJob Payment: $100\nCommission Rate: 0.25 (25%)\nTechnician Earns: $100 × 0.25 = $25\n```\n\n**Bonus Calculation:**\n```\nJob Payment: $100\nBonus Rate: 0.05 (5%)\nBase Salary: $3000/month\nEmployee Bonus: $100 × 0.05 = $5\nTotal Monthly: $3000 + bonuses\n```\n\n**Response:**\n```json\n{\n  \"message\": \"Technician created successfully\",\n  \"technician\": {\n    \"id\": 42,\n    \"techId\": \"TECH-042\",\n    \"name\": \"Ahmed Hassan\",\n    \"phone\": \"50111112\",\n    \"specialization\": \"ELECTRICAL\",\n    \"type\": \"FREELANCER\",\n    \"password\": \"TechAbc12345\"\n  }\n}\n```\n\n**Use Cases:**\n- Set custom rates for experienced technicians\n- Lower rates for training period\n- Reward top performers with higher commission\n- Adjust rates based on skill level\n\n**Benefits:**\n✅ Individual rate control\n✅ Performance-based compensation\n✅ Flexible reward system\n✅ Fair pay based on experience\n\n**Status:** ✅ PRODUCTION READY\n\n**Documentation:** See INDIVIDUAL_COMMISSION_BONUS_RATES.md"
 					}
 				},
 				{
@@ -4308,7 +4354,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Ahmed Hassan (Updated)\",\n  \"email\": \"ahmed.updated@serviopro.com\",\n  \"commissionRate\": 0.12,\n  \"academicTitle\": \"BSc. MSc. Electrical Engineering\",\n  \"status\": \"ACTIVE\"\n}"
+							"raw": "{\n  \"name\": \"Ahmed Hassan (Updated)\",\n  \"email\": \"ahmed.updated@serviopro.com\",\n  \"commissionRate\": 0.30,\n  \"bonusRate\": 0.07,\n  \"academicTitle\": \"BSc. MSc. Electrical Engineering\",\n  \"status\": \"ACTIVE\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/technicians/:id",
@@ -4328,7 +4374,7 @@
 								}
 							]
 						},
-						"description": "Update technician information.\n\n**Path Parameters:**\n- id: Technician user ID\n\n**Request Body (all optional):**\n- name: Full name\n- email: Email address\n- specialization: ELECTRICAL, GENERAL, HVAC, or PLUMBING\n- commissionRate: 0.0 to 1.0\n- bonusRate: 0.0 to 1.0\n- baseSalary: Monthly salary\n- homeAddress: Home address\n- academicTitle: Academic qualifications\n- status: ACTIVE or INACTIVE\n\n**Response:** Updated technician details.\n\n**Admin only**"
+						"description": "✅ **UPDATED (Dec 14, 2025)** - Update technician's individual commission/bonus rates\n\n**Purpose:** Update technician information including individual commission and bonus rates.\n\n**Authorization:** Admin only\n\n**Path Parameters:**\n- `id` - Technician user ID\n\n**Request Body (all optional):**\n\n**Individual Rate Updates (✅ ADJUST RATES):**\n- `commissionRate` - Update individual commission rate (0.0 to 1.0)\n  - Example: Change from 25% to 30% → `\"commissionRate\": 0.30`\n  - Only affects future jobs, past commissions unchanged\n- `bonusRate` - Update individual bonus rate (0.0 to 1.0)\n  - Example: Increase from 5% to 7% → `\"bonusRate\": 0.07`\n  - Reward for good performance\n\n**Other Update Fields:**\n- `name` - Full name\n- `email` - Email address\n- `specialization` - ELECTRICAL, GENERAL, HVAC, or PLUMBING\n- `baseSalary` - Monthly salary (for INTERNAL employees)\n- `homeAddress` - Home address\n- `academicTitle` - Academic qualifications\n- `status` - ACTIVE or INACTIVE\n\n**Rate Update Examples:**\n\n**Promote to higher rate:**\n```json\n{\n  \"commissionRate\": 0.35\n}\n```\n\n**Increase bonus for performance:**\n```json\n{\n  \"bonusRate\": 0.10\n}\n```\n\n**Update multiple fields:**\n```json\n{\n  \"commissionRate\": 0.30,\n  \"bonusRate\": 0.07,\n  \"status\": \"ACTIVE\"\n}\n```\n\n**Response:**\n```json\n{\n  \"message\": \"Technician updated successfully\",\n  \"technician\": {\n    \"id\": 42,\n    \"name\": \"Ahmed Hassan (Updated)\",\n    \"email\": \"ahmed.updated@serviopro.com\",\n    \"technicianProfile\": {\n      \"commissionRate\": 0.30,\n      \"bonusRate\": 0.07,\n      \"status\": \"ACTIVE\"\n    }\n  }\n}\n```\n\n**Use Cases:**\n- Reward top performers with higher rates\n- Adjust rates after probation period\n- Increase rates based on experience\n- Performance-based rate adjustments\n- Annual rate reviews\n\n**Important Notes:**\n⚠️ Rate changes affect future jobs only\n⚠️ Past commissions are not recalculated\n✅ All changes are logged in audit trail\n✅ Can update rates independently of other fields\n\n**Status:** ✅ PRODUCTION READY\n\n**Documentation:** See INDIVIDUAL_COMMISSION_BONUS_RATES.md"
 					}
 				},
 				{
@@ -4848,6 +4894,158 @@
 							]
 						},
 						"description": "Get the default bonus rate for internal employees.\n\n**Use Case:** Used when creating new internal employees to auto-fill bonus rate\n\n**Admin only**"
+					},
+					"response": []
+				},
+				{
+					"name": "Set Individual Commission Rate (Technician)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"commissionRate\": 0.28\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "42",
+									"description": "Technician ID"
+								}
+							]
+						},
+						"description": "✅ **NEW (Dec 14, 2025)** - Set individual commission rate for specific freelancer\n\n**Purpose:** Assign custom commission rate to a specific technician/freelancer based on their performance, experience, or skill level.\n\n**Authorization:** Admin only\n\n**Path Parameters:**\n- `id` - Technician user ID\n\n**Request Body:**\n```json\n{\n  \"commissionRate\": 0.28\n}\n```\n\n**Commission Rate Values:**\n- Format: Decimal from 0.0 to 1.0\n- `0.10` = 10% (Training/Probation)\n- `0.15` = 15% (Junior)\n- `0.20` = 20% (Standard)\n- `0.25` = 25% (Experienced)\n- `0.30` = 30% (Senior)\n- `0.35` = 35% (Expert)\n- `0.40` = 40% (Top Performer)\n\n**Use Cases:**\n\n**1. Promote Top Performer:**\n```json\n// Increase from 25% to 35%\n{\n  \"commissionRate\": 0.35\n}\n```\n\n**2. Set Training Period Rate:**\n```json\n// New technician on probation\n{\n  \"commissionRate\": 0.12\n}\n```\n\n**3. Reward Experience:**\n```json\n// After 1 year of good service\n{\n  \"commissionRate\": 0.28\n}\n```\n\n**4. Annual Review Increase:**\n```json\n// 5% increase for performance\n{\n  \"commissionRate\": 0.27\n}\n```\n\n**Calculation Example:**\n```\nJob Payment: $200\nOld Commission (25%): $50\nNew Commission (28%): $56\nIncrease: $6 per job\n```\n\n**Response:**\n```json\n{\n  \"message\": \"Technician updated successfully\",\n  \"technician\": {\n    \"id\": 42,\n    \"name\": \"Ahmed Hassan\",\n    \"technicianProfile\": {\n      \"commissionRate\": 0.28,\n      \"type\": \"FREELANCER\",\n      \"status\": \"ACTIVE\"\n    }\n  }\n}\n```\n\n**Important Notes:**\n⚠️ Rate change affects FUTURE jobs only\n⚠️ Past commissions are NOT recalculated\n✅ Change is logged in audit trail\n✅ Technician will see new rate in profile\n✅ Applies to all job types (repairs, installations, maintenance)\n\n**Validation:**\n- Must be between 0.0 and 1.0\n- Cannot be negative\n- Maximum 100% (1.0)\n\n**Error Responses:**\n- 400: Invalid rate format or out of range\n- 404: Technician not found\n- 403: Not authorized (admin only)\n\n**Status:** ✅ PRODUCTION READY\n\n**Documentation:** See INDIVIDUAL_COMMISSION_BONUS_RATES.md"
+					},
+					"response": []
+				},
+				{
+					"name": "Set Individual Bonus Rate (Employee)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bonusRate\": 0.08\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "25",
+									"description": "Employee ID"
+								}
+							]
+						},
+						"description": "✅ **NEW (Dec 14, 2025)** - Set individual bonus rate for specific internal employee\n\n**Purpose:** Assign custom bonus rate to a specific internal employee based on their performance, seniority, or role.\n\n**Authorization:** Admin only\n\n**Path Parameters:**\n- `id` - Employee user ID (TECH_INTERNAL)\n\n**Request Body:**\n```json\n{\n  \"bonusRate\": 0.08\n}\n```\n\n**Bonus Rate Values:**\n- Format: Decimal from 0.0 to 1.0\n- `0.03` = 3% (Entry Level)\n- `0.05` = 5% (Standard)\n- `0.07` = 7% (Experienced)\n- `0.10` = 10% (Senior)\n- `0.12` = 12% (Team Lead)\n- `0.15` = 15% (Supervisor)\n\n**Use Cases:**\n\n**1. Promote to Senior:**\n```json\n// Increase from 5% to 10%\n{\n  \"bonusRate\": 0.10\n}\n```\n\n**2. Performance Bonus Increase:**\n```json\n// Reward good performance\n{\n  \"bonusRate\": 0.08\n}\n```\n\n**3. Team Lead Position:**\n```json\n// Higher responsibility\n{\n  \"bonusRate\": 0.12\n}\n```\n\n**4. Annual Merit Increase:**\n```json\n// 2% increase\n{\n  \"bonusRate\": 0.07\n}\n```\n\n**Calculation Example:**\n```\nBase Salary: $3,000/month\nJob Completed: $150\nOld Bonus (5%): $7.50\nNew Bonus (8%): $12.00\nIncrease: $4.50 per job\n\nIf 20 jobs/month:\nOld Monthly: $3,000 + (20 × $7.50) = $3,150\nNew Monthly: $3,000 + (20 × $12.00) = $3,240\nIncrease: $90/month\n```\n\n**Response:**\n```json\n{\n  \"message\": \"Technician updated successfully\",\n  \"technician\": {\n    \"id\": 25,\n    \"name\": \"Karim Employee\",\n    \"technicianProfile\": {\n      \"bonusRate\": 0.08,\n      \"baseSalary\": 3000,\n      \"type\": \"INTERNAL\",\n      \"status\": \"ACTIVE\"\n    }\n  }\n}\n```\n\n**Important Notes:**\n⚠️ Bonus applies to each job completed\n⚠️ Added on top of base salary\n⚠️ Rate change affects FUTURE jobs only\n✅ Logged in audit trail\n✅ Employee sees new rate in profile\n✅ Reflects in monthly earnings report\n\n**Validation:**\n- Must be between 0.0 and 1.0\n- Cannot be negative\n- Typically 3-15% for employees\n\n**Error Responses:**\n- 400: Invalid rate format or out of range\n- 404: Employee not found\n- 403: Not authorized (admin only)\n\n**Status:** ✅ PRODUCTION READY\n\n**Documentation:** See INDIVIDUAL_COMMISSION_BONUS_RATES.md"
+					},
+					"response": []
+				},
+				{
+					"name": "Set Both Rates (Technician)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"commissionRate\": 0.30,\n  \"bonusRate\": 0.06\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "42",
+									"description": "Technician ID"
+								}
+							]
+						},
+						"description": "✅ **NEW (Dec 14, 2025)** - Set both commission and bonus rates for a specific technician\n\n**Purpose:** Update both commission and bonus rates simultaneously for comprehensive rate adjustment.\n\n**Authorization:** Admin only\n\n**Path Parameters:**\n- `id` - Technician user ID\n\n**Request Body:**\n```json\n{\n  \"commissionRate\": 0.30,\n  \"bonusRate\": 0.06\n}\n```\n\n**When to Use:**\n- Complete rate structure overhaul\n- Switching technician from FREELANCER to INTERNAL (or vice versa)\n- Annual rate review with multiple adjustments\n- Promotion with both rate increases\n\n**Use Cases:**\n\n**1. Comprehensive Promotion:**\n```json\n{\n  \"commissionRate\": 0.32,\n  \"bonusRate\": 0.08,\n  \"status\": \"ACTIVE\"\n}\n```\n\n**2. Performance Review Update:**\n```json\n{\n  \"commissionRate\": 0.28,\n  \"bonusRate\": 0.05\n}\n```\n\n**3. Role Change Adjustment:**\n```json\n// Moving to hybrid model\n{\n  \"commissionRate\": 0.20,\n  \"bonusRate\": 0.10,\n  \"baseSalary\": 2000\n}\n```\n\n**Calculation Example:**\n```\nJob Payment: $200\n\nCommission Earnings:\n- Rate: 30%\n- Amount: $200 × 0.30 = $60\n\nBonus Earnings:\n- Rate: 6%\n- Amount: $200 × 0.06 = $12\n\nTotal per Job: $72\n\nIf 15 jobs/month:\nCommissions: 15 × $60 = $900\nBonuses: 15 × $12 = $180\nTotal Extra: $1,080/month\n```\n\n**Response:**\n```json\n{\n  \"message\": \"Technician updated successfully\",\n  \"technician\": {\n    \"id\": 42,\n    \"name\": \"Ahmed Hassan\",\n    \"technicianProfile\": {\n      \"commissionRate\": 0.30,\n      \"bonusRate\": 0.06,\n      \"type\": \"FREELANCER\",\n      \"status\": \"ACTIVE\"\n    }\n  }\n}\n```\n\n**Important Notes:**\n⚠️ Can set both rates even if one is typically used\n⚠️ Freelancers usually use commissionRate\n⚠️ Internal employees usually use bonusRate\n⚠️ Both can be set for hybrid models\n✅ Past earnings unchanged\n✅ Affects future jobs only\n\n**Additional Fields (Optional):**\n```json\n{\n  \"commissionRate\": 0.30,\n  \"bonusRate\": 0.06,\n  \"name\": \"Ahmed Hassan (Senior)\",\n  \"status\": \"ACTIVE\",\n  \"baseSalary\": 2500,\n  \"academicTitle\": \"BSc, MSc Electrical Engineering\"\n}\n```\n\n**Validation:**\n- Both rates must be 0.0 to 1.0\n- Cannot be negative\n- Independent validation for each rate\n\n**Status:** ✅ PRODUCTION READY\n\n**Documentation:** See INDIVIDUAL_COMMISSION_BONUS_RATES.md"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Technician Rates",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/technicians/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"technicians",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "42",
+									"description": "Technician ID"
+								}
+							]
+						},
+						"description": "✅ **NEW (Dec 14, 2025)** - Get individual commission and bonus rates for a specific technician\n\n**Purpose:** View current commission and bonus rates assigned to a specific technician.\n\n**Authorization:** Admin or Dispatcher\n\n**Path Parameters:**\n- `id` - Technician user ID\n\n**Response:**\n```json\n{\n  \"id\": 42,\n  \"name\": \"Ahmed Hassan\",\n  \"phone\": \"8801712345678\",\n  \"email\": \"ahmed@example.com\",\n  \"role\": \"TECH_FREELANCER\",\n  \"homeAddress\": \"123 Main St, Dhaka\",\n  \"createdAt\": \"2024-01-15T10:00:00Z\",\n  \"technicianProfile\": {\n    \"id\": 25,\n    \"type\": \"FREELANCER\",\n    \"commissionRate\": 0.28,\n    \"bonusRate\": 0.05,\n    \"baseSalary\": 0,\n    \"status\": \"ACTIVE\",\n    \"specialization\": \"ELECTRICAL\",\n    \"academicTitle\": \"BSc Electrical Engineering\",\n    \"department\": \"Field Services\",\n    \"joinDate\": \"2024-01-15T00:00:00Z\",\n    \"position\": \"Senior Technician\"\n  }\n}\n```\n\n**Rate Display Examples:**\n\n**Freelancer:**\n```\nName: Ahmed Hassan\nType: Freelancer\nCommission: 28% (0.28)\nBonus: 5% (0.05)\n\nEarnings per $100 job:\n- Commission: $28\n- Bonus: $5\n- Total: $33\n```\n\n**Internal Employee:**\n```\nName: Karim Employee\nType: Internal\nBase Salary: $3,000/month\nCommission: 0% (0.00)\nBonus: 8% (0.08)\n\nEarnings per $100 job:\n- Bonus: $8\n\nMonthly (20 jobs):\n- Salary: $3,000\n- Bonuses: $160\n- Total: $3,160\n```\n\n**Use Cases:**\n- Check current rate before updating\n- Verify rate change was applied\n- Compare rates across technicians\n- Audit rate assignments\n- Display in admin dashboard\n\n**Status:** ✅ PRODUCTION READY\n\n**Documentation:** See INDIVIDUAL_COMMISSION_BONUS_RATES.md"
 					},
 					"response": []
 				}

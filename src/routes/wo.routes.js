@@ -4,6 +4,7 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import {
   getAllWorkOrders,
@@ -26,10 +27,16 @@ import {
 
 const router = Router();
 
+// Ensure upload directory exists
+const uploadDir = "uploads/wo-completion";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 // Configure multer for completion photos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/wo-completion");
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

@@ -5,11 +5,30 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { errorHandler } from "./middleware/errorHandler.js";
 import {
   detectLanguage,
   addTranslationHelpers,
 } from "./middleware/language.js";
+
+// Create __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure upload directories exist
+const uploadDirs = [
+  path.join(__dirname, "..", "uploads", "wo-completion"),
+];
+
+uploadDirs.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`📁 Created directory: ${dir}`);
+  }
+});
 
 import authRoutes from "./routes/auth.routes.js";
 import otpRoutes from "./routes/otp.routes.js";
