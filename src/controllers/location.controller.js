@@ -134,9 +134,8 @@ export const getNearbyTechnicians = async (req, res, next) => {
     // Add status filter if provided
     if (status) {
       whereClause.locationStatus = status;
-    } else {
-      whereClause.locationStatus = { in: ["ONLINE", "BUSY"] };
     }
+    // If no status filter, show ALL technicians (ONLINE, BUSY, OFFLINE)
 
     const technicians = await prisma.user.findMany({
       where: whereClause,

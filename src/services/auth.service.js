@@ -478,6 +478,10 @@ export const getUserProfile = async (userId) => {
       homeAddress: true,
       latitude: true,
       longitude: true,
+      lastLatitude: true,
+      lastLongitude: true,
+      locationStatus: true,
+      locationUpdatedAt: true,
       createdAt: true,
       updatedAt: true,
       technicianProfile: {
