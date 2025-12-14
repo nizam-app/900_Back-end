@@ -67,11 +67,9 @@ export const blockTechnician = async (req, res, next) => {
     const { isBlocked, blockedReason } = req.body;
 
     if (isBlocked && !blockedReason) {
-      return res
-        .status(400)
-        .json({
-          message: "Blocked reason is required when blocking a technician",
-        });
+      return res.status(400).json({
+        message: "Blocked reason is required when blocking a technician",
+      });
     }
 
     const user = await adminService.setTechnicianBlockStatus(
@@ -199,20 +197,6 @@ export const getTechnicianLocations = async (req, res, next) => {
         const profile = tech.technicianProfile;
         const currentJob = tech.technicianWOs?.[0];
 
-        // Determine online status based on:
-        // 1. Profile status is ACTIVE
-        // 2. Has location data
-        // 3. Last activity within threshold (use updatedAt from profile or last WO activity)
-        const lastActivity = currentJob?.updatedAt || tech.updatedAt;
-        const minutesSinceActivity = (now - new Date(lastActivity)) / 1000 / 60;
-        const isRecentlyActive =
-          minutesSinceActivity < ONLINE_THRESHOLD_MINUTES;
-
-        const isOnline =
-          profile.status === "ACTIVE" &&
-          (tech.latitude || profile.latitude) &&
-          isRecentlyActive;
-
         // Use user's location if available, otherwise use profile location
         const latitude = tech.latitude || profile.latitude || null;
         const longitude = tech.longitude || profile.longitude || null;
@@ -221,6 +205,25 @@ export const getTechnicianLocations = async (req, res, next) => {
         if (!latitude || !longitude) {
           return null;
         }
+
+        // Logic: Display technician if:
+        // 1. They have set mobile app to online (profile.status === "ACTIVE")
+        // 2. OR they have an active order (regardless of mobile app status)
+        const hasActiveJob = currentJob !== null && currentJob !== undefined;
+        const isMobileAppOnline = profile.status === "ACTIVE";
+
+        // Skip if technician is not online AND doesn't have active job
+        if (!isMobileAppOnline && !hasActiveJob) {
+          return null;
+        }
+
+        // Determine online status for display
+        const lastActivity = currentJob?.updatedAt || tech.updatedAt;
+        const minutesSinceActivity = (now - new Date(lastActivity)) / 1000 / 60;
+        const isRecentlyActive =
+          minutesSinceActivity < ONLINE_THRESHOLD_MINUTES;
+
+        const isOnline = isMobileAppOnline && isRecentlyActive;
 
         return {
           id: tech.id,

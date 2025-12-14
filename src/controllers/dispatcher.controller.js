@@ -1,6 +1,8 @@
+/** @format */
+
 // src/controllers/dispatcher.controller.js
-import { prisma } from '../prisma.js';
-import { calculateDistance } from '../utils/location.js';
+import { prisma } from "../prisma.js";
+import { calculateDistance } from "../utils/location.js";
 
 // ✅ Get nearby technicians with distance, availability, and workload
 export const getNearbyTechnicians = async (req, res, next) => {
@@ -9,8 +11,8 @@ export const getNearbyTechnicians = async (req, res, next) => {
 
     // Validate required parameters
     if (!latitude || !longitude) {
-      return res.status(400).json({ 
-        message: 'Latitude and longitude are required' 
+      return res.status(400).json({
+        message: "Latitude and longitude are required",
       });
     }
 
@@ -18,18 +20,21 @@ export const getNearbyTechnicians = async (req, res, next) => {
     const lng = parseFloat(longitude);
 
     if (isNaN(lat) || isNaN(lng)) {
-      return res.status(400).json({ message: 'Invalid latitude or longitude values' });
+      return res
+        .status(400)
+        .json({ message: "Invalid latitude or longitude values" });
     }
 
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-      return res.status(400).json({ 
-        message: 'Latitude must be between -90 and 90, longitude between -180 and 180' 
+      return res.status(400).json({
+        message:
+          "Latitude must be between -90 and 90, longitude between -180 and 180",
       });
     }
 
     // Build where clause for technicians
     const where = {
-      role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
+      role: { in: ["TECH_INTERNAL", "TECH_FREELANCER"] },
       isBlocked: false,
     };
 
@@ -50,7 +55,7 @@ export const getNearbyTechnicians = async (req, res, next) => {
         technicianWOs: {
           where: {
             status: {
-              in: ['ASSIGNED', 'ACCEPTED', 'IN_PROGRESS'],
+              in: ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"],
             },
           },
           select: {
@@ -77,15 +82,18 @@ export const getNearbyTechnicians = async (req, res, next) => {
       });
 
       if (category) {
-        filteredTechs = technicians.filter(tech => 
-          tech.technicianProfile?.specialization?.toLowerCase().includes(category.name.toLowerCase()) ||
-          !tech.technicianProfile?.specialization // Include if no specialization set
+        filteredTechs = technicians.filter(
+          (tech) =>
+            tech.technicianProfile?.specialization
+              ?.toLowerCase()
+              .includes(category.name.toLowerCase()) ||
+            !tech.technicianProfile?.specialization // Include if no specialization set
         );
       }
     }
 
     // Calculate distance and prepare response
-    const techniciansWithDistance = filteredTechs.map(tech => {
+    const techniciansWithDistance = filteredTechs.map((tech) => {
       let distance = null;
       let estimatedTravelMinutes = null;
 
@@ -101,12 +109,19 @@ export const getNearbyTechnicians = async (req, res, next) => {
         estimatedTravelMinutes = Math.ceil((distance / 30) * 60);
       }
 
-      // Determine availability
-      let availability = 'OFFLINE';
-      if (tech.locationStatus === 'ONLINE') {
-        availability = tech.technicianWOs.length > 0 ? 'BUSY' : 'AVAILABLE';
-      } else if (tech.locationStatus === 'BUSY') {
-        availability = 'BUSY';
+      // Determine availability based on:
+      // 1. Mobile app status (profile.status === 'ACTIVE')
+      // 2. Has active jobs (regardless of mobile app status)
+      const hasActiveJobs = tech.technicianWOs.length > 0;
+      const isMobileAppOnline = tech.technicianProfile?.status === "ACTIVE";
+
+      let availability = "OFFLINE";
+
+      // Show as online/available if mobile app is online OR has active jobs
+      if (isMobileAppOnline || hasActiveJobs) {
+        // If has jobs, show as BUSY
+        // If no jobs but online, show as AVAILABLE
+        availability = hasActiveJobs ? "BUSY" : "AVAILABLE";
       }
 
       return {
@@ -120,15 +135,20 @@ export const getNearbyTechnicians = async (req, res, next) => {
         availability,
         locationStatus: tech.locationStatus,
         lastLocationUpdate: tech.locationUpdatedAt,
-        currentLocation: tech.lastLatitude && tech.lastLongitude ? {
-          latitude: tech.lastLatitude,
-          longitude: tech.lastLongitude,
-        } : null,
+        currentLocation:
+          tech.lastLatitude && tech.lastLongitude
+            ? {
+                latitude: tech.lastLatitude,
+                longitude: tech.lastLongitude,
+              }
+            : null,
         distance: distance ? parseFloat(distance.toFixed(2)) : null,
-        distanceKm: distance ? `${distance.toFixed(2)} km` : 'Unknown',
-        estimatedTravelTime: estimatedTravelMinutes ? `${estimatedTravelMinutes} min` : null,
+        distanceKm: distance ? `${distance.toFixed(2)} km` : "Unknown",
+        estimatedTravelTime: estimatedTravelMinutes
+          ? `${estimatedTravelMinutes} min`
+          : null,
         openJobsCount: tech.technicianWOs.length,
-        openJobs: tech.technicianWOs.map(wo => ({
+        openJobs: tech.technicianWOs.map((wo) => ({
           woNumber: wo.woNumber,
           status: wo.status,
           scheduledAt: wo.scheduledAt,
@@ -147,8 +167,8 @@ export const getNearbyTechnicians = async (req, res, next) => {
     let finalTechs = techniciansWithDistance;
     if (maxDistance) {
       const maxDist = parseFloat(maxDistance);
-      finalTechs = techniciansWithDistance.filter(tech => 
-        tech.distance === null || tech.distance <= maxDist
+      finalTechs = techniciansWithDistance.filter(
+        (tech) => tech.distance === null || tech.distance <= maxDist
       );
     }
 
@@ -191,7 +211,7 @@ export const getTechnicianWorkload = async (req, res, next) => {
         technicianWOs: {
           where: {
             status: {
-              in: ['ASSIGNED', 'ACCEPTED', 'IN_PROGRESS'],
+              in: ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"],
             },
           },
           include: {
@@ -213,18 +233,18 @@ export const getTechnicianWorkload = async (req, res, next) => {
             },
           },
           orderBy: {
-            scheduledAt: 'asc',
+            scheduledAt: "asc",
           },
         },
       },
     });
 
     if (!technician) {
-      return res.status(404).json({ message: 'Technician not found' });
+      return res.status(404).json({ message: "Technician not found" });
     }
 
-    if (!['TECH_INTERNAL', 'TECH_FREELANCER'].includes(technician.role)) {
-      return res.status(400).json({ message: 'User is not a technician' });
+    if (!["TECH_INTERNAL", "TECH_FREELANCER"].includes(technician.role)) {
+      return res.status(400).json({ message: "User is not a technician" });
     }
 
     const workload = {
@@ -239,11 +259,17 @@ export const getTechnicianWorkload = async (req, res, next) => {
       },
       summary: {
         total: technician.technicianWOs.length,
-        assigned: technician.technicianWOs.filter(wo => wo.status === 'ASSIGNED').length,
-        accepted: technician.technicianWOs.filter(wo => wo.status === 'ACCEPTED').length,
-        inProgress: technician.technicianWOs.filter(wo => wo.status === 'IN_PROGRESS').length,
+        assigned: technician.technicianWOs.filter(
+          (wo) => wo.status === "ASSIGNED"
+        ).length,
+        accepted: technician.technicianWOs.filter(
+          (wo) => wo.status === "ACCEPTED"
+        ).length,
+        inProgress: technician.technicianWOs.filter(
+          (wo) => wo.status === "IN_PROGRESS"
+        ).length,
       },
-      jobs: technician.technicianWOs.map(wo => ({
+      jobs: technician.technicianWOs.map((wo) => ({
         id: wo.id,
         woNumber: wo.woNumber,
         status: wo.status,
@@ -253,7 +279,9 @@ export const getTechnicianWorkload = async (req, res, next) => {
         customer: wo.customer,
         category: wo.category.name,
         subservice: wo.subservice.name,
-        estimatedDuration: wo.estimatedDuration ? `${wo.estimatedDuration} min` : null,
+        estimatedDuration: wo.estimatedDuration
+          ? `${wo.estimatedDuration} min`
+          : null,
       })),
     };
 

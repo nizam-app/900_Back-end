@@ -373,6 +373,14 @@ export const listSR = async (req, res, next) => {
             phone: true,
           },
         },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            role: true,
+          },
+        },
         category: true,
         subservice: true,
         service: true,
@@ -540,6 +548,14 @@ export const getMySRs = async (req, res, next) => {
             id: true,
             name: true,
             phone: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            role: true,
           },
         },
         category: true,
