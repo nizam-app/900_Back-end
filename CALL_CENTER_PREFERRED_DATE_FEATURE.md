@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # Call Center - Customer Preferred Date Feature
 
 **Status:** ✅ ALREADY IMPLEMENTED (December 14, 2025)
@@ -11,6 +13,7 @@ Call center agents **already have the ability** to enter the customer's preferre
 ### Database Schema
 
 The `ServiceRequest` model includes:
+
 ```prisma
 model ServiceRequest {
   // ... other fields ...
@@ -27,18 +30,21 @@ model ServiceRequest {
 ### Request Body Fields
 
 **Required Fields:**
+
 - `phone` - Customer phone number
 - `address` - Service location address
 - `categoryId` - Service category ID
 - `serviceId` - Service ID
 
 **Optional Fields for Scheduling:**
+
 - `preferredDate` - Customer's preferred service date (ISO 8601 format: "2025-12-20T10:00:00Z")
 - `preferredTime` - Preferred time slot ("Morning", "Afternoon", "Evening", or custom)
 - `scheduledAt` - Alternative to preferredDate (same format)
 - `notes` - Call center appointment notes
 
 **Other Optional Fields:**
+
 - `name` - Customer name (required if new customer)
 - `email` - Customer email (required if new customer)
 - `subserviceId` - Specific subservice ID
@@ -116,17 +122,21 @@ Content-Type: application/json
 ## Date Format Guidelines
 
 ### ISO 8601 Format
+
 - Format: `YYYY-MM-DDTHH:mm:ssZ`
 - Example: `2025-12-20T10:00:00Z`
 - Time zone: UTC (Z suffix)
 
 ### Common Time Slots
+
 - **Morning**: 08:00 - 12:00 (e.g., "2025-12-20T09:00:00Z")
 - **Afternoon**: 12:00 - 17:00 (e.g., "2025-12-20T14:00:00Z")
 - **Evening**: 17:00 - 21:00 (e.g., "2025-12-20T18:00:00Z")
 
 ### Bangladesh Time Zone (GMT+6)
+
 If customer says "10 AM Bangladesh time" on December 20:
+
 ```
 Bangladesh: 2025-12-20 10:00 AM (GMT+6)
 UTC:        2025-12-20 04:00 AM (GMT+0)
@@ -175,21 +185,25 @@ Format:     2025-12-20T04:00:00Z
 ### Call Center Workflow
 
 1. **Call center agent receives customer call**
+
    - Customer explains the service issue
    - Customer mentions preferred date/time for service
 
 2. **Agent searches for existing customer**
+
    ```
    GET /api/srs/search-customer?phone=8801712345678
    ```
 
 3. **Agent creates service request with preferred date**
+
    - If customer exists: Use phone only
    - If new customer: Provide name + email
    - Include `preferredDate` and `preferredTime` fields
    - Add any special notes in `notes` field
 
 4. **System stores preferred date**
+
    - SR created with `preferredDate` and `preferredTime`
    - Dispatcher can see this when converting SR to WO
    - Technician can see scheduled appointment time
@@ -210,14 +224,17 @@ Format:     2025-12-20T04:00:00Z
 ## Integration Points
 
 ### Dispatcher View
+
 - When viewing SR list, dispatcher can see `preferredDate` and `preferredTime`
 - When converting SR to WO, can use preferred date as default `scheduledAt`
 
 ### Technician View
+
 - Technicians see scheduled appointment time in their job list
 - Can plan their day based on scheduled appointments
 
 ### Customer View
+
 - If customer later logs in, they can see their preferred date
 - Can track when service is scheduled
 
@@ -226,12 +243,14 @@ Format:     2025-12-20T04:00:00Z
 ### Test in Postman
 
 1. **Login as Call Center Agent**
+
    ```
    POST /api/auth/login
    Body: { "phone": "3333333333", "password": "callcenter123" }
    ```
 
 2. **Create SR with Preferred Date**
+
    ```
    POST /api/sr
    Authorization: Bearer {{callCenterToken}}
@@ -253,6 +272,7 @@ Format:     2025-12-20T04:00:00Z
 ## Status
 
 ✅ **PRODUCTION READY** - Feature is fully implemented and tested
+
 - Database schema: ✅ Complete
 - API endpoint: ✅ Working
 - Call center access: ✅ Authorized
