@@ -2,18 +2,78 @@
 
 // src/controllers/location.controller.js
 import { prisma } from "../prisma.js";
+import geoip from "geoip-lite";
+
+// Helper function to get IP-based location (fallback)
+const getIpLocation = (req) => {
+  try {
+    // Get client IP address
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.headers["x-real-ip"] ||
+      req.connection.remoteAddress ||
+      req.socket.remoteAddress;
+
+    // Remove IPv6 prefix if present
+    const cleanIp = ip?.replace(/^::ffff:/, "");
+
+    // Skip localhost/private IPs
+    if (
+      !cleanIp ||
+      cleanIp === "127.0.0.1" ||
+      cleanIp === "::1" ||
+      cleanIp.startsWith("192.168.") ||
+      cleanIp.startsWith("10.") ||
+      cleanIp.startsWith("172.")
+    ) {
+      return null;
+    }
+
+    // Get location from IP
+    const geo = geoip.lookup(cleanIp);
+    if (geo && geo.ll) {
+      return {
+        latitude: geo.ll[0],
+        longitude: geo.ll[1],
+        source: "ip",
+        city: geo.city,
+        country: geo.country,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("IP geolocation error:", error);
+    return null;
+  }
+};
 
 export const updateLocation = async (req, res, next) => {
   try {
     const technicianId = req.user.id;
-    const { latitude, longitude, status } = req.body;
+    let { latitude, longitude, status } = req.body;
 
     // Prepare update data
     const updateData = {
       locationUpdatedAt: new Date(),
     };
 
-    // Update location if coordinates provided
+    let locationSource = "manual";
+
+    // If no coordinates provided, try to get from IP (auto-location fallback)
+    if (!latitude || !longitude) {
+      const ipLocation = getIpLocation(req);
+      if (ipLocation) {
+        latitude = ipLocation.latitude;
+        longitude = ipLocation.longitude;
+        locationSource = "auto-ip";
+        console.log(
+          `📍 Auto-detected location from IP: ${ipLocation.city}, ${ipLocation.country}`
+        );
+      }
+    }
+
+    // Update location if coordinates available (from body or IP)
     if (latitude && longitude) {
       updateData.lastLatitude = Number(latitude);
       updateData.lastLongitude = Number(longitude);
@@ -24,7 +84,7 @@ export const updateLocation = async (req, res, next) => {
       updateData.locationStatus = status;
     }
 
-    // If neither coordinates nor status provided, default to updating status only
+    // If neither coordinates nor status provided, default to ONLINE
     if (!latitude && !longitude && !status) {
       updateData.locationStatus = "ONLINE";
     }
@@ -38,7 +98,8 @@ export const updateLocation = async (req, res, next) => {
       message: "Location updated successfully",
       updated: {
         coordinates: latitude && longitude ? true : false,
-        status: status || (!latitude && !longitude ? "ONLINE" : "unchanged"),
+        status: status || (!status && !latitude && !longitude ? "ONLINE" : "unchanged"),
+        locationSource, // 'manual', 'auto-ip', or 'none'
       },
     });
   } catch (err) {
