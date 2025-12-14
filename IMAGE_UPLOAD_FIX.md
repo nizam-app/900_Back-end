@@ -5,6 +5,7 @@
 ## 🚨 Problem Identified
 
 Your project has an **external image upload service** configured:
+
 ```
 IMAGE_UPLOAD_SERVICE_URL=https://img.mtscorporate.com
 ```
@@ -16,12 +17,14 @@ But work order completion photos are being saved **locally** to the `uploads/wo-
 ## 📊 Current Situation
 
 ### ✅ CORRECT Implementation (Technician Documents)
+
 - **File:** `src/routes/technician-management.routes.js`
 - **Method:** Saves to temp directory → uploads to external service → deletes temp file
 - **Storage:** `os.tmpdir()` (system temp folder)
 - **Result:** Images stored on `https://img.mtscorporate.com` ✅
 
 ### ❌ WRONG Implementation (Work Order Completion Photos)
+
 - **File:** `src/routes/wo.routes.js`
 - **Method:** Saves directly to project folder
 - **Storage:** `uploads/wo-completion/` (local project folder)
@@ -32,18 +35,22 @@ But work order completion photos are being saved **locally** to the `uploads/wo-
 ## 🔍 Why This Is a Problem
 
 ### 1. **Deployment Issues**
+
 - When you deploy to Coolify/Docker, local uploads will be lost on container restart
 - No persistent storage means lost images
 
 ### 2. **Scalability Issues**
+
 - Multiple server instances can't share local files
 - Can't use load balancing properly
 
 ### 3. **Backup Issues**
+
 - Need to backup both database AND uploads folder
 - Increases complexity
 
 ### 4. **Inconsistency**
+
 - Technician documents use external service
 - Work order photos use local storage
 - Different behavior is confusing
@@ -53,6 +60,7 @@ But work order completion photos are being saved **locally** to the `uploads/wo-
 ## ✅ Solution: Fix Work Order Routes
 
 ### Current Code (WRONG)
+
 ```javascript
 // src/routes/wo.routes.js
 
@@ -74,6 +82,7 @@ const storage = multer.diskStorage({
 ```
 
 ### Fixed Code (CORRECT)
+
 ```javascript
 // src/routes/wo.routes.js
 import os from "os"; // Add this import
@@ -95,6 +104,7 @@ const storage = multer.diskStorage({
 ```
 
 ### Update Service to Use External Upload
+
 ```javascript
 // src/services/wo.service.js
 import { uploadImageToService } from "../utils/imageUpload.js"; // Add this import
@@ -122,7 +132,7 @@ export const completeWorkOrderByTechnician = async (woId, techId, data) => {
   const updated = await prisma.workOrder.update({
     where: { id: woId },
     data: {
-      status: 'COMPLETED_PENDING_PAYMENT',
+      status: "COMPLETED_PENDING_PAYMENT",
       completedAt: new Date(),
       completionNotes: completionNotes || null,
       completionPhotos: photoUrls.length > 0 ? JSON.stringify(photoUrls) : null,
@@ -139,12 +149,15 @@ export const completeWorkOrderByTechnician = async (woId, techId, data) => {
 ## 🎯 Files That Need Changes
 
 ### 1. `src/routes/wo.routes.js`
+
 **Change:** Use `os.tmpdir()` instead of `uploads/wo-completion/`
 
 ### 2. `src/services/wo.service.js`
+
 **Change:** Use `uploadImageToService()` instead of saving local paths
 
 ### 3. (Optional) Clean up existing uploads
+
 **After fix:** Can delete the `uploads/` folder from project
 
 ---
@@ -152,6 +165,7 @@ export const completeWorkOrderByTechnician = async (woId, techId, data) => {
 ## 📝 Step-by-Step Implementation
 
 ### Step 1: Update wo.routes.js
+
 ```diff
 // src/routes/wo.routes.js
 import { Router } from "express";
@@ -186,6 +200,7 @@ const storage = multer.diskStorage({
 ```
 
 ### Step 2: Update wo.service.js
+
 ```diff
 // src/services/wo.service.js
 import { prisma } from "../prisma.js";
@@ -217,6 +232,7 @@ export const completeWorkOrderByTechnician = async (woId, techId, data) => {
 ```
 
 ### Step 3: Test the Changes
+
 ```bash
 # 1. Restart the server
 npm start
@@ -234,7 +250,7 @@ npm start
 ## 🧪 Testing Checklist
 
 - [ ] Work order completion with 1 photo
-- [ ] Work order completion with multiple photos  
+- [ ] Work order completion with multiple photos
 - [ ] Check database - URLs should be `https://img.mtscorporate.com/...`
 - [ ] Verify temp files are deleted after upload
 - [ ] Check `uploads/` folder is no longer growing
@@ -245,6 +261,7 @@ npm start
 ## 🎯 Expected Results After Fix
 
 ### Before Fix
+
 ```json
 {
   "completionPhotos": "[
@@ -255,6 +272,7 @@ npm start
 ```
 
 ### After Fix
+
 ```json
 {
   "completionPhotos": "[
@@ -271,11 +289,13 @@ npm start
 Once you verify the fix works:
 
 1. **Delete uploads folder from project:**
+
    ```bash
    rm -rf uploads/
    ```
 
 2. **Add to .gitignore (if not already there):**
+
    ```
    uploads/
    ```
@@ -290,10 +310,12 @@ Once you verify the fix works:
 ## 📚 Summary
 
 **Current State:**
+
 - ❌ Work order photos: Local storage (`uploads/` folder)
 - ✅ Technician documents: External service (`img.mtscorporate.com`)
 
 **After Fix:**
+
 - ✅ Work order photos: External service
 - ✅ Technician documents: External service
 - ✅ No local files stored in project

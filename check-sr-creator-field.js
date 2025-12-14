@@ -42,7 +42,9 @@ async function checkSRCreatorField() {
 
     srs.forEach((sr, index) => {
       console.log(`\n${index + 1}. SR Number: ${sr.srNumber}`);
-      console.log(`   Customer: ${sr.customer?.name || "N/A"} (ID: ${sr.customerId})`);
+      console.log(
+        `   Customer: ${sr.customer?.name || "N/A"} (ID: ${sr.customerId})`
+      );
       console.log(`   Status: ${sr.status}`);
       console.log(`   Source: ${sr.source || "N/A"}`);
       console.log(`   Created At: ${sr.createdAt.toLocaleString()}`);
@@ -53,7 +55,9 @@ async function checkSRCreatorField() {
         console.log(`      - Phone: ${sr.createdBy.phone}`);
         console.log(`      - Role: ${sr.createdBy.role}`);
       } else if (sr.createdById) {
-        console.log(`   ⚠️  Created By ID: ${sr.createdById} (User data not found)`);
+        console.log(
+          `   ⚠️  Created By ID: ${sr.createdById} (User data not found)`
+        );
       } else {
         console.log(`   ⚠️  Created By: Not recorded (createdById is null)`);
       }
@@ -63,8 +67,9 @@ async function checkSRCreatorField() {
 
     // Summary statistics
     const withCreator = srs.filter((sr) => sr.createdBy).length;
-    const withCreatorId = srs.filter((sr) => sr.createdById && !sr.createdBy)
-      .length;
+    const withCreatorId = srs.filter(
+      (sr) => sr.createdById && !sr.createdBy
+    ).length;
     const withoutCreator = srs.filter((sr) => !sr.createdById).length;
 
     console.log("\n📈 Summary:");

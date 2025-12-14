@@ -151,7 +151,9 @@ async function testSRCreatorInfo() {
       console.log(`   Customer: ${sr.customer?.name}`);
       console.log(`   Status: ${sr.status}`);
       if (sr.createdBy) {
-        console.log(`   ✅ Created By: ${sr.createdBy.name} (${sr.createdBy.role})`);
+        console.log(
+          `   ✅ Created By: ${sr.createdBy.name} (${sr.createdBy.role})`
+        );
       } else {
         console.log(`   ⚠️  Created By: Not recorded (null)`);
       }
@@ -165,9 +167,7 @@ async function testSRCreatorInfo() {
     console.log(
       "   Dispatchers can see which Call Center agent created each SR."
     );
-    console.log(
-      "   The information includes: Name, Phone, Role, and User ID."
-    );
+    console.log("   The information includes: Name, Phone, Role, and User ID.");
   } catch (error) {
     console.error("\n❌ Test Error:", error.message);
   }
