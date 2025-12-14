@@ -65,10 +65,11 @@ async function main() {
       email: "tech.internal@fsm.com",
       passwordHash: techInternalPassword,
       role: "TECH_INTERNAL",
-      lastLatitude: -1.286389,
-      lastLongitude: 36.817223,
+      lastLatitude: 23.8103, // Dhaka, Bangladesh - Mohakhali area
+      lastLongitude: 90.4125,
       locationStatus: "ONLINE",
-      homeAddress: "456 Tech Street, Nairobi",
+      locationUpdatedAt: new Date(),
+      homeAddress: "456 Mohakhali C/A, Dhaka-1212, Bangladesh",
     },
   });
 
@@ -118,10 +119,11 @@ async function main() {
       email: "tech.freelancer@fsm.com",
       passwordHash: techFreelancerPassword,
       role: "TECH_FREELANCER",
-      lastLatitude: -1.292066,
-      lastLongitude: 36.821946,
+      lastLatitude: 23.7465, // Dhaka, Bangladesh - Dhanmondi area
+      lastLongitude: 90.3763,
       locationStatus: "ONLINE",
-      homeAddress: "789 Freelancer Ave, Nairobi",
+      locationUpdatedAt: new Date(),
+      homeAddress: "789 Dhanmondi Road 27, Dhaka-1209, Bangladesh",
     },
   });
 
@@ -323,9 +325,9 @@ async function main() {
       email: "customer@example.com",
       passwordHash: customerPassword,
       role: "CUSTOMER",
-      latitude: -1.286389,
-      longitude: 36.817223,
-      homeAddress: "123 Customer Lane, Nairobi",
+      latitude: 23.7808, // Dhaka, Bangladesh - Gulshan area
+      longitude: 90.4106,
+      homeAddress: "123 Gulshan Avenue, Dhaka-1212, Bangladesh",
     },
   });
   console.log("✅ Created sample customer:", customer.phone);
@@ -339,9 +341,9 @@ async function main() {
       name: "Robert Smith",
       email: "robert@example.com",
       role: "CUSTOMER",
-      latitude: -1.295,
-      longitude: 36.82,
-      homeAddress: "789 Smith Road, Nairobi",
+      latitude: 23.7265, // Dhaka, Bangladesh - Mirpur area
+      longitude: 90.3854,
+      homeAddress: "789 Mirpur Road, Dhaka-1216, Bangladesh",
       isBlocked: true,
       blockedReason: "Multiple customer complaints",
       blockedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
@@ -353,9 +355,9 @@ async function main() {
       email: "robert@example.com",
       passwordHash: customer2Password,
       role: "CUSTOMER",
-      latitude: -1.295,
-      longitude: 36.82,
-      homeAddress: "789 Smith Road, Nairobi",
+      latitude: 23.7265, // Dhaka, Bangladesh - Mirpur area
+      longitude: 90.3854,
+      homeAddress: "789 Mirpur Road, Dhaka-1216, Bangladesh",
       isBlocked: true,
       blockedReason: "Multiple customer complaints",
       blockedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
@@ -373,9 +375,9 @@ async function main() {
       email: "sarah@example.com",
       passwordHash: customer3Password,
       role: "CUSTOMER",
-      latitude: -1.28,
-      longitude: 36.815,
-      homeAddress: "456 Johnson Ave, Nairobi",
+      latitude: 23.7515, // Dhaka, Bangladesh - Banani area
+      longitude: 90.3996,
+      homeAddress: "456 Banani Road 11, Dhaka-1213, Bangladesh",
     },
   });
   console.log("✅ Created additional customers");
@@ -391,10 +393,11 @@ async function main() {
       email: "david@fsm.com",
       passwordHash: tech2Password,
       role: "TECH_FREELANCER",
-      lastLatitude: -1.283,
-      lastLongitude: 36.818,
+      lastLatitude: 23.8594, // Dhaka, Bangladesh - Uttara area
+      lastLongitude: 90.3963,
       locationStatus: "ONLINE",
-      homeAddress: "321 Tech Lane, Nairobi",
+      locationUpdatedAt: new Date(),
+      homeAddress: "321 Uttara Sector 7, Dhaka-1230, Bangladesh",
     },
   });
 
