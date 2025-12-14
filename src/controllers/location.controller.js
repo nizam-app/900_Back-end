@@ -6,21 +6,39 @@ export const updateLocation = async (req, res, next) => {
     const technicianId = req.user.id;
     const { latitude, longitude, status } = req.body;
 
-    if (!latitude || !longitude) {
-      return res.status(400).json({ message: 'Latitude and longitude are required' });
+    // Prepare update data
+    const updateData = {
+      locationUpdatedAt: new Date(),
+    };
+
+    // Update location if coordinates provided
+    if (latitude && longitude) {
+      updateData.lastLatitude = Number(latitude);
+      updateData.lastLongitude = Number(longitude);
+    }
+
+    // Update status if provided
+    if (status) {
+      updateData.locationStatus = status;
+    }
+
+    // If neither coordinates nor status provided, default to updating status only
+    if (!latitude && !longitude && !status) {
+      updateData.locationStatus = 'ONLINE';
     }
 
     await prisma.user.update({
       where: { id: technicianId },
-      data: {
-        lastLatitude: Number(latitude),
-        lastLongitude: Number(longitude),
-        locationStatus: status || 'ONLINE',
-        locationUpdatedAt: new Date(),
-      },
+      data: updateData,
     });
 
-    return res.json({ message: 'Location updated successfully' });
+    return res.json({ 
+      message: 'Location updated successfully',
+      updated: {
+        coordinates: latitude && longitude ? true : false,
+        status: status || ((!latitude && !longitude) ? 'ONLINE' : 'unchanged')
+      }
+    });
   } catch (err) {
     next(err); 
   }
