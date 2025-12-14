@@ -1,14 +1,15 @@
+/** @format */
+
 // src/services/wo.service.js
-import { prisma } from '../prisma.js';
+import { prisma } from "../prisma.js";
 import {
   notifyWOAssignment,
   notifyWOAccepted,
   notifyWOCompleted,
-  
-} from './notification.service.js';
-import { uploadImageToService } from '../utils/imageUpload.js';
+} from "./notification.service.js";
+import { uploadImageToService } from "../utils/imageUpload.js";
 
-const generateWONumber = () => 'WO-' + Date.now();
+const generateWONumber = () => "WO-" + Date.now();
 
 // ✅ Dispatcher: Convert SR → WO
 export const createWOFromSR = async (req, res, next) => {
@@ -22,11 +23,11 @@ export const createWOFromSR = async (req, res, next) => {
     });
 
     if (!sr) {
-      return res.status(404).json({ message: 'Service Request not found' });
+      return res.status(404).json({ message: "Service Request not found" });
     }
 
-    if (sr.status === 'CONVERTED_TO_WO') {
-      return res.status(400).json({ message: 'SR already converted to WO' });
+    if (sr.status === "CONVERTED_TO_WO") {
+      return res.status(400).json({ message: "SR already converted to WO" });
     }
 
     const wo = await prisma.workOrder.create({
@@ -42,7 +43,7 @@ export const createWOFromSR = async (req, res, next) => {
         address: sr.address,
         paymentType: sr.paymentType,
         priority: sr.priority,
-        status: technicianId ? 'ASSIGNED' : 'UNASSIGNED',
+        status: technicianId ? "ASSIGNED" : "UNASSIGNED",
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         notes: notes || null,
       },
@@ -50,14 +51,14 @@ export const createWOFromSR = async (req, res, next) => {
 
     await prisma.serviceRequest.update({
       where: { id: sr.id },
-      data: { status: 'CONVERTED_TO_WO' },
+      data: { status: "CONVERTED_TO_WO" },
     });
 
     await prisma.auditLog.create({
       data: {
         userId: dispatcherId,
-        action: 'WO_CREATED_FROM_SR',
-        entityType: 'WORK_ORDER',
+        action: "WO_CREATED_FROM_SR",
+        entityType: "WORK_ORDER",
         entityId: wo.id,
       },
     });
@@ -80,26 +81,26 @@ export const assignWorkOrder = async (woId, technicianId, assignerId) => {
   });
 
   if (!tech) {
-    throw new Error('Technician not found');
+    throw new Error("Technician not found");
   }
 
   if (tech.isBlocked) {
-    throw new Error('Technician is blocked');
+    throw new Error("Technician is blocked");
   }
 
   const wo = await prisma.workOrder.update({
     where: { id: woId },
     data: {
       technicianId: Number(technicianId),
-      status: 'ASSIGNED',
+      status: "ASSIGNED",
     },
   });
 
   await prisma.auditLog.create({
     data: {
       userId: assignerId,
-      action: 'WO_ASSIGNED',
-      entityType: 'WORK_ORDER',
+      action: "WO_ASSIGNED",
+      entityType: "WORK_ORDER",
       entityId: wo.id,
       metadataJson: JSON.stringify({ technicianId }),
     },
@@ -118,51 +119,51 @@ export const respondToWorkOrder = async (woId, techId, action) => {
   });
 
   if (!wo) {
-    throw new Error('Work Order not found');
+    throw new Error("Work Order not found");
   }
 
   if (wo.technicianId !== techId) {
-    throw new Error('This WO does not belong to you');
+    throw new Error("This WO does not belong to you");
   }
 
-  if (wo.status !== 'ASSIGNED') {
-    throw new Error('WO is not in ASSIGNED status');
+  if (wo.status !== "ASSIGNED") {
+    throw new Error("WO is not in ASSIGNED status");
   }
 
   let updated;
 
-  if (action === 'ACCEPT') {
+  if (action === "ACCEPT") {
     updated = await prisma.workOrder.update({
       where: { id: woId },
       data: {
-        status: 'ACCEPTED',
+        status: "ACCEPTED",
         acceptedAt: new Date(),
       },
     });
-  } else if (action === 'DECLINE') {
+  } else if (action === "DECLINE") {
     updated = await prisma.workOrder.update({
       where: { id: woId },
       data: {
-        status: 'UNASSIGNED',
+        status: "UNASSIGNED",
         technicianId: null,
       },
     });
   } else {
-    throw new Error('Invalid action, use ACCEPT or DECLINE');
+    throw new Error("Invalid action, use ACCEPT or DECLINE");
   }
 
   await prisma.auditLog.create({
     data: {
       userId: techId,
-      action: 'WO_RESPOND',
-      entityType: 'WORK_ORDER',
+      action: "WO_RESPOND",
+      entityType: "WORK_ORDER",
       entityId: wo.id,
       metadataJson: JSON.stringify({ action }),
     },
   });
 
   // Notify dispatcher if accepted
-  if (action === 'ACCEPT' && wo.dispatcherId) {
+  if (action === "ACCEPT" && wo.dispatcherId) {
     await notifyWOAccepted(wo.dispatcherId, updated);
   }
 
@@ -178,21 +179,21 @@ export const startWorkOrder = async (woId, techId, location) => {
   });
 
   if (!wo) {
-    throw new Error('Work Order not found');
+    throw new Error("Work Order not found");
   }
 
   if (wo.technicianId !== techId) {
-    throw new Error('This WO does not belong to you');
+    throw new Error("This WO does not belong to you");
   }
 
-  if (wo.status !== 'ACCEPTED') {
-    throw new Error('WO is not in ACCEPTED status');
+  if (wo.status !== "ACCEPTED") {
+    throw new Error("WO is not in ACCEPTED status");
   }
 
   await prisma.workOrder.update({
     where: { id: woId },
     data: {
-      status: 'IN_PROGRESS',
+      status: "IN_PROGRESS",
       startedAt: new Date(),
     },
   });
@@ -209,17 +210,22 @@ export const startWorkOrder = async (woId, techId, location) => {
   await prisma.auditLog.create({
     data: {
       userId: techId,
-      action: 'WO_START',
-      entityType: 'WORK_ORDER',
+      action: "WO_START",
+      entityType: "WORK_ORDER",
       entityId: wo.id,
     },
   });
 
-  return { message: 'Work started' };
+  return { message: "Work started" };
 };
 
 // ✅ Technician: Complete job (Pending payment)
-export const completeWorkOrder = async (woId, techId, completionData, files) => {
+export const completeWorkOrder = async (
+  woId,
+  techId,
+  completionData,
+  files
+) => {
   const { completionNotes, materialsUsed } = completionData;
 
   const wo = await prisma.workOrder.findUnique({
@@ -227,24 +233,27 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
   });
 
   if (!wo) {
-    throw new Error('Work Order not found');
+    throw new Error("Work Order not found");
   }
 
   if (wo.technicianId !== techId) {
-    throw new Error('This WO does not belong to you');
+    throw new Error("This WO does not belong to you");
   }
 
-  if (wo.status !== 'IN_PROGRESS') {
-    throw new Error('WO is not in IN_PROGRESS status');
+  if (wo.status !== "IN_PROGRESS") {
+    throw new Error("WO is not in IN_PROGRESS status");
   }
 
   // Parse materialsUsed if it's a JSON string
   let parsedMaterials = null;
   if (materialsUsed) {
     try {
-      parsedMaterials = typeof materialsUsed === 'string' ? JSON.parse(materialsUsed) : materialsUsed;
+      parsedMaterials =
+        typeof materialsUsed === "string"
+          ? JSON.parse(materialsUsed)
+          : materialsUsed;
     } catch (err) {
-      throw new Error('Invalid materialsUsed format. Expected JSON array.');
+      throw new Error("Invalid materialsUsed format. Expected JSON array.");
     }
   }
 
@@ -257,7 +266,7 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
         const imageUrl = await uploadImageToService(file);
         photoUrls.push(imageUrl);
       } catch (error) {
-        console.error('Failed to upload completion photo:', error);
+        console.error("Failed to upload completion photo:", error);
         // Continue with other files even if one fails
       }
     }
@@ -266,7 +275,7 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
   const updated = await prisma.workOrder.update({
     where: { id: woId },
     data: {
-      status: 'COMPLETED_PENDING_PAYMENT',
+      status: "COMPLETED_PENDING_PAYMENT",
       completedAt: new Date(),
       completionNotes: completionNotes || null,
       completionPhotos: photoUrls.length > 0 ? JSON.stringify(photoUrls) : null,
@@ -277,8 +286,8 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
   await prisma.auditLog.create({
     data: {
       userId: techId,
-      action: 'WO_COMPLETE',
-      entityType: 'WORK_ORDER',
+      action: "WO_COMPLETE",
+      entityType: "WORK_ORDER",
       entityId: wo.id,
     },
   });
@@ -290,12 +299,3 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
 
   return updated;
 };
-
-
-
-
-
-
-
-
-
