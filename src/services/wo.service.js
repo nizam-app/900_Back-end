@@ -6,6 +6,7 @@ import {
   notifyWOCompleted,
   
 } from './notification.service.js';
+import { uploadImageToService } from '../utils/imageUpload.js';
 
 const generateWONumber = () => 'WO-' + Date.now();
 
@@ -247,12 +248,19 @@ export const completeWorkOrder = async (woId, techId, completionData, files) => 
     }
   }
 
-  // Process uploaded files
+  // Process uploaded files - Upload to external image service
   const photoUrls = [];
   if (files && files.length > 0) {
-    files.forEach(file => {
-      photoUrls.push(`/uploads/wo-completion/${file.filename}`);
-    });
+    for (const file of files) {
+      try {
+        // Upload to external image service (https://img.mtscorporate.com)
+        const imageUrl = await uploadImageToService(file);
+        photoUrls.push(imageUrl);
+      } catch (error) {
+        console.error('Failed to upload completion photo:', error);
+        // Continue with other files even if one fails
+      }
+    }
   }
 
   const updated = await prisma.workOrder.update({

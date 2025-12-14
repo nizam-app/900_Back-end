@@ -4,7 +4,7 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "path";
-import fs from "fs";
+import os from "os";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import {
   getAllWorkOrders,
@@ -27,20 +27,19 @@ import {
 
 const router = Router();
 
-// Ensure upload directory exists
-const uploadDir = "uploads/wo-completion";
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure multer for completion photos
+// Configure multer for completion photos - using temp directory
+// Files will be uploaded to external service and then deleted
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir);
+    cb(null, os.tmpdir());
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, "wo-" + uniqueSuffix + path.extname(file.originalname));
+    cb(
+      null,
+      `temp-wo-${Date.now()}-${Math.random().toString(36).substring(7)}-${
+        file.originalname
+      }`
+    );
   },
 });
 
