@@ -1,5 +1,7 @@
+/** @format */
+
 // src/controllers/location.controller.js
-import { prisma } from '../prisma.js';
+import { prisma } from "../prisma.js";
 
 export const updateLocation = async (req, res, next) => {
   try {
@@ -24,7 +26,7 @@ export const updateLocation = async (req, res, next) => {
 
     // If neither coordinates nor status provided, default to updating status only
     if (!latitude && !longitude && !status) {
-      updateData.locationStatus = 'ONLINE';
+      updateData.locationStatus = "ONLINE";
     }
 
     await prisma.user.update({
@@ -32,15 +34,15 @@ export const updateLocation = async (req, res, next) => {
       data: updateData,
     });
 
-    return res.json({ 
-      message: 'Location updated successfully',
+    return res.json({
+      message: "Location updated successfully",
       updated: {
         coordinates: latitude && longitude ? true : false,
-        status: status || ((!latitude && !longitude) ? 'ONLINE' : 'unchanged')
-      }
+        status: status || (!latitude && !longitude ? "ONLINE" : "unchanged"),
+      },
     });
   } catch (err) {
-    next(err); 
+    next(err);
   }
 };
 
@@ -49,7 +51,9 @@ export const getNearbyTechnicians = async (req, res, next) => {
     const { latitude, longitude, radius, status } = req.query;
 
     if (!latitude || !longitude) {
-      return res.status(400).json({ message: 'Latitude and longitude are required' });
+      return res
+        .status(400)
+        .json({ message: "Latitude and longitude are required" });
     }
 
     const lat = Number(latitude);
@@ -58,7 +62,7 @@ export const getNearbyTechnicians = async (req, res, next) => {
 
     // Build where clause dynamically
     const whereClause = {
-      role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
+      role: { in: ["TECH_INTERNAL", "TECH_FREELANCER"] },
       isBlocked: false,
       lastLatitude: { not: null },
       lastLongitude: { not: null },
@@ -68,7 +72,7 @@ export const getNearbyTechnicians = async (req, res, next) => {
     if (status) {
       whereClause.locationStatus = status;
     } else {
-      whereClause.locationStatus = { in: ['ONLINE', 'BUSY'] };
+      whereClause.locationStatus = { in: ["ONLINE", "BUSY"] };
     }
 
     const technicians = await prisma.user.findMany({
@@ -101,7 +105,7 @@ export const getNearbyTechnicians = async (req, res, next) => {
         const dLat = ((techLat - lat) * Math.PI) / 180;
         const dLon = ((techLng - lng) * Math.PI) / 180;
         const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) + 
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
           Math.cos((lat * Math.PI) / 180) *
             Math.cos((techLat * Math.PI) / 180) *
             Math.sin(dLon / 2) *
@@ -148,21 +152,21 @@ export const getTechnicianLocation = async (req, res, next) => {
     });
 
     if (!technician) {
-      return res.status(404).json({ message: 'Technician not found' });
+      return res.status(404).json({ message: "Technician not found" });
     }
 
-    if (!['TECH_INTERNAL', 'TECH_FREELANCER'].includes(technician.role)) {
-      return res.status(400).json({ message: 'User is not a technician' });
+    if (!["TECH_INTERNAL", "TECH_FREELANCER"].includes(technician.role)) {
+      return res.status(400).json({ message: "User is not a technician" });
     }
 
     if (!technician.lastLatitude || !technician.lastLongitude) {
-      return res.status(404).json({ 
-        message: 'Location not available',
+      return res.status(404).json({
+        message: "Location not available",
         technician: {
           id: technician.id,
           name: technician.name,
-          locationStatus: 'OFFLINE'
-        }
+          locationStatus: "OFFLINE",
+        },
       });
     }
 
@@ -173,9 +177,9 @@ export const getTechnicianLocation = async (req, res, next) => {
       role: technician.role,
       latitude: technician.lastLatitude,
       longitude: technician.lastLongitude,
-      status: technician.locationStatus || 'ONLINE',
+      status: technician.locationStatus || "ONLINE",
       lastUpdated: technician.locationUpdatedAt,
-      technicianProfile: technician.technicianProfile
+      technicianProfile: technician.technicianProfile,
     });
   } catch (err) {
     next(err);
@@ -186,13 +190,13 @@ export const getLocationHistory = async (req, res, next) => {
   try {
     const { technicianId } = req.params;
     const { startDate, endDate, limit = 100 } = req.query;
-    
+
     if (!technicianId) {
-      return res.status(400).json({ message: 'Technician ID is required' });
+      return res.status(400).json({ message: "Technician ID is required" });
     }
 
     const where = {
-      technicianId: Number(technicianId)
+      technicianId: Number(technicianId),
     };
 
     if (startDate || endDate) {
@@ -210,17 +214,17 @@ export const getLocationHistory = async (req, res, next) => {
             id: true,
             woNumber: true,
             address: true,
-            status: true
-          }
-        }
+            status: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' },
-      take: Number(limit)
+      orderBy: { createdAt: "desc" },
+      take: Number(limit),
     });
 
     return res.json({
       count: checkins.length,
-      history: checkins
+      history: checkins,
     });
   } catch (err) {
     next(err);
@@ -232,8 +236,9 @@ export const getETA = async (req, res, next) => {
     const { technicianId, destinationLat, destinationLng } = req.query;
 
     if (!technicianId || !destinationLat || !destinationLng) {
-      return res.status(400).json({ 
-        message: 'technicianId, destinationLat, and destinationLng are required' 
+      return res.status(400).json({
+        message:
+          "technicianId, destinationLat, and destinationLng are required",
       });
     }
 
@@ -245,17 +250,17 @@ export const getETA = async (req, res, next) => {
         lastLatitude: true,
         lastLongitude: true,
         locationStatus: true,
-        locationUpdatedAt: true
-      }
+        locationUpdatedAt: true,
+      },
     });
 
     if (!technician) {
-      return res.status(404).json({ message: 'Technician not found' });
+      return res.status(404).json({ message: "Technician not found" });
     }
 
     if (!technician.lastLatitude || !technician.lastLongitude) {
-      return res.status(404).json({ 
-        message: 'Technician location not available' 
+      return res.status(404).json({
+        message: "Technician location not available",
       });
     }
 
@@ -288,22 +293,25 @@ export const getETA = async (req, res, next) => {
         name: technician.name,
         currentLocation: {
           latitude: technician.lastLatitude,
-          longitude: technician.lastLongitude
+          longitude: technician.lastLongitude,
         },
         locationStatus: technician.locationStatus,
-        lastUpdated: technician.locationUpdatedAt
+        lastUpdated: technician.locationUpdatedAt,
       },
       destination: {
         latitude: lat2,
-        longitude: lng2
+        longitude: lng2,
       },
       distance: parseFloat(distance.toFixed(2)), // km
       estimatedTime: {
         minutes: estimatedTimeMinutes,
-        formatted: estimatedTimeMinutes < 60 
-          ? `${estimatedTimeMinutes} minutes`
-          : `${Math.floor(estimatedTimeMinutes / 60)} hours ${estimatedTimeMinutes % 60} minutes`
-      }
+        formatted:
+          estimatedTimeMinutes < 60
+            ? `${estimatedTimeMinutes} minutes`
+            : `${Math.floor(estimatedTimeMinutes / 60)} hours ${
+                estimatedTimeMinutes % 60
+              } minutes`,
+      },
     });
   } catch (err) {
     next(err);
@@ -335,21 +343,21 @@ export const getTechnicianStatus = async (req, res, next) => {
     });
 
     if (!technician) {
-      return res.status(404).json({ message: 'Technician not found' });
+      return res.status(404).json({ message: "Technician not found" });
     }
 
-    if (!['TECH_INTERNAL', 'TECH_FREELANCER'].includes(technician.role)) {
-      return res.status(400).json({ message: 'User is not a technician' });
+    if (!["TECH_INTERNAL", "TECH_FREELANCER"].includes(technician.role)) {
+      return res.status(400).json({ message: "User is not a technician" });
     }
 
     return res.json({
       id: technician.id,
       name: technician.name,
       phone: technician.phone,
-      locationStatus: technician.locationStatus || 'OFFLINE',
+      locationStatus: technician.locationStatus || "OFFLINE",
       lastUpdated: technician.locationUpdatedAt,
       hasLocation: !!(technician.lastLatitude && technician.lastLongitude),
-      technicianProfile: technician.technicianProfile
+      technicianProfile: technician.technicianProfile,
     });
   } catch (err) {
     next(err);
