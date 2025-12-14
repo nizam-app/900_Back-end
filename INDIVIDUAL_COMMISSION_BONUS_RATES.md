@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # Individual Commission & Bonus Rates for Technicians
 
 **Status:** ✅ ALREADY IMPLEMENTED (December 14, 2025)
@@ -43,6 +45,7 @@ model TechnicianProfile {
 ```
 
 **Response:**
+
 ```json
 {
   "message": "Technician created successfully",
@@ -72,6 +75,7 @@ model TechnicianProfile {
 ```
 
 **Example:** Update only commission rate for technician ID 42:
+
 ```json
 PATCH /api/technicians/42
 Authorization: Bearer {{adminToken}}
@@ -86,6 +90,7 @@ Authorization: Bearer {{adminToken}}
 **Endpoint:** `GET /api/technicians/:id`
 
 **Response:**
+
 ```json
 {
   "id": 42,
@@ -217,21 +222,24 @@ If rates are not specified during technician creation:
 ### Scenario: Freelancer Completes Job
 
 **Job Details:**
+
 - Service: AC Repair
 - Customer Payment: $150
 - Technician: Ahmed (Freelancer)
 - Commission Rate: 0.25 (25%)
 
 **Calculation:**
+
 ```
 Commission Amount = $150 × 0.25 = $37.50
 ```
 
 **Database Entry:**
+
 ```json
 {
   "technicianId": 42,
-  "amount": 37.50,
+  "amount": 37.5,
   "rate": 0.25,
   "type": "COMMISSION",
   "status": "PENDING",
@@ -240,6 +248,7 @@ Commission Amount = $150 × 0.25 = $37.50
 ```
 
 **Technician Earnings:**
+
 ```
 This Week: $37.50
 This Month: $450.00
@@ -251,6 +260,7 @@ All Time: $5,200.00
 ### Scenario: Internal Employee Completes Job
 
 **Job Details:**
+
 - Service: Electrical Wiring
 - Customer Payment: $200
 - Technician: Karim (Internal)
@@ -258,11 +268,13 @@ All Time: $5,200.00
 - Bonus Rate: 0.05 (5%)
 
 **Calculation:**
+
 ```
 Bonus Amount = $200 × 0.05 = $10.00
 ```
 
 **Monthly Earnings:**
+
 ```
 Base Salary: $3000
 Bonuses (20 jobs): $200
@@ -271,13 +283,13 @@ Total: $3200
 
 ## API Endpoints Summary
 
-| Method | Endpoint                    | Description                           | Auth  |
-| ------ | --------------------------- | ------------------------------------- | ----- |
-| POST   | `/api/technicians`          | Create technician with custom rates   | Admin |
-| PATCH  | `/api/technicians/:id`      | Update individual rates               | Admin |
-| GET    | `/api/technicians/:id`      | View technician with current rates    | Admin |
-| GET    | `/api/technicians/directory`| List all technicians with their rates | Admin |
-| GET    | `/api/technicians/overview` | Statistics including avg rates        | Admin |
+| Method | Endpoint                     | Description                           | Auth  |
+| ------ | ---------------------------- | ------------------------------------- | ----- |
+| POST   | `/api/technicians`           | Create technician with custom rates   | Admin |
+| PATCH  | `/api/technicians/:id`       | Update individual rates               | Admin |
+| GET    | `/api/technicians/:id`       | View technician with current rates    | Admin |
+| GET    | `/api/technicians/directory` | List all technicians with their rates | Admin |
+| GET    | `/api/technicians/overview`  | Statistics including avg rates        | Admin |
 
 ## Updating Multiple Technicians
 
@@ -298,6 +310,7 @@ PATCH /api/technicians/43
 ### Option 2: Bulk Rate Adjustment (Future Feature)
 
 Currently not implemented, but could be added:
+
 ```json
 POST /api/technicians/bulk-update-rates
 {
@@ -363,18 +376,20 @@ Authorization: Bearer {{adminToken}}
 ## Rate Validation Rules
 
 ### Commission Rate Validation
+
 ```javascript
 if (commissionRate !== undefined) {
   const rate = parseFloat(commissionRate);
   if (isNaN(rate) || rate < 0 || rate > 1) {
     return res.status(400).json({
-      message: "Commission rate must be between 0.0 and 1.0"
+      message: "Commission rate must be between 0.0 and 1.0",
     });
   }
 }
 ```
 
 ### Valid Examples
+
 - `0.10` ✅ (10%)
 - `0.25` ✅ (25%)
 - `0.40` ✅ (40%)
@@ -382,6 +397,7 @@ if (commissionRate !== undefined) {
 - `1.0` ✅ (100%)
 
 ### Invalid Examples
+
 - `10` ❌ (should be 0.10)
 - `25%` ❌ (should be 0.25)
 - `-0.1` ❌ (negative)
@@ -391,15 +407,18 @@ if (commissionRate !== undefined) {
 ## Important Notes
 
 1. **Individual Rates Override Defaults**
+
    - Each technician has their own rates stored in `TechnicianProfile`
    - These rates are used for commission/bonus calculations
    - Default rates only apply if no individual rate is set
 
 2. **Freelancer vs Internal**
+
    - **Freelancers:** Earn `commissionRate` percentage of job payment
    - **Internal:** Earn fixed `baseSalary` + `bonusRate` percentage of job payment
 
 3. **Rate Changes**
+
    - Updating rates affects **future** jobs only
    - Past commissions are not recalculated
    - Audit log tracks all rate changes
@@ -412,6 +431,7 @@ if (commissionRate !== undefined) {
 ## Database Queries
 
 ### Get Technician with Rates
+
 ```javascript
 const technician = await prisma.user.findUnique({
   where: { id: 42 },
@@ -421,39 +441,44 @@ const technician = await prisma.user.findUnique({
         commissionRate: true,
         bonusRate: true,
         type: true,
-        status: true
-      }
-    }
-  }
+        status: true,
+      },
+    },
+  },
 });
 
-console.log(`Commission: ${technician.technicianProfile.commissionRate * 100}%`);
+console.log(
+  `Commission: ${technician.technicianProfile.commissionRate * 100}%`
+);
 // Output: Commission: 25%
 ```
 
 ### Update Individual Rate
+
 ```javascript
 await prisma.technicianProfile.update({
   where: { userId: 42 },
   data: {
-    commissionRate: 0.30
-  }
+    commissionRate: 0.3,
+  },
 });
 ```
 
 ### Calculate Commission
+
 ```javascript
 const commission = await prisma.commission.create({
   data: {
     technicianId: 42,
     amount: jobAmount * technician.technicianProfile.commissionRate,
     rate: technician.technicianProfile.commissionRate,
-    type: technician.technicianProfile.type === 'FREELANCER' 
-      ? 'COMMISSION' 
-      : 'BONUS',
+    type:
+      technician.technicianProfile.type === "FREELANCER"
+        ? "COMMISSION"
+        : "BONUS",
     workOrderId: 123,
-    status: 'PENDING'
-  }
+    status: "PENDING",
+  },
 });
 ```
 
@@ -470,6 +495,7 @@ const commission = await prisma.commission.create({
 ## Status
 
 ✅ **PRODUCTION READY** - Feature is fully implemented and tested
+
 - Database schema: ✅ Complete
 - Create endpoint: ✅ Working (`POST /api/technicians`)
 - Update endpoint: ✅ Working (`PATCH /api/technicians/:id`)

@@ -19,9 +19,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure upload directories exist
-const uploadDirs = [
-  path.join(__dirname, "..", "uploads", "wo-completion"),
-];
+const uploadDirs = [path.join(__dirname, "..", "uploads", "wo-completion")];
 
 uploadDirs.forEach((dir) => {
   if (!fs.existsSync(dir)) {
