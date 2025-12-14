@@ -1,3 +1,5 @@
+<!-- @format -->
+
 # Technician Online/Offline Status - Complete Guide
 
 ## 🔍 Problem
@@ -19,6 +21,7 @@ node check-technician-status.js
 ```
 
 **Output shows:**
+
 - 🟢 ONLINE - Available for assignment
 - 🟡 BUSY - Currently on a job
 - ⚫ OFFLINE - Not available (or status not set)
@@ -29,6 +32,7 @@ node check-technician-status.js
 ## 🎯 Current Situation
 
 From the check, you have:
+
 - **2 ONLINE** technicians:
   - Ahmed Hassan (5555555555)
   - David Electrician (6666666666)
@@ -65,7 +69,7 @@ Body: {
 ```sql
 -- Make specific technician online
 UPDATE "User"
-SET 
+SET
   "locationStatus" = 'ONLINE',
   "lastLatitude" = 23.8103,
   "lastLongitude" = 90.4125,
@@ -74,7 +78,7 @@ WHERE phone = '6666666666';
 
 -- Make ALL technicians online (for testing)
 UPDATE "User"
-SET 
+SET
   "locationStatus" = 'ONLINE',
   "lastLatitude" = 23.8103,
   "lastLongitude" = 90.4125,
@@ -111,6 +115,7 @@ main().catch(console.error);
 ```
 
 Run it:
+
 ```bash
 node set-all-technicians-online.js
 ```
@@ -120,12 +125,14 @@ node set-all-technicians-online.js
 ## 📱 How Dispatcher Sees Online Status
 
 ### 1. Get Technician Locations (Map View)
+
 ```bash
 GET {{baseUrl}}/api/dispatch/technician-locations
 Authorization: Bearer {{dispatcherToken}}
 ```
 
 **Response includes `locationStatus`:**
+
 ```json
 [
   {
@@ -146,12 +153,14 @@ Authorization: Bearer {{dispatcherToken}}
 ```
 
 ### 2. Get Technician Status Summary
+
 ```bash
 GET {{baseUrl}}/api/dispatch/technician-status
 Authorization: Bearer {{dispatcherToken}}
 ```
 
 **Response:**
+
 ```json
 {
   "activeTechnicians": 2,     ← ONLINE count
@@ -180,28 +189,26 @@ Authorization: Bearer {{dispatcherToken}}
 // Technician card/list item
 function TechnicianCard({ technician }) {
   const statusColor = {
-    ONLINE: 'green',
-    BUSY: 'yellow', 
-    OFFLINE: 'gray'
-  }[technician.locationStatus || 'OFFLINE'];
+    ONLINE: "green",
+    BUSY: "yellow",
+    OFFLINE: "gray",
+  }[technician.locationStatus || "OFFLINE"];
 
   const statusIcon = {
-    ONLINE: '🟢',
-    BUSY: '🟡',
-    OFFLINE: '⚫'
-  }[technician.locationStatus || 'OFFLINE'];
+    ONLINE: "🟢",
+    BUSY: "🟡",
+    OFFLINE: "⚫",
+  }[technician.locationStatus || "OFFLINE"];
 
   return (
-    <div className="technician-card">
+    <div className='technician-card'>
       <span className={`status-${statusColor}`}>
         {statusIcon} {technician.name}
       </span>
-      <span className="location-status">
-        {technician.locationStatus || 'OFFLINE'}
+      <span className='location-status'>
+        {technician.locationStatus || "OFFLINE"}
       </span>
-      {technician.locationStatus === 'ONLINE' && (
-        <button>Assign Job</button>
-      )}
+      {technician.locationStatus === "ONLINE" && <button>Assign Job</button>}
     </div>
   );
 }
@@ -212,12 +219,15 @@ function TechnicianCard({ technician }) {
 ## 🧪 Testing Steps
 
 ### Step 1: Check Current Status
+
 ```bash
 node check-technician-status.js
 ```
 
 ### Step 2: Make Technicians Online
+
 Choose one method:
+
 - API update (Method 1)
 - Direct database update (Method 2)
 - Run script (Method 3)
@@ -225,12 +235,14 @@ Choose one method:
 ### Step 3: Verify in Dispatcher
 
 **A. Login as Dispatcher:**
+
 ```bash
 POST {{baseUrl}}/api/auth/login
 Body: {"phone": "2222222222", "password": "dispatcher123"}
 ```
 
 **B. Check Technician Status:**
+
 ```bash
 GET {{baseUrl}}/api/dispatch/technician-status
 Authorization: Bearer {{dispatcherToken}}
@@ -239,6 +251,7 @@ Authorization: Bearer {{dispatcherToken}}
 **Expected:** `activeTechnicians` should show increased count
 
 **C. View Technician Locations:**
+
 ```bash
 GET {{baseUrl}}/api/dispatch/technician-locations
 Authorization: Bearer {{dispatcherToken}}
@@ -249,6 +262,7 @@ Authorization: Bearer {{dispatcherToken}}
 ### Step 4: Test Assignment
 
 **Get nearby ONLINE technicians:**
+
 ```bash
 GET {{baseUrl}}/api/location/nearby?latitude=23.8103&longitude=90.4125&status=ONLINE
 Authorization: Bearer {{dispatcherToken}}
@@ -260,23 +274,25 @@ Authorization: Bearer {{dispatcherToken}}
 
 ## 🔧 Status Values
 
-| Status | Meaning | Can Be Assigned? | Icon |
-|--------|---------|------------------|------|
-| **ONLINE** | Available, ready for jobs | ✅ YES | 🟢 |
-| **BUSY** | Currently on a job | ⚠️ Maybe (if allowed) | 🟡 |
-| **OFFLINE** | Not available, logged out | ❌ NO | ⚫ |
-| **null** | Status not set (treated as OFFLINE) | ❌ NO | ⚫ |
+| Status      | Meaning                             | Can Be Assigned?      | Icon |
+| ----------- | ----------------------------------- | --------------------- | ---- |
+| **ONLINE**  | Available, ready for jobs           | ✅ YES                | 🟢   |
+| **BUSY**    | Currently on a job                  | ⚠️ Maybe (if allowed) | 🟡   |
+| **OFFLINE** | Not available, logged out           | ❌ NO                 | ⚫   |
+| **null**    | Status not set (treated as OFFLINE) | ❌ NO                 | ⚫   |
 
 ---
 
 ## 📋 Quick Reference
 
 ### Check Status
+
 ```bash
 node check-technician-status.js
 ```
 
 ### Set ONE Technician Online
+
 ```bash
 POST {{baseUrl}}/api/location/update
 Authorization: Bearer {{technicianToken}}
@@ -284,12 +300,14 @@ Body: {"latitude": 23.8103, "longitude": 90.4125, "status": "ONLINE"}
 ```
 
 ### Set ALL Technicians Online (Testing)
+
 ```sql
-UPDATE "User" SET "locationStatus" = 'ONLINE', "lastLatitude" = 23.8103, "lastLongitude" = 90.4125 
+UPDATE "User" SET "locationStatus" = 'ONLINE', "lastLatitude" = 23.8103, "lastLongitude" = 90.4125
 WHERE role IN ('TECH_INTERNAL', 'TECH_FREELANCER') AND "isBlocked" = false;
 ```
 
 ### Dispatcher View Status
+
 ```bash
 GET {{baseUrl}}/api/dispatch/technician-status
 GET {{baseUrl}}/api/dispatch/technician-locations
@@ -300,15 +318,19 @@ GET {{baseUrl}}/api/dispatch/technician-locations
 ## ❓ FAQ
 
 ### Q: Why are most technicians showing OFFLINE?
+
 **A:** Because they haven't updated their location status yet. When technicians log in via mobile app, they should call `/api/location/update` with status "ONLINE".
 
 ### Q: How often should location be updated?
+
 **A:** Mobile apps should update every 30-60 seconds when technician is online. Desktop/web can update on login and manual refresh.
 
 ### Q: Can I filter technicians by status in dispatcher?
+
 **A:** Yes! Use query parameter: `?status=ONLINE` in nearby technicians endpoint.
 
 ### Q: What if locationStatus is null?
+
 **A:** Treated as OFFLINE. Technician has never set their status.
 
 ---
@@ -324,9 +346,10 @@ For production, technicians should:
 5. **On Logout:** Change to OFFLINE
 
 **Mobile App Example:**
+
 ```javascript
 // On login
-await updateLocation({ status: 'ONLINE', ...currentGPS });
+await updateLocation({ status: "ONLINE", ...currentGPS });
 
 // Background location updates (every 30s)
 setInterval(async () => {
@@ -336,7 +359,7 @@ setInterval(async () => {
 }, 30000);
 
 // On logout
-await updateLocation({ status: 'OFFLINE', ...currentGPS });
+await updateLocation({ status: "OFFLINE", ...currentGPS });
 ```
 
 ---
@@ -350,6 +373,7 @@ await updateLocation({ status: 'OFFLINE', ...currentGPS });
 5. **Filter by status** - Use `?status=ONLINE` parameter
 
 **Next Steps:**
+
 1. Run `node check-technician-status.js` to see current state
 2. Set some technicians to ONLINE for testing
 3. Check dispatcher endpoints to verify status shows correctly
