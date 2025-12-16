@@ -119,11 +119,7 @@ export const notifyWOAssignment = async (technicianId, wo) => {
 
     // Send SMS notification
     if (technician && technician.phone) {
-      await sendWOAssignmentSMS(
-        technician.phone,
-        wo.woNumber,
-        customerName
-      );
+      await sendWOAssignmentSMS(technician.phone, wo.woNumber, customerName);
     }
 
     // 🔥 Send Firebase Push Notification (with sound & priority)

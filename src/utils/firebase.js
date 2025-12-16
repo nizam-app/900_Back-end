@@ -1,7 +1,7 @@
 /** @format */
 
 // src/utils/firebase.js
-import admin from 'firebase-admin';
+import admin from "firebase-admin";
 
 // Initialize Firebase Admin SDK
 let firebaseApp = null;
@@ -12,18 +12,18 @@ export const initializeFirebase = () => {
       const serviceAccount = {
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
       };
 
       firebaseApp = admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
 
-      console.log('✅ Firebase Admin SDK initialized successfully');
+      console.log("✅ Firebase Admin SDK initialized successfully");
     }
     return firebaseApp;
   } catch (error) {
-    console.error('❌ Firebase initialization error:', error);
+    console.error("❌ Firebase initialization error:", error);
     throw error;
   }
 };
@@ -42,7 +42,11 @@ export const getFirebaseMessaging = () => {
  * @param {Object} notification - Notification payload
  * @param {Object} data - Data payload (optional)
  */
-export const sendPushNotification = async (fcmToken, notification, data = {}) => {
+export const sendPushNotification = async (
+  fcmToken,
+  notification,
+  data = {}
+) => {
   try {
     const messaging = getFirebaseMessaging();
 
@@ -61,11 +65,11 @@ export const sendPushNotification = async (fcmToken, notification, data = {}) =>
         ...(data.type && { type: String(data.type) }),
       },
       android: {
-        priority: 'high',
+        priority: "high",
         notification: {
-          sound: 'default', // Play default notification sound
-          channelId: 'job_assignments', // Custom channel for job notifications
-          priority: 'high',
+          sound: "default", // Play default notification sound
+          channelId: "job_assignments", // Custom channel for job notifications
+          priority: "high",
           defaultSound: true,
           defaultVibrateTimings: true,
         },
@@ -73,20 +77,20 @@ export const sendPushNotification = async (fcmToken, notification, data = {}) =>
       apns: {
         payload: {
           aps: {
-            sound: 'default', // Play sound on iOS
+            sound: "default", // Play sound on iOS
             badge: 1,
             contentAvailable: true,
-            category: 'JOB_ASSIGNMENT',
+            category: "JOB_ASSIGNMENT",
           },
         },
       },
     };
 
     const response = await messaging.send(message);
-    console.log('✅ Push notification sent successfully:', response);
+    console.log("✅ Push notification sent successfully:", response);
     return response;
   } catch (error) {
-    console.error('❌ Error sending push notification:', error);
+    console.error("❌ Error sending push notification:", error);
     throw error;
   }
 };
@@ -97,7 +101,11 @@ export const sendPushNotification = async (fcmToken, notification, data = {}) =>
  * @param {Object} notification - Notification payload
  * @param {Object} data - Data payload (optional)
  */
-export const sendPushNotificationToMultiple = async (fcmTokens, notification, data = {}) => {
+export const sendPushNotificationToMultiple = async (
+  fcmTokens,
+  notification,
+  data = {}
+) => {
   try {
     const messaging = getFirebaseMessaging();
 
@@ -113,17 +121,17 @@ export const sendPushNotificationToMultiple = async (fcmTokens, notification, da
         ...(data.woNumber && { woNumber: String(data.woNumber) }),
       },
       android: {
-        priority: 'high',
+        priority: "high",
         notification: {
-          sound: 'default',
-          channelId: 'job_assignments',
-          priority: 'high',
+          sound: "default",
+          channelId: "job_assignments",
+          priority: "high",
         },
       },
       apns: {
         payload: {
           aps: {
-            sound: 'default',
+            sound: "default",
             badge: 1,
           },
         },
@@ -131,10 +139,12 @@ export const sendPushNotificationToMultiple = async (fcmTokens, notification, da
     };
 
     const response = await messaging.sendEachForMulticast(message);
-    console.log(`✅ Push notifications sent: ${response.successCount} successful, ${response.failureCount} failed`);
+    console.log(
+      `✅ Push notifications sent: ${response.successCount} successful, ${response.failureCount} failed`
+    );
     return response;
   } catch (error) {
-    console.error('❌ Error sending push notifications:', error);
+    console.error("❌ Error sending push notifications:", error);
     throw error;
   }
 };

@@ -17,16 +17,19 @@
 ## 🔥 Features
 
 ### ✅ Sound & Vibration
+
 - Plays default notification sound on Android & iOS
 - High priority notifications (bypass Do Not Disturb on some devices)
 - Vibration enabled
 
 ### ✅ Works in Background/Locked
+
 - Notifications appear even when app is closed
 - Wakes up locked screen
 - Shows in notification tray
 
 ### ✅ Notification Content
+
 - Title: "🔔 New Job Assigned!"
 - Body: Work order number and customer name
 - Custom data payload with WO details
@@ -53,6 +56,7 @@ npm install @react-native-firebase/app @react-native-firebase/messaging
 ### Step 3: Android Configuration
 
 **android/build.gradle:**
+
 ```gradle
 buildscript {
   dependencies {
@@ -62,6 +66,7 @@ buildscript {
 ```
 
 **android/app/build.gradle:**
+
 ```gradle
 apply plugin: 'com.google.gms.google-services'
 
@@ -73,6 +78,7 @@ dependencies {
 ### Step 4: iOS Configuration
 
 **ios/Podfile:**
+
 ```ruby
 use_frameworks!
 pod 'Firebase/Messaging'
@@ -84,8 +90,8 @@ Run: `cd ios && pod install`
 
 ```javascript
 // App.js or useEffect in main component
-import messaging from '@react-native-firebase/messaging';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from "@react-native-firebase/messaging";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Request permission
 async function requestUserPermission() {
@@ -95,11 +101,11 @@ async function requestUserPermission() {
     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
   if (enabled) {
-    console.log('✅ Notification permission granted');
+    console.log("✅ Notification permission granted");
     return true;
   }
-  
-  console.log('❌ Notification permission denied');
+
+  console.log("❌ Notification permission denied");
   return false;
 }
 
@@ -107,10 +113,10 @@ async function requestUserPermission() {
 async function getFCMToken() {
   try {
     const token = await messaging().getToken();
-    console.log('📱 FCM Token:', token);
+    console.log("📱 FCM Token:", token);
     return token;
   } catch (error) {
-    console.error('Error getting FCM token:', error);
+    console.error("Error getting FCM token:", error);
     return null;
   }
 }
@@ -121,19 +127,22 @@ async function registerFCMToken(userToken) {
   if (!fcmToken) return;
 
   try {
-    const response = await fetch('https://your-api.com/api/notifications/fcm-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${userToken}`
-      },
-      body: JSON.stringify({ fcmToken })
-    });
+    const response = await fetch(
+      "https://your-api.com/api/notifications/fcm-token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userToken}`,
+        },
+        body: JSON.stringify({ fcmToken }),
+      }
+    );
 
     const result = await response.json();
-    console.log('✅ FCM token registered:', result);
+    console.log("✅ FCM token registered:", result);
   } catch (error) {
-    console.error('❌ Failed to register FCM token:', error);
+    console.error("❌ Failed to register FCM token:", error);
   }
 }
 
@@ -146,7 +155,7 @@ export default function App() {
       if (!hasPermission) return;
 
       // Get user token from storage
-      const userToken = await AsyncStorage.getItem('authToken');
+      const userToken = await AsyncStorage.getItem("authToken");
       if (userToken) {
         // Register FCM token with backend
         await registerFCMToken(userToken);
@@ -154,8 +163,8 @@ export default function App() {
 
       // Listen for token refresh
       messaging().onTokenRefresh(async (newToken) => {
-        console.log('🔄 FCM Token refreshed:', newToken);
-        const userToken = await AsyncStorage.getItem('authToken');
+        console.log("🔄 FCM Token refreshed:", newToken);
+        const userToken = await AsyncStorage.getItem("authToken");
         if (userToken) {
           await registerFCMToken(userToken);
         }
@@ -175,23 +184,23 @@ export default function App() {
 // Listen for notifications while app is in foreground
 useEffect(() => {
   const unsubscribe = messaging().onMessage(async (remoteMessage) => {
-    console.log('🔔 Foreground notification:', remoteMessage);
-    
+    console.log("🔔 Foreground notification:", remoteMessage);
+
     // Show local notification or update UI
     Alert.alert(
       remoteMessage.notification.title,
       remoteMessage.notification.body,
       [
         {
-          text: 'View Job',
+          text: "View Job",
           onPress: () => {
             // Navigate to work order details
-            navigation.navigate('WorkOrderDetails', {
-              woId: remoteMessage.data.woId
+            navigation.navigate("WorkOrderDetails", {
+              woId: remoteMessage.data.woId,
             });
-          }
+          },
         },
-        { text: 'Dismiss' }
+        { text: "Dismiss" },
       ]
     );
   });
@@ -205,11 +214,11 @@ useEffect(() => {
 ```javascript
 // Handle notification when app is opened from notification
 messaging().onNotificationOpenedApp((remoteMessage) => {
-  console.log('📬 Notification opened app:', remoteMessage);
-  
+  console.log("📬 Notification opened app:", remoteMessage);
+
   // Navigate to work order
-  navigation.navigate('WorkOrderDetails', {
-    woId: remoteMessage.data.woId
+  navigation.navigate("WorkOrderDetails", {
+    woId: remoteMessage.data.woId,
   });
 });
 
@@ -218,11 +227,11 @@ messaging()
   .getInitialNotification()
   .then((remoteMessage) => {
     if (remoteMessage) {
-      console.log('📬 App opened from notification:', remoteMessage);
-      
+      console.log("📬 App opened from notification:", remoteMessage);
+
       // Navigate to work order
-      navigation.navigate('WorkOrderDetails', {
-        woId: remoteMessage.data.woId
+      navigation.navigate("WorkOrderDetails", {
+        woId: remoteMessage.data.woId,
       });
     }
   });
@@ -231,13 +240,14 @@ messaging()
 ### Step 8: Background Handler (Android)
 
 **index.js (root file):**
+
 ```javascript
-import messaging from '@react-native-firebase/messaging';
+import messaging from "@react-native-firebase/messaging";
 
 // Background message handler
 messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-  console.log('🔔 Background notification:', remoteMessage);
-  
+  console.log("🔔 Background notification:", remoteMessage);
+
   // Handle background logic if needed
   // This runs even when app is quit
 });
@@ -263,6 +273,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "message": "FCM token registered successfully",
@@ -278,6 +289,7 @@ Authorization: Bearer {token}
 ```
 
 **Response:**
+
 ```json
 {
   "message": "FCM token removed successfully"
@@ -369,6 +381,7 @@ FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...
 ### Change Notification Sound
 
 **Android:**
+
 ```javascript
 // In firebase.js, change:
 android: {
@@ -380,6 +393,7 @@ android: {
 ```
 
 **iOS:**
+
 ```javascript
 // In firebase.js, change:
 apns: {
@@ -394,6 +408,7 @@ apns: {
 ### Change Notification Icon
 
 **Android - AndroidManifest.xml:**
+
 ```xml
 <meta-data
   android:name="com.google.firebase.messaging.default_notification_icon"
@@ -410,16 +425,19 @@ apns: {
 ### No Notification Received?
 
 1. **Check FCM token registered:**
+
    ```sql
    SELECT id, name, phone, fcmToken FROM "User" WHERE role IN ('TECH_INTERNAL', 'TECH_FREELANCER');
    ```
 
 2. **Check Firebase console:**
+
    - Go to Firebase Console → Cloud Messaging
    - Send test message to token
    - Verify token is valid
 
 3. **Check app permissions:**
+
    - Android: Settings → Apps → Your App → Notifications → Enabled
    - iOS: Settings → Notifications → Your App → Allow Notifications
 
@@ -454,6 +472,7 @@ apns: {
 ## 🎯 Summary
 
 ### ✅ Backend Ready:
+
 - Firebase Admin SDK initialized
 - Push notifications integrated with job assignment
 - FCM token management endpoints
@@ -461,6 +480,7 @@ apns: {
 - Works in background/locked
 
 ### 📱 Mobile App TODO:
+
 1. Install Firebase packages
 2. Configure Android/iOS
 3. Request notification permission
@@ -470,6 +490,7 @@ apns: {
 7. Navigate to job details when notification tapped
 
 ### 🔔 Notification Behavior:
+
 - **App Open:** Alert/banner in app
 - **App Background:** Notification in tray with sound
 - **App Closed:** Notification in tray with sound
