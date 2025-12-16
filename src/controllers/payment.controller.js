@@ -81,7 +81,13 @@ export const getPaymentById = async (req, res, next) => {
             },
             category: true,
             service: true,
-            subservice: true,
+            subservice: {
+              select: {
+                id: true,
+                name: true,
+                baseRate: true,
+              },
+            },
           },
         },
         technician: {
@@ -126,7 +132,13 @@ export const uploadPaymentProof = async (req, res, next) => {
       include: {
         service: true, // Get service pricing
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
       },
     });
 

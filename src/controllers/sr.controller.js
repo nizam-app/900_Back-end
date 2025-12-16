@@ -288,7 +288,13 @@ export const createSR = async (req, res, next) => {
       },
       include: {
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
         customer: {
           select: {
@@ -382,7 +388,13 @@ export const listSR = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
         workOrders: {
           select: {
@@ -559,7 +571,13 @@ export const getMySRs = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
         workOrders: {
           select: {
@@ -718,7 +736,13 @@ export const getSRById = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
         workOrders: {
           include: {
@@ -936,7 +960,13 @@ export const cancelSR = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
       },
     });
@@ -1053,7 +1083,13 @@ export const rejectSR = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
       },
     });
@@ -1202,7 +1238,13 @@ export const rebookService = async (req, res, next) => {
       },
       include: {
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
         customer: {
           select: {
@@ -1245,7 +1287,13 @@ export const bookAgain = async (req, res, next) => {
       where: { id: Number(srId) },
       include: {
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
         customer: {
           select: {
@@ -1294,7 +1342,13 @@ export const bookAgain = async (req, res, next) => {
       },
       include: {
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
         customer: {
           select: {

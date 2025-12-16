@@ -1,5 +1,7 @@
+/** @format */
+
 // src/controllers/report.controller.js
-import { prisma } from '../prisma.js';
+import { prisma } from "../prisma.js";
 
 export const getWorkOrderReport = async (req, res, next) => {
   try {
@@ -39,10 +41,16 @@ export const getWorkOrderReport = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     return res.json(workOrders);
@@ -92,7 +100,7 @@ export const getCommissionReport = async (req, res, next) => {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     const summary = {
@@ -161,7 +169,7 @@ export const getPaymentReport = async (req, res, next) => {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     const summary = {
@@ -188,7 +196,7 @@ export const getTechnicianPerformance = async (req, res, next) => {
     const { startDate, endDate } = req.query;
 
     const where = {
-      role: { in: ['TECH_INTERNAL', 'TECH_FREELANCER'] },
+      role: { in: ["TECH_INTERNAL", "TECH_FREELANCER"] },
     };
 
     const technicians = await prisma.user.findMany({
@@ -229,12 +237,14 @@ export const getTechnicianPerformance = async (req, res, next) => {
 
     const performance = technicians.map((tech) => {
       const totalWOs = tech.technicianWOs.length;
-      const completedWOs = tech.technicianWOs.filter((wo) => wo.status === 'PAID_VERIFIED').length;
+      const completedWOs = tech.technicianWOs.filter(
+        (wo) => wo.status === "PAID_VERIFIED"
+      ).length;
       const totalEarned = tech.commissions
-        .filter((c) => c.status === 'EARNED' || c.status === 'PAID')
+        .filter((c) => c.status === "EARNED" || c.status === "PAID")
         .reduce((sum, c) => sum + c.amount, 0);
       const totalPaid = tech.commissions
-        .filter((c) => c.status === 'PAID')
+        .filter((c) => c.status === "PAID")
         .reduce((sum, c) => sum + c.amount, 0);
 
       return {
@@ -244,7 +254,8 @@ export const getTechnicianPerformance = async (req, res, next) => {
         role: tech.role,
         totalWOs,
         completedWOs,
-        completionRate: totalWOs > 0 ? ((completedWOs / totalWOs) * 100).toFixed(2) : 0,
+        completionRate:
+          totalWOs > 0 ? ((completedWOs / totalWOs) * 100).toFixed(2) : 0,
         totalEarned,
         totalPaid,
         pendingPayout: totalEarned - totalPaid,
@@ -268,28 +279,32 @@ export const getFinancialReport = async (req, res, next) => {
       },
     };
 
-    const [totalRevenue, verifiedPayments, totalCommissions, paidCommissions] = await Promise.all([
-      prisma.payment.aggregate({
-        where: { ...where, status: { in: ['VERIFIED', 'PENDING_VERIFICATION'] } },
-        _sum: { amount: true },
-        _count: true,
-      }),
-      prisma.payment.aggregate({
-        where: { ...where, status: 'VERIFIED' },
-        _sum: { amount: true },
-        _count: true,
-      }),
-      prisma.commission.aggregate({
-        where,
-        _sum: { amount: true },
-        _count: true,
-      }),
-      prisma.commission.aggregate({
-        where: { ...where, status: 'PAID' },
-        _sum: { amount: true },
-        _count: true,
-      }),
-    ]);
+    const [totalRevenue, verifiedPayments, totalCommissions, paidCommissions] =
+      await Promise.all([
+        prisma.payment.aggregate({
+          where: {
+            ...where,
+            status: { in: ["VERIFIED", "PENDING_VERIFICATION"] },
+          },
+          _sum: { amount: true },
+          _count: true,
+        }),
+        prisma.payment.aggregate({
+          where: { ...where, status: "VERIFIED" },
+          _sum: { amount: true },
+          _count: true,
+        }),
+        prisma.commission.aggregate({
+          where,
+          _sum: { amount: true },
+          _count: true,
+        }),
+        prisma.commission.aggregate({
+          where: { ...where, status: "PAID" },
+          _sum: { amount: true },
+          _count: true,
+        }),
+      ]);
 
     const totalRevenueAmount = totalRevenue._sum.amount || 0;
     const verifiedRevenueAmount = verifiedPayments._sum.amount || 0;
@@ -300,7 +315,7 @@ export const getFinancialReport = async (req, res, next) => {
       revenue: {
         total: totalRevenueAmount,
         verified: verifiedRevenueAmount,
-        pending: totalRevenueAmount - verifiedRevenueAmount, 
+        pending: totalRevenueAmount - verifiedRevenueAmount,
         count: totalRevenue._count,
       },
       commissions: {
@@ -312,9 +327,10 @@ export const getFinancialReport = async (req, res, next) => {
       profit: {
         gross: verifiedRevenueAmount,
         netAfterCommissions: verifiedRevenueAmount - paidCommissionAmount,
-        commissionRate: verifiedRevenueAmount > 0 
-          ? ((paidCommissionAmount / verifiedRevenueAmount) * 100).toFixed(2) 
-          : 0,
+        commissionRate:
+          verifiedRevenueAmount > 0
+            ? ((paidCommissionAmount / verifiedRevenueAmount) * 100).toFixed(2)
+            : 0,
       },
     });
   } catch (err) {

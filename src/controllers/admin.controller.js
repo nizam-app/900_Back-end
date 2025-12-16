@@ -175,7 +175,13 @@ export const getTechnicianLocations = async (req, res, next) => {
           include: {
             serviceRequest: {
               include: {
-                subservice: true,
+                subservice: {
+                  select: {
+                    id: true,
+                    name: true,
+                    baseRate: true,
+                  },
+                },
               },
             },
           },
@@ -554,7 +560,13 @@ export const getInProgressWorkOrders = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
       },
       orderBy: {
@@ -669,7 +681,13 @@ export const getWorkOrderAuditTrail = async (req, res, next) => {
           select: { id: true, name: true, phone: true },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         service: true,
         payments: {
           include: {

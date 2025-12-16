@@ -149,7 +149,7 @@ export const getAllWorkOrders = async (req, res, next) => {
             select: { id: true, name: true },
           },
           subservice: {
-            select: { id: true, name: true },
+            select: { id: true, name: true, baseRate: true },
           },
           serviceRequest: {
             select: { id: true, srNumber: true },
@@ -460,7 +460,13 @@ export const reassignWO = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
       },
     });
 
@@ -594,7 +600,13 @@ export const rescheduleWO = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
         serviceRequest: {
           select: {
             id: true,
@@ -1131,7 +1143,13 @@ export const cancelWO = async (req, res, next) => {
           },
         },
         category: true,
-        subservice: true,
+        subservice: {
+          select: {
+            id: true,
+            name: true,
+            baseRate: true,
+          },
+        },
       },
     });
 
