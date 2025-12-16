@@ -215,6 +215,8 @@ export const createUserWithProfile = async (userData, adminId) => {
       homeAddress: homeAddress || null,
       latitude: latitude ? parseFloat(latitude) : null,
       longitude: longitude ? parseFloat(longitude) : null,
+      registrationSource: "ADMIN",
+      createdById: adminId,
     },
   });
 

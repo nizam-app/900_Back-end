@@ -211,6 +211,8 @@ export const createSR = async (req, res, next) => {
             homeAddress: homeAddress || address,
             latitude: latitude ? parseFloat(latitude) : null,
             longitude: longitude ? parseFloat(longitude) : null,
+            registrationSource: "CALL_CENTER",
+            createdById: req.user.id,
           },
         });
       }

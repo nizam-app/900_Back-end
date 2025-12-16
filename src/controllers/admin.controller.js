@@ -22,6 +22,94 @@ export const listUsers = async (req, res, next) => {
   }
 };
 
+// Get all customers with registration source information
+export const listCustomers = async (req, res, next) => {
+  try {
+    const { registrationSource } = req.query;
+
+    const where = { role: "CUSTOMER" };
+    
+    // Filter by registration source if provided
+    if (registrationSource) {
+      where.registrationSource = registrationSource;
+    }
+
+    const customers = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        homeAddress: true,
+        latitude: true,
+        longitude: true,
+        registrationSource: true,
+        createdById: true,
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            role: true,
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
+        isBlocked: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    // Calculate statistics
+    const totalCustomers = customers.length;
+    const selfRegistered = customers.filter(
+      (c) => c.registrationSource === "SELF_REGISTERED"
+    ).length;
+    const callCenterCreated = customers.filter(
+      (c) => c.registrationSource === "CALL_CENTER"
+    ).length;
+    const adminCreated = customers.filter(
+      (c) => c.registrationSource === "ADMIN"
+    ).length;
+    const webPortal = customers.filter(
+      (c) => c.registrationSource === "WEB_PORTAL"
+    ).length;
+    const unknown = customers.filter((c) => !c.registrationSource).length;
+
+    return res.json({
+      total: totalCustomers,
+      statistics: {
+        selfRegistered: {
+          count: selfRegistered,
+          percentage: totalCustomers > 0 ? ((selfRegistered / totalCustomers) * 100).toFixed(1) : 0,
+        },
+        callCenterCreated: {
+          count: callCenterCreated,
+          percentage: totalCustomers > 0 ? ((callCenterCreated / totalCustomers) * 100).toFixed(1) : 0,
+        },
+        adminCreated: {
+          count: adminCreated,
+          percentage: totalCustomers > 0 ? ((adminCreated / totalCustomers) * 100).toFixed(1) : 0,
+        },
+        webPortal: {
+          count: webPortal,
+          percentage: totalCustomers > 0 ? ((webPortal / totalCustomers) * 100).toFixed(1) : 0,
+        },
+        unknown: {
+          count: unknown,
+          percentage: totalCustomers > 0 ? ((unknown / totalCustomers) * 100).toFixed(1) : 0,
+        },
+      },
+      customers,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const createUser = async (req, res, next) => {
   try {
     const { name, phone, email, password, role, technicianProfile } = req.body;

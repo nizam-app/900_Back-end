@@ -27,6 +27,8 @@ model User {
   latitude          Float? // GPS coordinates for customers/locations
   longitude         Float? // GPS coordinates for customers/locations
   fcmToken          String? // Firebase Cloud Messaging token for push notifications
+  registrationSource String? // SELF_REGISTERED, CALL_CENTER, ADMIN, WEB_PORTAL
+  createdById       Int? // ID of the user who created this account (for call center/admin created accounts)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -50,6 +52,8 @@ model User {
   checkins               TechnicianCheckin[]
   blockedBy              User?               @relation("BlockedByUser", fields: [blockedById], references: [id])
   blockedUsers           User[]              @relation("BlockedByUser")
+  createdBy              User?               @relation("CreatedByUser", fields: [createdById], references: [id])
+  createdUsers           User[]              @relation("CreatedByUser")
   walletTransactions     WalletTransaction[]
   customerReviews        Review[]            @relation("CustomerReviews")
   technicianReviews      Review[]            @relation("TechnicianReviews")

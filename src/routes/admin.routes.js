@@ -4,8 +4,7 @@ import multer from 'multer';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 import {
   getDashboard,
-  listUsers,
-  createUser,
+  listUsers,  listCustomers,  createUser,
   updateUser,
   blockTechnician,
   updateTechnicianProfile,
@@ -47,6 +46,7 @@ const upload = multer({
 // Admin only routes
 router.get('/dashboard', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), getDashboard);
 router.get('/users', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), listUsers);
+router.get('/customers', authMiddleware, requireRole('ADMIN', 'DISPATCHER', 'CALL_CENTER'), listCustomers);
 router.post('/users', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), createUser);
 router.patch('/users/:id', authMiddleware, requireRole('ADMIN'), updateUser);
 router.patch('/users/:id/block', authMiddleware, requireRole('ADMIN', 'DISPATCHER'), blockTechnician);
