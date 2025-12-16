@@ -28,7 +28,7 @@ export const listCustomers = async (req, res, next) => {
     const { registrationSource } = req.query;
 
     const where = { role: "CUSTOMER" };
-    
+
     // Filter by registration source if provided
     if (registrationSource) {
       where.registrationSource = registrationSource;
@@ -84,23 +84,38 @@ export const listCustomers = async (req, res, next) => {
       statistics: {
         selfRegistered: {
           count: selfRegistered,
-          percentage: totalCustomers > 0 ? ((selfRegistered / totalCustomers) * 100).toFixed(1) : 0,
+          percentage:
+            totalCustomers > 0
+              ? ((selfRegistered / totalCustomers) * 100).toFixed(1)
+              : 0,
         },
         callCenterCreated: {
           count: callCenterCreated,
-          percentage: totalCustomers > 0 ? ((callCenterCreated / totalCustomers) * 100).toFixed(1) : 0,
+          percentage:
+            totalCustomers > 0
+              ? ((callCenterCreated / totalCustomers) * 100).toFixed(1)
+              : 0,
         },
         adminCreated: {
           count: adminCreated,
-          percentage: totalCustomers > 0 ? ((adminCreated / totalCustomers) * 100).toFixed(1) : 0,
+          percentage:
+            totalCustomers > 0
+              ? ((adminCreated / totalCustomers) * 100).toFixed(1)
+              : 0,
         },
         webPortal: {
           count: webPortal,
-          percentage: totalCustomers > 0 ? ((webPortal / totalCustomers) * 100).toFixed(1) : 0,
+          percentage:
+            totalCustomers > 0
+              ? ((webPortal / totalCustomers) * 100).toFixed(1)
+              : 0,
         },
         unknown: {
           count: unknown,
-          percentage: totalCustomers > 0 ? ((unknown / totalCustomers) * 100).toFixed(1) : 0,
+          percentage:
+            totalCustomers > 0
+              ? ((unknown / totalCustomers) * 100).toFixed(1)
+              : 0,
         },
       },
       customers,

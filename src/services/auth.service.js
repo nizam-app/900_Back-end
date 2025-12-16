@@ -106,7 +106,8 @@ export const setPasswordAfterOTP = async (userData) => {
         name: finalName || existing.name,
         email: email || existing.email,
         role: userRole, // UPDATE THE ROLE from metadata
-        registrationSource: userRole === "CUSTOMER" ? "SELF_REGISTERED" : "ADMIN",
+        registrationSource:
+          userRole === "CUSTOMER" ? "SELF_REGISTERED" : "ADMIN",
       },
     });
 
@@ -120,7 +121,8 @@ export const setPasswordAfterOTP = async (userData) => {
         name: finalName || null,
         email: email || null,
         role: userRole,
-        registrationSource: userRole === "CUSTOMER" ? "SELF_REGISTERED" : "ADMIN",
+        registrationSource:
+          userRole === "CUSTOMER" ? "SELF_REGISTERED" : "ADMIN",
       },
     });
 

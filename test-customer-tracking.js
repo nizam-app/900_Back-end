@@ -1,3 +1,5 @@
+/** @format */
+
 // Test the new customer listing endpoint with registration source tracking
 
 const baseURL = "https://outside.mtscorporate.com/api";
@@ -60,7 +62,11 @@ async function testCustomerTracking() {
         console.log(`
         - ${customer.name} (${customer.phone})
           Source: ${customer.registrationSource || "Not set"}
-          Created by: ${customer.createdBy ? `${customer.createdBy.name} (${customer.createdBy.role})` : "Self"}
+          Created by: ${
+            customer.createdBy
+              ? `${customer.createdBy.name} (${customer.createdBy.role})`
+              : "Self"
+          }
           Created: ${new Date(customer.createdAt).toLocaleDateString()}
         `);
       });

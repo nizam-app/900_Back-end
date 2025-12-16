@@ -9,28 +9,28 @@ datasource db {
 }
 
 model User {
-  id                Int       @id @default(autoincrement())
-  name              String?
-  phone             String    @unique
-  email             String?   @unique
-  passwordHash      String
-  role              Role
-  isBlocked         Boolean   @default(false)
-  blockedReason     String?
-  blockedAt         DateTime?
-  blockedById       Int?
-  lastLatitude      Float?
-  lastLongitude     Float?
-  locationStatus    String? // ONLINE, BUSY, OFFLINE
-  locationUpdatedAt DateTime?
-  homeAddress       String? // Home address for technicians
-  latitude          Float? // GPS coordinates for customers/locations
-  longitude         Float? // GPS coordinates for customers/locations
-  fcmToken          String? // Firebase Cloud Messaging token for push notifications
+  id                 Int       @id @default(autoincrement())
+  name               String?
+  phone              String    @unique
+  email              String?   @unique
+  passwordHash       String
+  role               Role
+  isBlocked          Boolean   @default(false)
+  blockedReason      String?
+  blockedAt          DateTime?
+  blockedById        Int?
+  lastLatitude       Float?
+  lastLongitude      Float?
+  locationStatus     String? // ONLINE, BUSY, OFFLINE
+  locationUpdatedAt  DateTime?
+  homeAddress        String? // Home address for technicians
+  latitude           Float? // GPS coordinates for customers/locations
+  longitude          Float? // GPS coordinates for customers/locations
+  fcmToken           String? // Firebase Cloud Messaging token for push notifications
   registrationSource String? // SELF_REGISTERED, CALL_CENTER, ADMIN, WEB_PORTAL
-  createdById       Int? // ID of the user who created this account (for call center/admin created accounts)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdById        Int? // ID of the user who created this account (for call center/admin created accounts)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   technicianProfile      TechnicianProfile?
   serviceRequests        ServiceRequest[]    @relation("CustomerSR")

@@ -1,10 +1,14 @@
+<!-- @format -->
+
 # Customer Registration Source Tracking
 
 **Date**: December 16, 2024  
 **Status**: ✅ Implemented
 
 ## Overview
+
 Added functionality to track how customers were registered in the system, distinguishing between:
+
 - **Self-Registered**: Customers who signed up themselves via the mobile app
 - **Call Center Created**: Customers created by Call Center agents
 - **Admin Created**: Customers created by Admin/Dispatcher
@@ -19,7 +23,7 @@ model User {
   // ... existing fields ...
   registrationSource String? // SELF_REGISTERED, CALL_CENTER, ADMIN, WEB_PORTAL
   createdById       Int? // ID of the user who created this account
-  
+
   // ... existing relations ...
   createdBy              User?               @relation("CreatedByUser", fields: [createdById], references: [id])
   createdUsers           User[]              @relation("CreatedByUser")
@@ -27,9 +31,11 @@ model User {
 ```
 
 ### Migration
+
 Location: `prisma/migrations/add_customer_tracking/migration.sql`
 
 The migration:
+
 1. Adds `registrationSource` and `createdById` fields to User table
 2. Sets up foreign key relationship for `createdById`
 3. Backfills existing data:
@@ -46,10 +52,12 @@ The migration:
 **Access**: Admin, Dispatcher, Call Center
 
 **Query Parameters**:
+
 - `registrationSource` (optional): Filter by registration source
   - Values: `SELF_REGISTERED`, `CALL_CENTER`, `ADMIN`, `WEB_PORTAL`
 
 **Response**:
+
 ```json
 {
   "total": 8,
@@ -131,9 +139,11 @@ GET /api/admin/customers?registrationSource=CALL_CENTER
 ## Updated Logic
 
 ### 1. Self-Registration (Mobile App)
+
 **File**: `src/services/auth.service.js`
 
 When customers register via OTP:
+
 ```javascript
 user = await prisma.user.create({
   data: {
@@ -148,9 +158,11 @@ user = await prisma.user.create({
 ```
 
 ### 2. Call Center Customer Creation
+
 **File**: `src/controllers/sr.controller.js`
 
 When Call Center creates a customer while creating SR:
+
 ```javascript
 customer = await prisma.user.create({
   data: {
@@ -169,9 +181,11 @@ customer = await prisma.user.create({
 ```
 
 ### 3. Admin User Creation
+
 **File**: `src/services/admin.service.js`
 
 When Admin creates users via admin panel:
+
 ```javascript
 const user = await prisma.user.create({
   data: {
@@ -193,6 +207,7 @@ const user = await prisma.user.create({
 The frontend should display:
 
 1. **Statistics Cards** (already shown in your screenshot):
+
    ```
    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
    │ Total Customers │  │ Agent Created   │  │ Self-Registered │
@@ -201,6 +216,7 @@ The frontend should display:
    ```
 
 2. **Customer List with Badges**:
+
    - Show "Call Center Agent" badge for `registrationSource: "CALL_CENTER"`
    - Show "Mobile App" badge for `registrationSource: "SELF_REGISTERED"`
    - Show "Admin Created" badge for `registrationSource: "ADMIN"`
@@ -215,24 +231,26 @@ The frontend should display:
 // Badge component
 const getRegistrationBadge = (source) => {
   const badges = {
-    SELF_REGISTERED: { label: 'Mobile App', color: 'blue' },
-    CALL_CENTER: { label: 'Call Center Agent', color: 'red' },
-    ADMIN: { label: 'Admin Created', color: 'green' },
-    WEB_PORTAL: { label: 'Web Portal', color: 'purple' }
+    SELF_REGISTERED: { label: "Mobile App", color: "blue" },
+    CALL_CENTER: { label: "Call Center Agent", color: "red" },
+    ADMIN: { label: "Admin Created", color: "green" },
+    WEB_PORTAL: { label: "Web Portal", color: "purple" },
   };
-  return badges[source] || { label: 'Unknown', color: 'gray' };
+  return badges[source] || { label: "Unknown", color: "gray" };
 };
 
 // Display in customer card
-<div className="customer-card">
+<div className='customer-card'>
   <h3>{customer.name}</h3>
   <Badge color={getRegistrationBadge(customer.registrationSource).color}>
     {getRegistrationBadge(customer.registrationSource).label}
   </Badge>
   {customer.createdBy && (
-    <p>Created by: {customer.createdBy.name} ({customer.createdBy.role})</p>
+    <p>
+      Created by: {customer.createdBy.name} ({customer.createdBy.role})
+    </p>
   )}
-</div>
+</div>;
 ```
 
 ## Testing
@@ -240,31 +258,33 @@ const getRegistrationBadge = (source) => {
 ### Test Cases
 
 1. **Self-Registration**:
+
    ```bash
    # 1. Send OTP
    POST /api/otp/send
    { "phone": "+8801712345678" }
-   
+
    # 2. Verify OTP and set password
    POST /api/auth/set-password
-   { 
+   {
      "phone": "+8801712345678",
      "password": "password123",
      "name": "Test Customer",
      "tempToken": "..."
    }
-   
+
    # 3. Check customer
    GET /api/admin/customers
    # Should show registrationSource: "SELF_REGISTERED"
    ```
 
 2. **Call Center Creation**:
+
    ```bash
    # Login as Call Center agent
    POST /api/auth/login
    { "phone": "+8801798765432", "password": "callcenter123" }
-   
+
    # Create SR (creates customer automatically)
    POST /api/srs
    {
@@ -274,7 +294,7 @@ const getRegistrationBadge = (source) => {
      "subserviceId": 2,
      "address": "Test Address"
    }
-   
+
    # Check customer
    GET /api/admin/customers
    # Should show registrationSource: "CALL_CENTER"
@@ -282,11 +302,12 @@ const getRegistrationBadge = (source) => {
    ```
 
 3. **Admin Creation**:
+
    ```bash
    # Login as Admin
    POST /api/auth/login
    { "phone": "+8801798888888", "password": "admin123" }
-   
+
    # Create user
    POST /api/admin/users
    {
@@ -295,7 +316,7 @@ const getRegistrationBadge = (source) => {
      "name": "Admin Customer",
      "role": "CUSTOMER"
    }
-   
+
    # Check customer
    GET /api/admin/customers
    # Should show registrationSource: "ADMIN"
@@ -303,10 +324,11 @@ const getRegistrationBadge = (source) => {
    ```
 
 4. **Filter by Source**:
+
    ```bash
    # Get only self-registered customers
    GET /api/admin/customers?registrationSource=SELF_REGISTERED
-   
+
    # Get only call center created customers
    GET /api/admin/customers?registrationSource=CALL_CENTER
    ```
@@ -337,15 +359,18 @@ npx prisma studio
 ## Future Enhancements
 
 1. **Reports**:
+
    - Daily/weekly registration statistics by source
    - Agent performance (number of customers created)
    - Registration trend analysis
 
 2. **Notifications**:
+
    - Alert admin when Call Center creates many customers (potential data entry issues)
    - Welcome emails based on registration source
 
 3. **Permissions**:
+
    - Different default permissions for self-registered vs agent-created customers
    - Auto-verify agent-created customers
 
@@ -367,6 +392,7 @@ npx prisma studio
 ## Summary
 
 The system now tracks:
+
 - ✅ **How** customers were created (registrationSource)
 - ✅ **Who** created them (createdById)
 - ✅ **When** they were created (createdAt)
@@ -374,6 +400,7 @@ The system now tracks:
 - ✅ Complete audit trail
 
 Admins can now clearly see which customers:
+
 - Registered themselves via mobile app
 - Were created by Call Center agents
 - Were created by Admin/Dispatcher

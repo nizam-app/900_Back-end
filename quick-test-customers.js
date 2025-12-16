@@ -1,3 +1,5 @@
+/** @format */
+
 // Quick test to verify customer tracking endpoint
 // Run: node quick-test-customers.js
 
