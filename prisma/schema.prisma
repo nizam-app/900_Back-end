@@ -26,6 +26,7 @@ model User {
   homeAddress       String? // Home address for technicians
   latitude          Float? // GPS coordinates for customers/locations
   longitude         Float? // GPS coordinates for customers/locations
+  fcmToken          String? // Firebase Cloud Messaging token for push notifications
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

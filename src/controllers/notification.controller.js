@@ -104,3 +104,48 @@ export const markAllAsRead = async (req, res, next) => {
     next(err);
   }
 };
+
+// Register or update FCM token for push notifications
+export const registerFCMToken = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { fcmToken } = req.body;
+
+    if (!fcmToken) {
+      return res.status(400).json({ message: "FCM token is required" });
+    }
+
+    // Update user's FCM token
+    await prisma.user.update({
+      where: { id: userId },
+      data: { fcmToken },
+    });
+
+    console.log(`✅ FCM token registered for user ${userId}`);
+
+    return res.json({
+      message: "FCM token registered successfully",
+      userId,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Remove FCM token (on logout)
+export const removeFCMToken = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { fcmToken: null },
+    });
+
+    console.log(`✅ FCM token removed for user ${userId}`);
+
+    return res.json({ message: "FCM token removed successfully" });
+  } catch (err) {
+    next(err);
+  }
+};

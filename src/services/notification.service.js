@@ -11,6 +11,7 @@ import {
   sendAccountBlockedSMS,
   sendWelcomeSMS,
 } from "./sms.service.js";
+import { sendPushNotification } from "../utils/firebase.js";
 
 // ✅ Create and send notification (database storage + SMS)
 export const createNotification = async (
@@ -105,7 +106,7 @@ export const notifyWOAssignment = async (technicianId, wo) => {
     // Get technician details
     const technician = await prisma.user.findUnique({
       where: { id: technicianId },
-      select: { phone: true, name: true },
+      select: { phone: true, name: true, fcmToken: true },
     });
 
     // Get customer details
@@ -114,13 +115,44 @@ export const notifyWOAssignment = async (technicianId, wo) => {
       select: { name: true },
     });
 
+    const customerName = customer?.name || "Customer";
+
     // Send SMS notification
     if (technician && technician.phone) {
       await sendWOAssignmentSMS(
         technician.phone,
         wo.woNumber,
-        customer?.name || "Customer"
+        customerName
       );
+    }
+
+    // 🔥 Send Firebase Push Notification (with sound & priority)
+    if (technician && technician.fcmToken) {
+      try {
+        await sendPushNotification(
+          technician.fcmToken,
+          {
+            title: "🔔 New Job Assigned!",
+            body: `Work Order ${wo.woNumber} - Customer: ${customerName}`,
+          },
+          {
+            type: "WO_ASSIGNED",
+            woId: wo.id,
+            woNumber: wo.woNumber,
+            customerId: wo.customerId,
+            customerName: customerName,
+            // This will trigger sound and high priority notification
+            priority: "high",
+            sound: "default",
+          }
+        );
+        console.log(`🔔 Push notification sent to technician ${technicianId}`);
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+        // Don't fail the entire operation if push fails
+      }
+    } else {
+      console.log(`⚠️ No FCM token found for technician ${technicianId}`);
     }
 
     // Create database notification
