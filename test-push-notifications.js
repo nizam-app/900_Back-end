@@ -12,8 +12,7 @@ const BASE_URL = "https://fsm-api.alright-bd.com";
 // Test tokens (replace with actual values from your test users)
 const TECHNICIAN_TOKEN = ""; // Login as technician and get JWT token
 const CUSTOMER_TOKEN = ""; // Login as customer and get JWT token
-const FCM_TOKEN =
-  "dA1B2c3D4e5F6g7H8i9J0k:APA91bH..."; // Get from Firebase on mobile device
+const FCM_TOKEN = "dA1B2c3D4e5F6g7H8i9J0k:APA91bH..."; // Get from Firebase on mobile device
 
 // Colors for console output
 const colors = {
@@ -83,7 +82,10 @@ async function testWOAssignmentNotification() {
   );
   log("Steps:", "yellow");
   log("1. Have admin create a Service Request", "yellow");
-  log("2. Have admin convert SR to WO and assign to your technician account", "yellow");
+  log(
+    "2. Have admin convert SR to WO and assign to your technician account",
+    "yellow"
+  );
   log("3. Check your mobile device for push notification", "yellow");
   log("4. Notification should appear with sound and vibration", "yellow");
   log("5. Notification title: 🔔 New Job Assigned!", "yellow");
@@ -111,11 +113,8 @@ async function testGetNotifications() {
     });
 
     log("✅ Notifications retrieved successfully", "green");
-    log(
-      `Total notifications: ${response.data.notifications.length}`,
-      "blue"
-    );
-    
+    log(`Total notifications: ${response.data.notifications.length}`, "blue");
+
     if (response.data.notifications.length > 0) {
       log("\nLatest 3 notifications:", "blue");
       response.data.notifications.slice(0, 3).forEach((notif, index) => {
@@ -298,7 +297,10 @@ async function runTests() {
   log("  - Postman: DELETE /api/notifications/fcm-token", "cyan");
 
   log("\n✅ Push notifications are now working for all events!", "green");
-  log("🎉 Real-time notifications will appear in mobile notification bar", "green");
+  log(
+    "🎉 Real-time notifications will appear in mobile notification bar",
+    "green"
+  );
 }
 
 // Run all tests

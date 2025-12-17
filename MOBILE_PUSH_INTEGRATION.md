@@ -1,4 +1,6 @@
-/** @format */
+<!-- @format -->
+
+/\*_ @format _/
 
 # 📱 MOBILE APP PUSH NOTIFICATION INTEGRATION GUIDE
 
@@ -19,12 +21,14 @@ Push notifications are **fully working** on the backend. You just need to integr
 ### 1️⃣ Install Firebase
 
 **React Native:**
+
 ```bash
 npm install @react-native-firebase/app @react-native-firebase/messaging
 cd ios && pod install && cd ..
 ```
 
 **Flutter:**
+
 ```bash
 flutter pub add firebase_core firebase_messaging
 ```
@@ -32,22 +36,23 @@ flutter pub add firebase_core firebase_messaging
 ### 2️⃣ Register FCM Token After Login
 
 **React Native:**
-```javascript
-import messaging from '@react-native-firebase/messaging';
-import axios from 'axios';
 
-const BASE_URL = 'https://fsm-api.alright-bd.com';
+```javascript
+import messaging from "@react-native-firebase/messaging";
+import axios from "axios";
+
+const BASE_URL = "https://fsm-api.alright-bd.com";
 
 async function registerForPushNotifications(jwtToken) {
   try {
     // Request permission
     const authStatus = await messaging().requestPermission();
     const enabled = authStatus === messaging.AuthorizationStatus.AUTHORIZED;
-    
+
     if (enabled) {
       // Get FCM token
       const fcmToken = await messaging().getToken();
-      
+
       // Register with backend
       const response = await axios.post(
         `${BASE_URL}/api/notifications/fcm-token`,
@@ -55,16 +60,16 @@ async function registerForPushNotifications(jwtToken) {
         {
           headers: {
             Authorization: `Bearer ${jwtToken}`,
-            'Content-Type': 'application/json'
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
-      
-      console.log('✅ FCM token registered:', response.data);
+
+      console.log("✅ FCM token registered:", response.data);
       return true;
     }
   } catch (error) {
-    console.error('❌ FCM registration failed:', error);
+    console.error("❌ FCM registration failed:", error);
     return false;
   }
 }
@@ -72,13 +77,14 @@ async function registerForPushNotifications(jwtToken) {
 // Call this after successful login
 async function onUserLogin(jwtToken) {
   // ... existing login logic ...
-  
+
   // Register for push notifications
   await registerForPushNotifications(jwtToken);
 }
 ```
 
 **Flutter:**
+
 ```dart
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
@@ -89,18 +95,18 @@ const String baseUrl = 'https://fsm-api.alright-bd.com';
 Future<bool> registerForPushNotifications(String jwtToken) async {
   try {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
-    
+
     // Request permission
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       sound: true,
       badge: true,
     );
-    
+
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       // Get FCM token
       String? fcmToken = await messaging.getToken();
-      
+
       if (fcmToken != null) {
         // Register with backend
         final response = await http.post(
@@ -111,14 +117,14 @@ Future<bool> registerForPushNotifications(String jwtToken) async {
           },
           body: jsonEncode({'fcmToken': fcmToken}),
         );
-        
+
         if (response.statusCode == 200) {
           print('✅ FCM token registered');
           return true;
         }
       }
     }
-    
+
     return false;
   } catch (e) {
     print('❌ FCM registration failed: $e');
@@ -129,7 +135,7 @@ Future<bool> registerForPushNotifications(String jwtToken) async {
 // Call this after successful login
 Future<void> onUserLogin(String jwtToken) async {
   // ... existing login logic ...
-  
+
   // Register for push notifications
   await registerForPushNotifications(jwtToken);
 }
@@ -138,6 +144,7 @@ Future<void> onUserLogin(String jwtToken) async {
 ### 3️⃣ Listen for Notifications
 
 **React Native:**
+
 ```javascript
 import { useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -145,25 +152,25 @@ import messaging from '@react-native-firebase/messaging';
 
 function App() {
   const navigation = useNavigation();
-  
+
   useEffect(() => {
     // Foreground notifications
     const unsubscribe = messaging().onMessage(async (remoteMessage) => {
       console.log('📱 Notification received:', remoteMessage);
-      
+
       // Show in-app notification
       Alert.alert(
         remoteMessage.notification?.title || 'New Notification',
         remoteMessage.notification?.body || ''
       );
     });
-    
+
     // Background/quit - notification tap
     messaging().onNotificationOpenedApp((remoteMessage) => {
       console.log('🔔 Notification tapped:', remoteMessage.data);
       handleNotificationTap(remoteMessage.data);
     });
-    
+
     // Check if app was opened from notification
     messaging()
       .getInitialNotification()
@@ -173,10 +180,10 @@ function App() {
           handleNotificationTap(remoteMessage.data);
         }
       });
-    
+
     return unsubscribe;
   }, []);
-  
+
   function handleNotificationTap(data) {
     // Navigate based on notification type
     switch (data.type) {
@@ -194,7 +201,7 @@ function App() {
         navigation.navigate('Notifications');
     }
   }
-  
+
   return (
     // ... your app component ...
   );
@@ -202,30 +209,31 @@ function App() {
 ```
 
 **Flutter:**
+
 ```dart
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  
+
   Future<void> initialize() async {
     // Foreground notifications
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('📱 Notification received: ${message.notification?.title}');
-      
+
       // Show in-app notification
       _showNotificationDialog(
         message.notification?.title ?? 'New Notification',
         message.notification?.body ?? '',
       );
     });
-    
+
     // Background/quit - notification tap
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('🔔 Notification tapped: ${message.data}');
       _handleNotificationTap(message.data);
     });
-    
+
     // Check if app was opened from notification
     RemoteMessage? initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
@@ -233,10 +241,10 @@ class NotificationService {
       _handleNotificationTap(initialMessage.data);
     }
   }
-  
+
   void _handleNotificationTap(Map<String, dynamic> data) {
     String type = data['type'] ?? '';
-    
+
     switch (type) {
       case 'WO_ASSIGNED':
         Navigator.pushNamed(context, '/work-order', arguments: data['woId']);
@@ -259,52 +267,51 @@ class NotificationService {
 
 ## 🔥 Notification Types You'll Receive
 
-| Type | Who Gets It | When | Title | Action |
-|------|-------------|------|-------|--------|
-| `WO_ASSIGNED` | Technician | New job assigned | 🔔 New Job Assigned! | Open work order details |
-| `WO_ACCEPTED` | Dispatcher | Tech accepts job | ✅ Work Order Accepted | Open work order |
-| `WO_COMPLETED` | Dispatcher | Tech completes job | ✅ Work Order Completed | Open work order |
-| `PAYMENT_VERIFIED` | Technician | Payment confirmed | 💰 Payment Verified | Open earnings |
-| `COMMISSION_PAID` | Technician | Commission paid | 💵 Commission Paid | Open earnings |
-| `TECHNICIAN_BLOCKED` | Technician | Account blocked | 🚫 Account Blocked | Show alert |
-| `SR_ASSIGNED` | Customer | Tech assigned to SR | 👷 Technician Assigned | Show technician info |
-| `TECH_ON_WAY` | Customer | Tech heading to location | 🚗 Technician On The Way | Open tracking |
-| `TECH_ARRIVED` | Customer | Tech arrived | 📍 Technician Arrived | Open tracking |
+| Type                 | Who Gets It | When                     | Title                    | Action                  |
+| -------------------- | ----------- | ------------------------ | ------------------------ | ----------------------- |
+| `WO_ASSIGNED`        | Technician  | New job assigned         | 🔔 New Job Assigned!     | Open work order details |
+| `WO_ACCEPTED`        | Dispatcher  | Tech accepts job         | ✅ Work Order Accepted   | Open work order         |
+| `WO_COMPLETED`       | Dispatcher  | Tech completes job       | ✅ Work Order Completed  | Open work order         |
+| `PAYMENT_VERIFIED`   | Technician  | Payment confirmed        | 💰 Payment Verified      | Open earnings           |
+| `COMMISSION_PAID`    | Technician  | Commission paid          | 💵 Commission Paid       | Open earnings           |
+| `TECHNICIAN_BLOCKED` | Technician  | Account blocked          | 🚫 Account Blocked       | Show alert              |
+| `SR_ASSIGNED`        | Customer    | Tech assigned to SR      | 👷 Technician Assigned   | Show technician info    |
+| `TECH_ON_WAY`        | Customer    | Tech heading to location | 🚗 Technician On The Way | Open tracking           |
+| `TECH_ARRIVED`       | Customer    | Tech arrived             | 📍 Technician Arrived    | Open tracking           |
 
 ---
 
 ## 🔓 Logout Cleanup
 
 **React Native:**
+
 ```javascript
 async function onUserLogout() {
   try {
     // Remove FCM token from backend
-    await axios.delete(
-      `${BASE_URL}/api/notifications/fcm-token`,
-      {
-        headers: {
-          Authorization: `Bearer ${jwtToken}`
-        }
-      }
-    );
-    
+    await axios.delete(`${BASE_URL}/api/notifications/fcm-token`, {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+      },
+    });
+
     // Clear local auth
-    await AsyncStorage.removeItem('authToken');
-    
+    await AsyncStorage.removeItem("authToken");
+
     // Navigate to login
     navigation.reset({
       index: 0,
-      routes: [{ name: 'Login' }],
+      routes: [{ name: "Login" }],
     });
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout error:", error);
     // Continue logout even if FCM removal fails
   }
 }
 ```
 
 **Flutter:**
+
 ```dart
 Future<void> onUserLogout() async {
   try {
@@ -315,10 +322,10 @@ Future<void> onUserLogout() async {
         'Authorization': 'Bearer $jwtToken',
       },
     );
-    
+
     // Clear local auth
     await storage.delete(key: 'authToken');
-    
+
     // Navigate to login
     Navigator.pushNamedAndRemoveUntil(
       context,
@@ -361,6 +368,7 @@ Every push notification includes:
 ## 🧪 Testing Checklist
 
 ### Backend Testing (Already Done ✅)
+
 - [x] Firebase initialized
 - [x] FCM token registration endpoint works
 - [x] FCM token removal endpoint works
@@ -369,6 +377,7 @@ Every push notification includes:
 - [x] Postman collection updated
 
 ### Mobile Testing (Your Turn 📱)
+
 - [ ] Install Firebase SDK
 - [ ] Request notification permission
 - [ ] Get FCM token from Firebase
@@ -387,6 +396,7 @@ Every push notification includes:
 ### No notifications received?
 
 1. **Check FCM token is registered:**
+
    ```bash
    # Call this endpoint to verify
    GET /api/notifications
@@ -394,17 +404,19 @@ Every push notification includes:
    ```
 
 2. **Check Firebase console:**
+
    - Go to Firebase Console → Cloud Messaging
    - Send a test notification to your FCM token
    - If Firebase test works but app doesn't = app issue
    - If Firebase test fails = token issue
 
 3. **Check backend logs:**
+
    ```bash
    # Look for these in server logs:
    ✅ Push notification sent successfully: projects/xxx/messages/xxx
    🔔 Push notification sent to user 123
-   
+
    # Or errors:
    ❌ Error sending push notification: ...
    ```
@@ -416,6 +428,7 @@ Every push notification includes:
 ### Notifications not playing sound?
 
 1. **iOS:**
+
    - Check "Allow Sounds" in notification settings
    - Check phone is not in silent mode
    - Ensure `sound: "default"` is in payload
@@ -430,6 +443,7 @@ Every push notification includes:
 ## 📚 API Endpoints
 
 ### Register FCM Token
+
 ```
 POST /api/notifications/fcm-token
 Headers: Authorization: Bearer {JWT_TOKEN}
@@ -443,6 +457,7 @@ Response:
 ```
 
 ### Remove FCM Token (Logout)
+
 ```
 DELETE /api/notifications/fcm-token
 Headers: Authorization: Bearer {JWT_TOKEN}
@@ -454,6 +469,7 @@ Response:
 ```
 
 ### Get Notifications
+
 ```
 GET /api/notifications?unreadOnly=true
 Headers: Authorization: Bearer {JWT_TOKEN}

@@ -184,11 +184,7 @@ export const notifyWOAccepted = async (dispatcherId, wo) => {
 
     // Send SMS notification
     if (dispatcher && dispatcher.phone) {
-      await sendWOAcceptedSMS(
-        dispatcher.phone,
-        wo.woNumber,
-        techName
-      );
+      await sendWOAcceptedSMS(dispatcher.phone, wo.woNumber, techName);
     }
 
     // 🔥 Send Firebase Push Notification

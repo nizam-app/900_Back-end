@@ -1,4 +1,6 @@
-/** @format */
+<!-- @format -->
+
+/\*_ @format _/
 
 # PUSH NOTIFICATIONS FIX - December 17, 2025
 
@@ -13,6 +15,7 @@
 Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification events:
 
 ### 1. **WO_ACCEPTED** ✅ FIXED
+
 - **Who:** Dispatcher/Admin
 - **When:** Technician accepts a work order
 - **Push:** "✅ Work Order Accepted - [Technician] accepted WO-XXX"
@@ -20,6 +23,7 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 - **Priority:** ✅ High priority
 
 ### 2. **WO_COMPLETED** ✅ FIXED
+
 - **Who:** Dispatcher/Admin
 - **When:** Technician completes a work order
 - **Push:** "✅ Work Order Completed - WO-XXX has been completed"
@@ -27,6 +31,7 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 - **Priority:** ✅ High priority
 
 ### 3. **PAYMENT_VERIFIED** ✅ FIXED
+
 - **Who:** Technician
 - **When:** Admin verifies payment for completed work
 - **Push:** "💰 Payment Verified - Payment of $XXX verified for WO-XXX"
@@ -34,6 +39,7 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 - **Priority:** ✅ High priority
 
 ### 4. **COMMISSION_PAID** ✅ FIXED
+
 - **Who:** Technician
 - **When:** Admin approves commission payout
 - **Push:** "💵 Commission Paid - Your commission of $XXX has been paid"
@@ -41,6 +47,7 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 - **Priority:** ✅ High priority
 
 ### 5. **TECHNICIAN_BLOCKED** ✅ FIXED
+
 - **Who:** Technician
 - **When:** Admin blocks technician account
 - **Push:** "🚫 Account Blocked - Your account has been blocked. Reason: [reason]"
@@ -48,6 +55,7 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 - **Priority:** ✅ High priority
 
 ### 6. **SR_ASSIGNED** ✅ FIXED
+
 - **Who:** Customer
 - **When:** Service request is assigned to technician
 - **Push:** "👷 Technician Assigned - [Name] will handle your request SR-XXX"
@@ -55,6 +63,7 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 - **Priority:** ✅ High priority
 
 ### 7. **TECH_ON_WAY** ✅ FIXED
+
 - **Who:** Customer
 - **When:** Technician marks "On The Way" status
 - **Push:** "🚗 Technician On The Way - Your technician is heading to your location"
@@ -62,6 +71,7 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 - **Priority:** ✅ High priority
 
 ### 8. **TECH_ARRIVED** ✅ FIXED
+
 - **Who:** Customer
 - **When:** Technician marks "Arrived" status
 - **Push:** "📍 Technician Arrived - Your technician is at your location for WO-XXX"
@@ -69,6 +79,7 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 - **Priority:** ✅ High priority
 
 ### 9. **WO_ASSIGNED** ✅ ALREADY WORKING
+
 - **Who:** Technician
 - **When:** Dispatcher assigns work order to technician
 - **Push:** "🔔 New Job Assigned! - Work Order WO-XXX - Customer: [Name]"
@@ -82,11 +93,13 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 **Changes Made:**
 
 1. **Updated User Queries** - Added `fcmToken` to all user queries
+
    ```javascript
    select: { phone: true, fcmToken: true }
    ```
 
 2. **Added Push Notification Calls** - Added FCM push after SMS for all events:
+
    ```javascript
    if (user && user.fcmToken) {
      try {
@@ -143,11 +156,13 @@ Added Firebase Cloud Messaging (FCM) push notifications to **ALL** notification 
 ### Step 1: Install Firebase SDK
 
 **React Native:**
+
 ```bash
 npm install @react-native-firebase/app @react-native-firebase/messaging
 ```
 
 **Flutter:**
+
 ```bash
 flutter pub add firebase_core firebase_messaging
 ```
@@ -155,26 +170,32 @@ flutter pub add firebase_core firebase_messaging
 ### Step 2: Get FCM Token on Login
 
 **React Native:**
+
 ```javascript
-import messaging from '@react-native-firebase/messaging';
+import messaging from "@react-native-firebase/messaging";
 
 async function onUserLogin(jwtToken) {
   // Request permission
   await messaging().requestPermission();
-  
+
   // Get FCM token
   const fcmToken = await messaging().getToken();
-  
+
   // Register with backend
-  await axios.post('/api/notifications/fcm-token', {
-    fcmToken
-  }, {
-    headers: { Authorization: `Bearer ${jwtToken}` }
-  });
+  await axios.post(
+    "/api/notifications/fcm-token",
+    {
+      fcmToken,
+    },
+    {
+      headers: { Authorization: `Bearer ${jwtToken}` },
+    }
+  );
 }
 ```
 
 **Flutter:**
+
 ```dart
 FirebaseMessaging messaging = FirebaseMessaging.instance;
 String? fcmToken = await messaging.getToken();
@@ -192,21 +213,23 @@ await http.post(
 ### Step 3: Listen for Incoming Notifications
 
 **React Native:**
+
 ```javascript
 // Foreground notifications
-messaging().onMessage(async remoteMessage => {
-  console.log('Notification:', remoteMessage);
+messaging().onMessage(async (remoteMessage) => {
+  console.log("Notification:", remoteMessage);
   // Show in-app notification
 });
 
 // Background/quit state - notification tap
-messaging().onNotificationOpenedApp(remoteMessage => {
-  console.log('Notification opened:', remoteMessage.data);
+messaging().onNotificationOpenedApp((remoteMessage) => {
+  console.log("Notification opened:", remoteMessage.data);
   // Navigate to relevant screen based on remoteMessage.data.type
 });
 ```
 
 **Flutter:**
+
 ```dart
 FirebaseMessaging.onMessage.listen((RemoteMessage message) {
   print('Notification: ${message.notification?.title}');
@@ -222,15 +245,17 @@ FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
 ### Step 4: Remove Token on Logout
 
 **React Native:**
+
 ```javascript
 async function onUserLogout() {
-  await axios.delete('/api/notifications/fcm-token', {
-    headers: { Authorization: `Bearer ${jwtToken}` }
+  await axios.delete("/api/notifications/fcm-token", {
+    headers: { Authorization: `Bearer ${jwtToken}` },
   });
 }
 ```
 
 **Flutter:**
+
 ```dart
 await http.delete(
   Uri.parse('$baseUrl/api/notifications/fcm-token'),
@@ -243,11 +268,13 @@ await http.delete(
 ### Test Script Created: `test-push-notifications.js`
 
 Run the test:
+
 ```bash
 node test-push-notifications.js
 ```
 
 **What it tests:**
+
 1. ✅ Register FCM token
 2. ✅ Get user notifications
 3. ✅ Mark notification as read
@@ -257,11 +284,13 @@ node test-push-notifications.js
 ### Manual Testing Steps
 
 1. **Get Mobile Device FCM Token:**
+
    - Install Firebase on mobile app
    - Get token using `messaging().getToken()`
    - Copy the token
 
 2. **Register Token:**
+
    ```bash
    curl -X POST https://fsm-api.alright-bd.com/api/notifications/fcm-token \
      -H "Authorization: Bearer YOUR_JWT_TOKEN" \
@@ -270,6 +299,7 @@ node test-push-notifications.js
    ```
 
 3. **Trigger Events:**
+
    - **As Dispatcher:** Assign a work order → Technician gets push
    - **As Technician:** Accept work order → Dispatcher gets push
    - **As Technician:** Complete work order → Dispatcher gets push
@@ -294,6 +324,7 @@ node test-push-notifications.js
 ## 📊 Before vs After
 
 ### BEFORE ❌
+
 ```
 Event: WO_ASSIGNED
 ├─> Database ✅
@@ -314,6 +345,7 @@ Event: PAYMENT_VERIFIED
 ```
 
 ### AFTER ✅
+
 ```
 Event: WO_ASSIGNED
 ├─> Database ✅
@@ -336,6 +368,7 @@ Event: PAYMENT_VERIFIED
 ## 🎉 What This Means for Users
 
 ### For Technicians 👷
+
 - ✅ Instant notification when new job assigned
 - ✅ Notification when payment verified
 - ✅ Notification when commission paid
@@ -343,6 +376,7 @@ Event: PAYMENT_VERIFIED
 - **All with sound and vibration!**
 
 ### For Customers 👥
+
 - ✅ Notification when technician assigned
 - ✅ Alert when technician is on the way
 - ✅ Notification when technician arrives
@@ -350,6 +384,7 @@ Event: PAYMENT_VERIFIED
 - **Real-time updates with sound!**
 
 ### For Dispatchers/Admins 📊
+
 - ✅ Notification when technician accepts job
 - ✅ Alert when work completed
 - ✅ Update when new service requests arrive
@@ -372,8 +407,9 @@ Event: PAYMENT_VERIFIED
 **Solution:** Added FCM push notification calls to all notification events in `notification.service.js`
 
 **Result:** Real-time notifications now work for ALL events with:
+
 - ✅ Sound
-- ✅ Vibration  
+- ✅ Vibration
 - ✅ High priority delivery
 - ✅ Notification bar display
 - ✅ Deep linking with data payload
