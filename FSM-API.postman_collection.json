@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "fsm-api-collection-2025-v5.3",
-		"name": "FSM System API - Complete Collection (Dec 14, 2025 - Updated)",
-		"description": "🎉 **MAJOR UPDATE - December 14, 2025 (v5.3)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Call Center Preferred Date Feature ✅ **NEW**\n**Added:** Call center agents can now enter customer's preferred service date/time\n- ✅ `preferredDate` field - Customer's preferred appointment date (ISO 8601 format)\n- ✅ `preferredTime` field - Time slot (Morning, Afternoon, Evening, or custom)\n- ✅ `scheduledAt` alternative field - Same as preferredDate for flexibility\n- ✅ `notes` field - Call center appointment notes\n- ✅ Works for new and existing customers\n- ✅ Dispatcher sees preferences when converting SR to WO\n- ✅ Better planning and customer satisfaction\n- **NEW ENDPOINT:** Create SR for Customer (Call Center) with complete documentation\n- **TESTED & WORKING** - Feature fully implemented\n\n### 2️⃣ Individual Commission & Bonus Rates ✅ **ENHANCED**\n**Updated:** Each technician can have custom commission and bonus rates\n- ✅ Set individual `commissionRate` per technician (0.0 to 1.0)\n- ✅ Set individual `bonusRate` per technician (0.0 to 1.0)\n- ✅ Update rates anytime via `PATCH /api/technicians/:id`\n- ✅ Performance-based rate adjustments\n- ✅ Training period lower rates\n- ✅ Senior technician higher rates\n- ✅ Rates stored in TechnicianProfile table\n- ✅ Past commissions unchanged, affects future jobs only\n- **ENHANCED DOCUMENTATION:** Create Technician and Update Technician endpoints\n- **TESTED & WORKING** - Already implemented, now better documented\n\n### 3️⃣ Previous Updates (Dec 12, 2025 - v5.2)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Commission & Bonus Rate Management ✅ **NEW**\n**Added:** Complete rate management system for admin\n- `GET /api/rates/summary` - Dashboard stats (Commission Rates: 2, Avg: 11%, Bonus Rates: 2, Avg: 5.5%)\n- `GET /api/rates` - List all rate structures with filters\n- `GET /api/rates/:id` - Get single rate details\n- `POST /api/rates` - Create commission/bonus rates\n- `PATCH /api/rates/:id` - Update rate structure\n- `DELETE /api/rates/:id` - Delete rate (with protection)\n- `PATCH /api/rates/:id/set-default` - Set as default rate\n- `GET /api/rates/default/:techType` - Get default rate for FREELANCER/INTERNAL\n- Supports multiple rate structures per type\n- Default rate auto-applied when creating technicians\n- Rate IDs auto-generated (RATE001, RATE002, etc.)\n- **TESTED & WORKING** - Seeded with initial data\n\n### 2️⃣ Technician Management Enhancements ✅\n**Updated:** Document upload system\n- ✅ External image service integration (https://img.mtscorporate.com)\n- ✅ No local file storage - all uploaded to CDN\n- ✅ Temporary files auto-deleted after upload\n- ✅ Password field added to technician creation\n- ✅ Email uniqueness validation\n- ✅ Dispatcher role access granted\n- Better error messages for missing profiles\n\n### 3️⃣ Previous Updates (Dec 9, 2025 - v5.1)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ International Phone Number Support ✅ **NEW**\n**Fixed:** Complete global phone number support\n- ✅ All 200+ countries now supported (Bangladesh, Netherlands, USA, UK, UAE, Kenya, India, Saudi Arabia, etc.)\n- ✅ Removed hardcoded Bangladesh-only restriction\n- ✅ Updated `formatPhoneForSMS()` - handles all international formats\n- ✅ Updated `normalizePhoneForDB()` - removes country codes from 10+ countries\n- ✅ Updated `isValidPhone()` - validates 8-15 digit numbers (ITU-T E.164 standard)\n- ✅ Enhanced error messages for invalid formats\n- ✅ Fixed bug where +31 (Netherlands) was becoming +88031 (invalid)\n- Examples that now work: +31612345678 (NL), +14155551234 (US), +971501234567 (UAE)\n\n### 2️⃣ Payout Management System ✅\n**Added:** Complete payout management for admin dashboard\n- `GET /api/payouts/summary` - Dashboard overview (Pending: $21,900, Early Requests: $1,000)\n- `GET /api/payouts/pending-commissions` - List pending commissions/bonuses (6 items ready)\n- `GET /api/payouts/early-requests` - Early payout requests (1 pending)\n- `POST /api/payouts/batches` - Create weekly payout batch\n- `GET /api/payouts/batches` - List payout batches (4 processed batches found)\n- `GET /api/payouts/history` - Completed payout history\n- `PATCH /api/payouts/batches/:id/process` - Process batch\n- `PATCH /api/payouts/early-requests/:id/approve` - Approve early payout\n- `PATCH /api/payouts/early-requests/:id/reject` - Reject early payout\n- Weekly batches automatically scheduled for Mondays (Next: Dec 15, 2025)\n- Early payout request approval workflow\n- **TESTED & WORKING** - All endpoints returning real data\n\n### 3️⃣ Technician Management System ✅\n**Added:** Complete technician management for admin\n- `GET /api/technicians/overview` - Statistics & distribution\n- `GET /api/technicians/directory` - List with filters\n- `GET /api/technicians/:id` - Detailed profile\n- `POST /api/technicians` - Create new technician\n- `PATCH /api/technicians/:id` - Update technician\n- `PATCH /api/technicians/:id/block` - Block/unblock\n- `PATCH /api/technicians/:id/documents` - Upload documents\n- `GET /api/technicians/export` - Export to CSV\n- Supports both freelancers (commission) and employees (salary + bonus)\n- Document upload (photo, ID, permits, degrees)\n- Comprehensive filtering and search\n\n### 4️⃣ Recent Services API ✅\n**Added:** Customer dashboard endpoint\n- `GET /api/sr/recent` - Recent completed services\n- Shows last 5 services with completion status\n- Optimized for customer dashboard UI\n\n### 5️⃣ Schema Improvements ✅\n**Updated:** Category model\n- Added `image` field to categories\n- Migration applied successfully\n- Seed data updated with image URLs\n\n### 6️⃣ Bug Fixes ✅\n**Fixed:** Multiple critical issues\n- ✅ Phone validation now accepts ALL international formats (8-15 digits)\n- ✅ Removed Bangladesh-only hardcoding in phone utilities\n- ✅ Fixed Netherlands (+31) being corrupted to +88031\n- ✅ Service/Subservice creation endpoints updated\n- ✅ BaseRate moved to Subservice level (completed Dec 5)\n- ✅ Payment calculations fixed\n- ✅ Technician earnings endpoint role-based naming\n- ✅ OTP service using updated phone utilities\n\n## 📋 Previous Updates:\n\n**December 4, 2025:**\n- Service hierarchy restructure (Category → Service → Subservice)\n- Technician profile endpoints\n- Internal employee registration system\n\n## 📊 Collection Stats:\n- Total Sections: 17 (includes Payout Management & Technician Management)\n- Total Endpoints: 130 (18 new today)\n- Countries Supported: 200+ (global coverage)\n- Files Updated Today: 4 (phone.js, otp.service.js, sms.service.js, postman collection)\n\n## ✅ All Systems Operational:\n- ✅ Global phone number support (200+ countries)\n- ✅ Payout management fully functional ($21,900 pending)\n- ✅ Technician management ready\n- ✅ Service hierarchy correct\n- ✅ Profile endpoints working\n- ✅ Employee registration tested\n- ✅ OTP delivery confirmed for all countries\n- ✅ Server running on port 4000\n\n## 🧪 Tested & Verified:\n- ✅ Netherlands +31612345678 → Works\n- ✅ USA +14155551234 → Works\n- ✅ Bangladesh +8801712345678 → Works\n- ✅ Kenya +254712345678 → Works\n- ✅ UAE +971501234567 → Works\n- ✅ Payout Summary API → Returning real data\n- ✅ Pending Commissions API → 6 items found\n- ✅ Early Payout Requests → 1 request pending\n\n**Status:** Production Ready | **Version:** 5.2 | **Date:** December 12, 2025\n\n## 🆕 Today's Additions (Dec 12):\n- ✅ Commission & Bonus Rate Management (12 endpoints)\n- ✅ Image upload to external CDN\n- ✅ Technician password field\n- ✅ Email validation on creation\n- ✅ Dispatcher access to technician management",
+		"_postman_id": "fsm-api-collection-2025-v5.4",
+		"name": "FSM System API - Complete Collection (Dec 16, 2025 - Updated)",
+		"description": "🎉 **MAJOR UPDATE - December 16, 2025 (v5.4)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Customer Registration Source Tracking ✅ **NEW**\n**Added:** Complete customer tracking system for Admin panel\n- ✅ `GET /api/admin/customers` - List all customers with registration source\n- ✅ Filter by registration source (SELF_REGISTERED, CALL_CENTER, ADMIN)\n- ✅ Shows HOW customers were created (mobile app, call center, admin)\n- ✅ Shows WHO created them (Call Center agent name, Admin name)\n- ✅ Statistics breakdown (self-registered %, call center created %)\n- ✅ Database fields: `registrationSource` and `createdById`\n- ✅ Track customer creation history and accountability\n- ✅ Monitor Call Center agent performance\n- **NEW ENDPOINTS:** 3 new customer listing endpoints with filters\n- **TESTED & WORKING** - Migration applied successfully\n\n### 2️⃣ Subservice Pricing ✅ **ENHANCED**\n**Updated:** All API responses now include subservice baseRate (price)\n- ✅ Work Order endpoints include pricing\n- ✅ Service Request endpoints include pricing\n- ✅ Payment endpoints include pricing\n- ✅ Report endpoints include pricing\n- ✅ Admin endpoints include pricing\n- ✅ 21 locations updated across 5 controller files\n- ✅ Consistent pricing information across all endpoints\n- **DOCUMENTATION:** SUBSERVICE_PRICE_IMPLEMENTATION.md\n- **TESTED & WORKING** - All endpoints verified\n\n### 3️⃣ Previous Updates (Dec 14, 2025 - v5.3)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Call Center Preferred Date Feature ✅ **NEW**\n**Added:** Call center agents can now enter customer's preferred service date/time\n- ✅ `preferredDate` field - Customer's preferred appointment date (ISO 8601 format)\n- ✅ `preferredTime` field - Time slot (Morning, Afternoon, Evening, or custom)\n- ✅ `scheduledAt` alternative field - Same as preferredDate for flexibility\n- ✅ `notes` field - Call center appointment notes\n- ✅ Works for new and existing customers\n- ✅ Dispatcher sees preferences when converting SR to WO\n- ✅ Better planning and customer satisfaction\n- **NEW ENDPOINT:** Create SR for Customer (Call Center) with complete documentation\n- **TESTED & WORKING** - Feature fully implemented\n\n### 2️⃣ Individual Commission & Bonus Rates ✅ **ENHANCED**\n**Updated:** Each technician can have custom commission and bonus rates\n- ✅ Set individual `commissionRate` per technician (0.0 to 1.0)\n- ✅ Set individual `bonusRate` per technician (0.0 to 1.0)\n- ✅ Update rates anytime via `PATCH /api/technicians/:id`\n- ✅ Performance-based rate adjustments\n- ✅ Training period lower rates\n- ✅ Senior technician higher rates\n- ✅ Rates stored in TechnicianProfile table\n- ✅ Past commissions unchanged, affects future jobs only\n- **ENHANCED DOCUMENTATION:** Create Technician and Update Technician endpoints\n- **TESTED & WORKING** - Already implemented, now better documented\n\n### 3️⃣ Previous Updates (Dec 12, 2025 - v5.2)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ Commission & Bonus Rate Management ✅ **NEW**\n**Added:** Complete rate management system for admin\n- `GET /api/rates/summary` - Dashboard stats (Commission Rates: 2, Avg: 11%, Bonus Rates: 2, Avg: 5.5%)\n- `GET /api/rates` - List all rate structures with filters\n- `GET /api/rates/:id` - Get single rate details\n- `POST /api/rates` - Create commission/bonus rates\n- `PATCH /api/rates/:id` - Update rate structure\n- `DELETE /api/rates/:id` - Delete rate (with protection)\n- `PATCH /api/rates/:id/set-default` - Set as default rate\n- `GET /api/rates/default/:techType` - Get default rate for FREELANCER/INTERNAL\n- Supports multiple rate structures per type\n- Default rate auto-applied when creating technicians\n- Rate IDs auto-generated (RATE001, RATE002, etc.)\n- **TESTED & WORKING** - Seeded with initial data\n\n### 2️⃣ Technician Management Enhancements ✅\n**Updated:** Document upload system\n- ✅ External image service integration (https://img.mtscorporate.com)\n- ✅ No local file storage - all uploaded to CDN\n- ✅ Temporary files auto-deleted after upload\n- ✅ Password field added to technician creation\n- ✅ Email uniqueness validation\n- ✅ Dispatcher role access granted\n- Better error messages for missing profiles\n\n### 3️⃣ Previous Updates (Dec 9, 2025 - v5.1)**\n\n## 🆕 What's New Today:\n\n### 1️⃣ International Phone Number Support ✅ **NEW**\n**Fixed:** Complete global phone number support\n- ✅ All 200+ countries now supported (Bangladesh, Netherlands, USA, UK, UAE, Kenya, India, Saudi Arabia, etc.)\n- ✅ Removed hardcoded Bangladesh-only restriction\n- ✅ Updated `formatPhoneForSMS()` - handles all international formats\n- ✅ Updated `normalizePhoneForDB()` - removes country codes from 10+ countries\n- ✅ Updated `isValidPhone()` - validates 8-15 digit numbers (ITU-T E.164 standard)\n- ✅ Enhanced error messages for invalid formats\n- ✅ Fixed bug where +31 (Netherlands) was becoming +88031 (invalid)\n- Examples that now work: +31612345678 (NL), +14155551234 (US), +971501234567 (UAE)\n\n### 2️⃣ Payout Management System ✅\n**Added:** Complete payout management for admin dashboard\n- `GET /api/payouts/summary` - Dashboard overview (Pending: $21,900, Early Requests: $1,000)\n- `GET /api/payouts/pending-commissions` - List pending commissions/bonuses (6 items ready)\n- `GET /api/payouts/early-requests` - Early payout requests (1 pending)\n- `POST /api/payouts/batches` - Create weekly payout batch\n- `GET /api/payouts/batches` - List payout batches (4 processed batches found)\n- `GET /api/payouts/history` - Completed payout history\n- `PATCH /api/payouts/batches/:id/process` - Process batch\n- `PATCH /api/payouts/early-requests/:id/approve` - Approve early payout\n- `PATCH /api/payouts/early-requests/:id/reject` - Reject early payout\n- Weekly batches automatically scheduled for Mondays (Next: Dec 15, 2025)\n- Early payout request approval workflow\n- **TESTED & WORKING** - All endpoints returning real data\n\n### 3️⃣ Technician Management System ✅\n**Added:** Complete technician management for admin\n- `GET /api/technicians/overview` - Statistics & distribution\n- `GET /api/technicians/directory` - List with filters\n- `GET /api/technicians/:id` - Detailed profile\n- `POST /api/technicians` - Create new technician\n- `PATCH /api/technicians/:id` - Update technician\n- `PATCH /api/technicians/:id/block` - Block/unblock\n- `PATCH /api/technicians/:id/documents` - Upload documents\n- `GET /api/technicians/export` - Export to CSV\n- Supports both freelancers (commission) and employees (salary + bonus)\n- Document upload (photo, ID, permits, degrees)\n- Comprehensive filtering and search\n\n### 4️⃣ Recent Services API ✅\n**Added:** Customer dashboard endpoint\n- `GET /api/sr/recent` - Recent completed services\n- Shows last 5 services with completion status\n- Optimized for customer dashboard UI\n\n### 5️⃣ Schema Improvements ✅\n**Updated:** Category model\n- Added `image` field to categories\n- Migration applied successfully\n- Seed data updated with image URLs\n\n### 6️⃣ Bug Fixes ✅\n**Fixed:** Multiple critical issues\n- ✅ Phone validation now accepts ALL international formats (8-15 digits)\n- ✅ Removed Bangladesh-only hardcoding in phone utilities\n- ✅ Fixed Netherlands (+31) being corrupted to +88031\n- ✅ Service/Subservice creation endpoints updated\n- ✅ BaseRate moved to Subservice level (completed Dec 5)\n- ✅ Payment calculations fixed\n- ✅ Technician earnings endpoint role-based naming\n- ✅ OTP service using updated phone utilities\n\n## 📋 Previous Updates:\n\n**December 4, 2025:**\n- Service hierarchy restructure (Category → Service → Subservice)\n- Technician profile endpoints\n- Internal employee registration system\n\n## 📊 Collection Stats:\n- Total Sections: 17 (includes Payout Management & Technician Management)\n- Total Endpoints: 130 (18 new today)\n- Countries Supported: 200+ (global coverage)\n- Files Updated Today: 4 (phone.js, otp.service.js, sms.service.js, postman collection)\n\n## ✅ All Systems Operational:\n- ✅ Global phone number support (200+ countries)\n- ✅ Payout management fully functional ($21,900 pending)\n- ✅ Technician management ready\n- ✅ Service hierarchy correct\n- ✅ Profile endpoints working\n- ✅ Employee registration tested\n- ✅ OTP delivery confirmed for all countries\n- ✅ Server running on port 4000\n\n## 🧪 Tested & Verified:\n- ✅ Netherlands +31612345678 → Works\n- ✅ USA +14155551234 → Works\n- ✅ Bangladesh +8801712345678 → Works\n- ✅ Kenya +254712345678 → Works\n- ✅ UAE +971501234567 → Works\n- ✅ Payout Summary API → Returning real data\n- ✅ Pending Commissions API → 6 items found\n- ✅ Early Payout Requests → 1 request pending\n\n**Status:** Production Ready | **Version:** 5.2 | **Date:** December 12, 2025\n\n## 🆕 Today's Additions (Dec 12):\n- ✅ Commission & Bonus Rate Management (12 endpoints)\n- ✅ Image upload to external CDN\n- ✅ Technician password field\n- ✅ Email validation on creation\n- ✅ Dispatcher access to technician management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -2542,6 +2542,92 @@
 					}
 				},
 				{
+					"name": "Get All Customers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/customers",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"customers"
+							]
+						},
+						"description": "**NEW: Customer Registration Source Tracking** (Dec 16, 2025)\n\nGet list of all customers with registration source information.\n\n**Access:** Admin, Dispatcher, Call Center\n\n**Features:**\n- ✅ Shows how each customer was created (SELF_REGISTERED, CALL_CENTER, ADMIN)\n- ✅ Tracks who created the customer (Call Center agent, Admin)\n- ✅ Provides statistics breakdown\n- ✅ Supports filtering by registration source\n- ✅ Shows creator information for staff-created accounts\n\n**Response Format:**\n```json\n{\n  \"total\": 8,\n  \"statistics\": {\n    \"selfRegistered\": {\n      \"count\": 4,\n      \"percentage\": \"50.0\"\n    },\n    \"callCenterCreated\": {\n      \"count\": 4,\n      \"percentage\": \"50.0\"\n    },\n    \"adminCreated\": {\n      \"count\": 0,\n      \"percentage\": \"0.0\"\n    },\n    \"webPortal\": {\n      \"count\": 0,\n      \"percentage\": \"0.0\"\n    },\n    \"unknown\": {\n      \"count\": 0,\n      \"percentage\": \"0.0\"\n    }\n  },\n  \"customers\": [\n    {\n      \"id\": 1,\n      \"name\": \"John Mitchell\",\n      \"phone\": \"+8801712345678\",\n      \"email\": \"john.mitchell@email.com\",\n      \"homeAddress\": \"123 Oak Street, Pittsburgh, PA 15213\",\n      \"latitude\": 40.4406,\n      \"longitude\": -79.9959,\n      \"registrationSource\": \"CALL_CENTER\",\n      \"createdById\": 5,\n      \"createdBy\": {\n        \"id\": 5,\n        \"name\": \"Agent Smith\",\n        \"phone\": \"+8801798765432\",\n        \"role\": \"CALL_CENTER\"\n      },\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n      \"updatedAt\": \"2024-01-15T10:30:00.000Z\",\n      \"isBlocked\": false\n    }\n  ]\n}\n```\n\n**Registration Source Values:**\n- `SELF_REGISTERED` - Customer registered via mobile app OTP\n- `CALL_CENTER` - Created by Call Center agent\n- `ADMIN` - Created by Admin/Dispatcher\n- `WEB_PORTAL` - Registered via web portal\n- `null` - Legacy customers (before tracking was implemented)\n\n**Use Cases:**\n1. View all customers with their registration source\n2. Identify customers created by specific Call Center agents\n3. Distinguish self-registered vs staff-created customers\n4. Generate reports on registration sources\n5. Monitor Call Center agent performance\n6. Display badges in admin panel UI\n\n**Database Fields:**\n- `registrationSource` - How the customer was created\n- `createdById` - ID of the user who created this customer\n- `createdBy` - Full details of the creator (for staff-created accounts)\n\n**Frontend Integration:**\n- Show \"Mobile App\" badge for SELF_REGISTERED\n- Show \"Call Center Agent\" badge for CALL_CENTER\n- Show \"Admin Created\" badge for ADMIN\n- Display creator name when createdBy is present\n\nTESTED & WORKING (Dec 16, 2025)"
+					}
+				},
+				{
+					"name": "Get All Customers (Filter: Self-Registered)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/customers?registrationSource=SELF_REGISTERED",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"customers"
+							],
+							"query": [
+								{
+									"key": "registrationSource",
+									"value": "SELF_REGISTERED",
+									"description": "Filter by registration source"
+								}
+							]
+						},
+						"description": "**Filter customers by registration source**\n\nGet only customers who registered themselves via the mobile app.\n\n**Query Parameters:**\n- `registrationSource=SELF_REGISTERED` - Self-registered customers only\n\n**Use Cases:**\n- View only mobile app registered customers\n- Generate report of self-registered users\n- Compare self-registered vs staff-created customers\n\nTESTED & WORKING (Dec 16, 2025)"
+					}
+				},
+				{
+					"name": "Get All Customers (Filter: Call Center)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/customers?registrationSource=CALL_CENTER",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"admin",
+								"customers"
+							],
+							"query": [
+								{
+									"key": "registrationSource",
+									"value": "CALL_CENTER",
+									"description": "Filter by Call Center created customers"
+								}
+							]
+						},
+						"description": "**Filter customers created by Call Center agents**\n\nGet only customers who were created by Call Center agents.\n\n**Query Parameters:**\n- `registrationSource=CALL_CENTER` - Call Center created customers only\n\n**Response includes:**\n- Customer details\n- Name of the Call Center agent who created them (in `createdBy` field)\n- Creation timestamp\n\n**Use Cases:**\n- View all Call Center created customers\n- Audit which agent created which customers\n- Monitor Call Center performance\n- Quality control and training purposes\n\nTESTED & WORKING (Dec 16, 2025)"
+					}
+				},
+				{
 					"name": "Update User",
 					"request": {
 						"method": "PATCH",
@@ -3260,6 +3346,62 @@
 							]
 						},
 						"description": "Mark all notifications as read for the authenticated user"
+					}
+				},
+				{
+					"name": "Register FCM Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fcmToken\": \"dA1B2c3D4e5F6g7H8i9J0k:APA91bH..._your_firebase_token_here\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/fcm-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"fcm-token"
+							]
+						},
+						"description": "**NEW: Firebase Push Notifications** (Dec 16, 2025)\n\nRegister Firebase Cloud Messaging (FCM) token for push notifications.\n\n**Access:** All authenticated users (Customer, Technician, Dispatcher, Admin, Call Center)\n\n**Use Cases:**\n- Register device for push notifications when app starts\n- Update FCM token when it changes (Firebase refreshes tokens periodically)\n- Enable real-time job assignment notifications\n- Receive order status updates\n- Get payment confirmations\n\n**Request Body:**\n```json\n{\n  \"fcmToken\": \"dA1B2c3D4e5F6g7H8i9J0k:APA91bH..._your_firebase_token_here\"\n}\n```\n\n**Success Response (200 OK):**\n```json\n{\n  \"message\": \"FCM token registered successfully\",\n  \"fcmToken\": \"dA1B2c3D4e5F6g7H8i9J0k:APA91bH...\"\n}\n```\n\n**Error Responses:**\n- 400 Bad Request - FCM token is required\n- 401 Unauthorized - Invalid or missing JWT token\n- 404 Not Found - User not found\n\n**How It Works:**\n1. Mobile app obtains FCM token from Firebase SDK\n2. App sends token to this endpoint after user login\n3. Token stored in User.fcmToken field in database\n4. Backend uses token to send push notifications\n5. Notifications include sound, vibration, high priority\n\n**Push Notification Types:**\n- 🔔 **Job Assignment** - Technician receives new work order\n- 📍 **Status Updates** - Customer notified of technician arrival\n- 💰 **Payment Confirmation** - Payment verified notifications\n- ⚠️ **Important Alerts** - System notifications\n\n**Push Notification Format:**\n```json\n{\n  \"notification\": {\n    \"title\": \"🔔 New Job Assigned!\",\n    \"body\": \"Work Order WO-001: AC Repair at Customer Location\"\n  },\n  \"data\": {\n    \"type\": \"WO_ASSIGNED\",\n    \"woId\": \"123\",\n    \"woNumber\": \"WO-001\"\n  },\n  \"android\": {\n    \"priority\": \"high\",\n    \"notification\": {\n      \"sound\": \"default\",\n      \"channelId\": \"job_assignments\",\n      \"vibrate\": [200, 100, 200]\n    }\n  },\n  \"apns\": {\n    \"payload\": {\n      \"aps\": {\n        \"sound\": \"default\",\n        \"badge\": 1,\n        \"contentAvailable\": true\n      }\n    }\n  }\n}\n```\n\n**Mobile App Integration:**\n\n**React Native (Firebase):**\n```javascript\nimport messaging from '@react-native-firebase/messaging';\nimport axios from 'axios';\n\nasync function registerForPushNotifications() {\n  // Request permission\n  const authStatus = await messaging().requestPermission();\n  const enabled = authStatus === messaging.AuthorizationStatus.AUTHORIZED;\n  \n  if (enabled) {\n    // Get FCM token\n    const fcmToken = await messaging().getToken();\n    \n    // Register with backend\n    await axios.post('/api/notifications/fcm-token', {\n      fcmToken\n    }, {\n      headers: { Authorization: `Bearer ${jwtToken}` }\n    });\n    \n    console.log('FCM token registered:', fcmToken);\n  }\n}\n\n// Handle incoming notifications\nmessaging().onMessage(async remoteMessage => {\n  console.log('Notification received:', remoteMessage);\n  // Show notification UI\n});\n\n// Handle notification tap\nmessaging().onNotificationOpenedApp(remoteMessage => {\n  console.log('Notification opened:', remoteMessage.data);\n  // Navigate to appropriate screen\n});\n```\n\n**Flutter (firebase_messaging):**\n```dart\nimport 'package:firebase_messaging/firebase_messaging.dart';\nimport 'package:http/http.dart' as http;\n\nFuture<void> registerFCMToken() async {\n  FirebaseMessaging messaging = FirebaseMessaging.instance;\n  \n  // Request permission\n  NotificationSettings settings = await messaging.requestPermission(\n    alert: true,\n    sound: true,\n    badge: true,\n  );\n  \n  if (settings.authorizationStatus == AuthorizationStatus.authorized) {\n    // Get FCM token\n    String? fcmToken = await messaging.getToken();\n    \n    // Register with backend\n    await http.post(\n      Uri.parse('$baseUrl/api/notifications/fcm-token'),\n      headers: {\n        'Authorization': 'Bearer $jwtToken',\n        'Content-Type': 'application/json',\n      },\n      body: jsonEncode({'fcmToken': fcmToken}),\n    );\n  }\n  \n  // Listen to messages\n  FirebaseMessaging.onMessage.listen((RemoteMessage message) {\n    print('Notification: ${message.notification?.title}');\n  });\n}\n```\n\n**Best Practices:**\n1. **Register on Login:** Call this endpoint after successful login\n2. **Handle Token Refresh:** Firebase refreshes tokens periodically, update when changed\n3. **Register on App Start:** If user already logged in, register token on app startup\n4. **Handle Errors:** Gracefully handle registration failures\n5. **Remove on Logout:** Call DELETE endpoint when user logs out\n\n**Security:**\n- JWT authentication required\n- Token stored securely in database\n- Only the user can register their own token\n- Tokens encrypted in transit (HTTPS)\n\n**Related Endpoints:**\n- DELETE /api/notifications/fcm-token - Remove token on logout\n- GET /api/notifications - Get in-app notifications\n\n**Documentation:**\n- Full guide: FIREBASE_PUSH_NOTIFICATIONS.md\n- Firebase setup: https://firebase.google.com/docs/cloud-messaging\n\nTESTED & WORKING (Dec 16, 2025)"
+					}
+				},
+				{
+					"name": "Remove FCM Token",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/fcm-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"fcm-token"
+							]
+						},
+						"description": "**Remove FCM token from user account**\n\nCall this endpoint when user logs out to stop receiving push notifications.\n\n**Access:** All authenticated users\n\n**When to Call:**\n- User logs out\n- User disables push notifications in settings\n- App is uninstalled (call in cleanup if possible)\n- User switches accounts\n\n**Success Response (200 OK):**\n```json\n{\n  \"message\": \"FCM token removed successfully\"\n}\n```\n\n**What Happens:**\n1. FCM token cleared from User.fcmToken field\n2. User will no longer receive push notifications\n3. Can re-register token by calling POST endpoint again\n\n**Mobile App Integration:**\n\n**React Native:**\n```javascript\nimport axios from 'axios';\n\nasync function logout() {\n  try {\n    // Remove FCM token from backend\n    await axios.delete('/api/notifications/fcm-token', {\n      headers: { Authorization: `Bearer ${jwtToken}` }\n    });\n    \n    // Clear local auth token\n    await AsyncStorage.removeItem('authToken');\n    \n    // Navigate to login screen\n    navigation.navigate('Login');\n  } catch (error) {\n    console.error('Logout error:', error);\n  }\n}\n```\n\n**Flutter:**\n```dart\nimport 'package:http/http.dart' as http;\n\nFuture<void> logout() async {\n  try {\n    // Remove FCM token\n    await http.delete(\n      Uri.parse('$baseUrl/api/notifications/fcm-token'),\n      headers: {'Authorization': 'Bearer $jwtToken'},\n    );\n    \n    // Clear local storage\n    await storage.delete(key: 'authToken');\n    \n    // Navigate to login\n    Navigator.pushReplacementNamed(context, '/login');\n  } catch (e) {\n    print('Logout error: $e');\n  }\n}\n```\n\n**Best Practices:**\n1. **Always call on logout** - Prevents notifications to logged-out users\n2. **Handle errors gracefully** - Don't block logout if removal fails\n3. **Silent failure** - User doesn't need to see errors from this\n4. **Clean up locally** - Also delete local FCM token cache\n\n**Error Handling:**\n```javascript\nasync function removeFCMToken() {\n  try {\n    await axios.delete('/api/notifications/fcm-token', {\n      headers: { Authorization: `Bearer ${token}` }\n    });\n  } catch (error) {\n    // Log but don't show error to user\n    console.log('FCM removal failed:', error);\n    // Continue with logout anyway\n  }\n}\n```\n\n**Security:**\n- JWT authentication required\n- User can only remove their own token\n- Safe to call multiple times (idempotent)\n\nTESTED & WORKING (Dec 16, 2025)"
 					}
 				}
 			]

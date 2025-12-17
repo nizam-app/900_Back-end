@@ -171,7 +171,7 @@ export const notifyWOAccepted = async (dispatcherId, wo) => {
     // Get dispatcher details
     const dispatcher = await prisma.user.findUnique({
       where: { id: dispatcherId },
-      select: { phone: true },
+      select: { phone: true, fcmToken: true },
     });
 
     // Get technician details
@@ -180,13 +180,38 @@ export const notifyWOAccepted = async (dispatcherId, wo) => {
       select: { name: true },
     });
 
+    const techName = technician?.name || "Technician";
+
     // Send SMS notification
     if (dispatcher && dispatcher.phone) {
       await sendWOAcceptedSMS(
         dispatcher.phone,
         wo.woNumber,
-        technician?.name || "Technician"
+        techName
       );
+    }
+
+    // 🔥 Send Firebase Push Notification
+    if (dispatcher && dispatcher.fcmToken) {
+      try {
+        await sendPushNotification(
+          dispatcher.fcmToken,
+          {
+            title: "✅ Work Order Accepted",
+            body: `${techName} accepted work order ${wo.woNumber}`,
+          },
+          {
+            type: "WO_ACCEPTED",
+            woId: wo.id,
+            woNumber: wo.woNumber,
+            priority: "high",
+            sound: "default",
+          }
+        );
+        console.log(`🔔 Push notification sent to dispatcher ${dispatcherId}`);
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+      }
     }
 
     return createNotification(
@@ -208,12 +233,35 @@ export const notifyWOCompleted = async (dispatcherId, wo) => {
     // Get dispatcher details
     const dispatcher = await prisma.user.findUnique({
       where: { id: dispatcherId },
-      select: { phone: true },
+      select: { phone: true, fcmToken: true },
     });
 
     // Send SMS notification
     if (dispatcher && dispatcher.phone) {
       await sendWOCompletedSMS(dispatcher.phone, wo.woNumber);
+    }
+
+    // 🔥 Send Firebase Push Notification
+    if (dispatcher && dispatcher.fcmToken) {
+      try {
+        await sendPushNotification(
+          dispatcher.fcmToken,
+          {
+            title: "✅ Work Order Completed",
+            body: `Work order ${wo.woNumber} has been completed`,
+          },
+          {
+            type: "WO_COMPLETED",
+            woId: wo.id,
+            woNumber: wo.woNumber,
+            priority: "high",
+            sound: "default",
+          }
+        );
+        console.log(`🔔 Push notification sent to dispatcher ${dispatcherId}`);
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+      }
     }
 
     return createNotification(
@@ -235,7 +283,7 @@ export const notifyPaymentVerified = async (technicianId, wo, payment) => {
     // Get technician details
     const technician = await prisma.user.findUnique({
       where: { id: technicianId },
-      select: { phone: true },
+      select: { phone: true, fcmToken: true },
     });
 
     // Send SMS notification
@@ -245,6 +293,30 @@ export const notifyPaymentVerified = async (technicianId, wo, payment) => {
         payment.amount,
         wo.woNumber
       );
+    }
+
+    // 🔥 Send Firebase Push Notification
+    if (technician && technician.fcmToken) {
+      try {
+        await sendPushNotification(
+          technician.fcmToken,
+          {
+            title: "💰 Payment Verified",
+            body: `Payment of ${payment.amount} verified for WO ${wo.woNumber}`,
+          },
+          {
+            type: "PAYMENT_VERIFIED",
+            woId: wo.id,
+            woNumber: wo.woNumber,
+            amount: String(payment.amount),
+            priority: "high",
+            sound: "default",
+          }
+        );
+        console.log(`🔔 Push notification sent to technician ${technicianId}`);
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+      }
     }
 
     return createNotification(
@@ -266,12 +338,35 @@ export const notifyCommissionPaid = async (technicianId, payout) => {
     // Get technician details
     const technician = await prisma.user.findUnique({
       where: { id: technicianId },
-      select: { phone: true },
+      select: { phone: true, fcmToken: true },
     });
 
     // Send SMS notification
     if (technician && technician.phone) {
       await sendPayoutApprovedSMS(technician.phone, payout.totalAmount);
+    }
+
+    // 🔥 Send Firebase Push Notification
+    if (technician && technician.fcmToken) {
+      try {
+        await sendPushNotification(
+          technician.fcmToken,
+          {
+            title: "💵 Commission Paid",
+            body: `Your commission of ${payout.totalAmount} has been paid`,
+          },
+          {
+            type: "COMMISSION_PAID",
+            payoutId: String(payout.id),
+            amount: String(payout.totalAmount),
+            priority: "high",
+            sound: "default",
+          }
+        );
+        console.log(`🔔 Push notification sent to technician ${technicianId}`);
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+      }
     }
 
     return createNotification(
@@ -293,12 +388,34 @@ export const notifyTechnicianBlocked = async (technicianId, reason) => {
     // Get technician details
     const technician = await prisma.user.findUnique({
       where: { id: technicianId },
-      select: { phone: true },
+      select: { phone: true, fcmToken: true },
     });
 
     // Send SMS notification
     if (technician && technician.phone) {
       await sendAccountBlockedSMS(technician.phone, reason);
+    }
+
+    // 🔥 Send Firebase Push Notification
+    if (technician && technician.fcmToken) {
+      try {
+        await sendPushNotification(
+          technician.fcmToken,
+          {
+            title: "🚫 Account Blocked",
+            body: `Your account has been blocked. Reason: ${reason}`,
+          },
+          {
+            type: "TECHNICIAN_BLOCKED",
+            reason: String(reason),
+            priority: "high",
+            sound: "default",
+          }
+        );
+        console.log(`🔔 Push notification sent to technician ${technicianId}`);
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+      }
     }
 
     const notification = await createNotification(
@@ -360,6 +477,12 @@ export const notifyNewServiceRequest = async (sr) => {
 // ✅ Send notification when SR is assigned (converted to WO)
 export const notifySRAssigned = async (sr, wo, technician) => {
   try {
+    // Get customer FCM token
+    const customer = await prisma.user.findUnique({
+      where: { id: sr.customerId },
+      select: { fcmToken: true },
+    });
+
     // Notify customer
     await createNotification(
       sr.customerId,
@@ -368,6 +491,31 @@ export const notifySRAssigned = async (sr, wo, technician) => {
       `Your service request ${sr.srNumber} has been assigned to ${technician.name}. Work order ${wo.woNumber} created.`,
       { srId: sr.id, woId: wo.id, srNumber: sr.srNumber, woNumber: wo.woNumber }
     );
+
+    // 🔥 Send Firebase Push Notification
+    if (customer && customer.fcmToken) {
+      try {
+        await sendPushNotification(
+          customer.fcmToken,
+          {
+            title: "👷 Technician Assigned",
+            body: `${technician.name} will handle your request ${sr.srNumber}`,
+          },
+          {
+            type: "SR_ASSIGNED",
+            srId: String(sr.id),
+            woId: String(wo.id),
+            srNumber: sr.srNumber,
+            woNumber: wo.woNumber,
+            priority: "high",
+            sound: "default",
+          }
+        );
+        console.log(`🔔 Push notification sent to customer ${sr.customerId}`);
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+      }
+    }
 
     console.log(
       `👷 SR assigned notification sent: ${sr.srNumber} -> ${wo.woNumber}`
@@ -447,6 +595,29 @@ export const notifyTechnicianOnWay = async (wo, customer) => {
       { woId: wo.id, woNumber: wo.woNumber }
     );
 
+    // 🔥 Send Firebase Push Notification
+    if (customer.fcmToken) {
+      try {
+        await sendPushNotification(
+          customer.fcmToken,
+          {
+            title: "🚗 Technician On The Way",
+            body: `Your technician is heading to your location for ${wo.woNumber}`,
+          },
+          {
+            type: "TECH_ON_WAY",
+            woId: String(wo.id),
+            woNumber: wo.woNumber,
+            priority: "high",
+            sound: "default",
+          }
+        );
+        console.log(`🔔 Push notification sent to customer ${customer.id}`);
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+      }
+    }
+
     console.log(
       `🚗 Technician on way notification sent for WO: ${wo.woNumber}`
     );
@@ -465,6 +636,29 @@ export const notifyTechnicianArrived = async (wo, customer) => {
       `Your technician has arrived at your location for work order ${wo.woNumber}.`,
       { woId: wo.id, woNumber: wo.woNumber }
     );
+
+    // 🔥 Send Firebase Push Notification
+    if (customer.fcmToken) {
+      try {
+        await sendPushNotification(
+          customer.fcmToken,
+          {
+            title: "📍 Technician Arrived",
+            body: `Your technician is at your location for ${wo.woNumber}`,
+          },
+          {
+            type: "TECH_ARRIVED",
+            woId: String(wo.id),
+            woNumber: wo.woNumber,
+            priority: "high",
+            sound: "default",
+          }
+        );
+        console.log(`🔔 Push notification sent to customer ${customer.id}`);
+      } catch (pushError) {
+        console.error("Error sending push notification:", pushError);
+      }
+    }
 
     console.log(
       `📍 Technician arrived notification sent for WO: ${wo.woNumber}`
