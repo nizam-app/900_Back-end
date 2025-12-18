@@ -57,7 +57,10 @@ async function addEarnedCommissions() {
         continue;
       }
 
-      const rate = profile.type === "FREELANCER" ? profile.commissionRate : profile.bonusRate;
+      const rate =
+        profile.type === "FREELANCER"
+          ? profile.commissionRate
+          : profile.bonusRate;
       const amount = payment.amount * rate;
       const type = profile.type === "FREELANCER" ? "COMMISSION" : "BONUS";
 
@@ -74,7 +77,9 @@ async function addEarnedCommissions() {
       });
 
       console.log(
-        `✅ Created ${type}: WO-${wo.id} | ${wo.technician.name} | $${amount.toFixed(2)} | Status: EARNED`
+        `✅ Created ${type}: WO-${wo.id} | ${
+          wo.technician.name
+        } | $${amount.toFixed(2)} | Status: EARNED`
       );
       created++;
     }
@@ -82,7 +87,6 @@ async function addEarnedCommissions() {
     console.log(`\n🎉 Successfully created ${created} EARNED commissions!`);
     console.log("\n📊 Now test the endpoint:");
     console.log("   GET /api/payouts/pending-commissions");
-
   } catch (error) {
     console.error("❌ Error:", error);
   } finally {
