@@ -41,7 +41,9 @@ async function diagnoseDashboard() {
     },
   });
 
-  console.log(`💰 Total Commissions for Technician ${technicianId}: ${allCommissions.length}\n`);
+  console.log(
+    `💰 Total Commissions for Technician ${technicianId}: ${allCommissions.length}\n`
+  );
 
   // Group by status
   const byStatus = {};
@@ -55,7 +57,9 @@ async function diagnoseDashboard() {
   console.log("📊 Commissions by Status:");
   Object.keys(byStatus).forEach((status) => {
     const total = byStatus[status].reduce((sum, c) => sum + c.amount, 0);
-    console.log(`   ${status}: ${byStatus[status].length} records = $${total.toFixed(2)}`);
+    console.log(
+      `   ${status}: ${byStatus[status].length} records = $${total.toFixed(2)}`
+    );
   });
   console.log();
 
@@ -74,14 +78,21 @@ async function diagnoseDashboard() {
 
   console.log("📅 This Week's Commissions (EARNED + PAID):");
   console.log(`   Count: ${thisWeekCommissions.length}`);
-  const thisWeekTotal = thisWeekCommissions.reduce((sum, c) => sum + c.amount, 0);
+  const thisWeekTotal = thisWeekCommissions.reduce(
+    (sum, c) => sum + c.amount,
+    0
+  );
   console.log(`   Total: $${thisWeekTotal.toFixed(2)}`);
   console.log();
 
   // Show each commission with date
   console.log("📋 Details:");
   thisWeekCommissions.forEach((c) => {
-    console.log(`   WO-${c.woId} | $${c.amount} | ${c.status} | Created: ${c.createdAt.toISOString()}`);
+    console.log(
+      `   WO-${c.woId} | $${c.amount} | ${
+        c.status
+      } | Created: ${c.createdAt.toISOString()}`
+    );
   });
   console.log();
 
@@ -97,7 +108,10 @@ async function diagnoseDashboard() {
 
   console.log("💰 Total Earned (All Time - EARNED + PAID):");
   console.log(`   Count: ${totalEarnedCommissions.length}`);
-  const totalEarned = totalEarnedCommissions.reduce((sum, c) => sum + c.amount, 0);
+  const totalEarned = totalEarnedCommissions.reduce(
+    (sum, c) => sum + c.amount,
+    0
+  );
   console.log(`   Total: $${totalEarned.toFixed(2)}`);
   console.log();
 
@@ -142,7 +156,11 @@ async function diagnoseDashboard() {
   });
 
   statusTotals.forEach((s) => {
-    console.log(`   ${s.status}: ${s._count} records = $${(s._sum.amount || 0).toFixed(2)}`);
+    console.log(
+      `   ${s.status}: ${s._count} records = $${(s._sum.amount || 0).toFixed(
+        2
+      )}`
+    );
   });
 
   await prisma.$disconnect();
