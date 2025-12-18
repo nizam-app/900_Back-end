@@ -23,7 +23,7 @@ async function seedTechnicianDashboardData() {
 
     // 1. Create TODAY'S JOBS (3 jobs scheduled for today)
     console.log("📅 Creating TODAY'S jobs...");
-    
+
     const todayJob1 = await prisma.workOrder.create({
       data: {
         woNumber: `WO-TODAY-${Date.now()}-1`,
@@ -43,7 +43,9 @@ async function seedTechnicianDashboardData() {
         scheduledAt: today, // SCHEDULED FOR TODAY
       },
     });
-    console.log(`  ✅ Created TODAY job: ${todayJob1.woNumber} (ASSIGNED - Ready to start)`);
+    console.log(
+      `  ✅ Created TODAY job: ${todayJob1.woNumber} (ASSIGNED - Ready to start)`
+    );
 
     const todayJob2 = await prisma.workOrder.create({
       data: {
@@ -56,8 +58,8 @@ async function seedTechnicianDashboardData() {
         serviceId,
         subserviceId,
         address: "456 Morning Avenue",
-        latitude: 23.8150,
-        longitude: 90.4200,
+        latitude: 23.815,
+        longitude: 90.42,
         paymentType: "MOBILE_MONEY",
         priority: "NORMAL",
         status: "IN_PROGRESS", // IN PROGRESS
@@ -79,19 +81,21 @@ async function seedTechnicianDashboardData() {
         serviceId,
         subserviceId,
         address: "789 Afternoon Lane",
-        latitude: 23.8200,
-        longitude: 90.4300,
+        latitude: 23.82,
+        longitude: 90.43,
         paymentType: "CASH",
         priority: "HIGH",
         status: "ASSIGNED",
         scheduledAt: new Date(today.getTime() + 3 * 60 * 60 * 1000), // Scheduled for later today
       },
     });
-    console.log(`  ✅ Created TODAY job: ${todayJob3.woNumber} (ASSIGNED - scheduled for later)`);
+    console.log(
+      `  ✅ Created TODAY job: ${todayJob3.woNumber} (ASSIGNED - scheduled for later)`
+    );
 
     // 2. Create READY TO START jobs (ASSIGNED status, ready now)
     console.log("\n🎯 Creating READY TO START jobs...");
-    
+
     const readyJob1 = await prisma.workOrder.create({
       data: {
         woNumber: `WO-READY-${Date.now()}-1`,
@@ -103,8 +107,8 @@ async function seedTechnicianDashboardData() {
         serviceId,
         subserviceId,
         address: "111 Ready Street",
-        latitude: 23.8250,
-        longitude: 90.4350,
+        latitude: 23.825,
+        longitude: 90.435,
         paymentType: "CASH",
         priority: "HIGH",
         status: "ASSIGNED",
@@ -124,8 +128,8 @@ async function seedTechnicianDashboardData() {
         serviceId,
         subserviceId,
         address: "222 Urgent Plaza",
-        latitude: 23.8300,
-        longitude: 90.4400,
+        latitude: 23.83,
+        longitude: 90.44,
         paymentType: "MOBILE_MONEY",
         priority: "URGENT",
         status: "ASSIGNED",
@@ -136,7 +140,7 @@ async function seedTechnicianDashboardData() {
 
     // 3. Create more IN PROGRESS jobs
     console.log("\n⚡ Creating more IN PROGRESS jobs...");
-    
+
     const inProgressJob = await prisma.workOrder.create({
       data: {
         woNumber: `WO-PROGRESS-${Date.now()}`,
@@ -148,8 +152,8 @@ async function seedTechnicianDashboardData() {
         serviceId,
         subserviceId,
         address: "333 Progress Road",
-        latitude: 23.8350,
-        longitude: 90.4450,
+        latitude: 23.835,
+        longitude: 90.445,
         paymentType: "CASH",
         priority: "NORMAL",
         status: "IN_PROGRESS",
@@ -162,12 +166,14 @@ async function seedTechnicianDashboardData() {
 
     // 4. Create COMPLETED THIS MONTH jobs with payments
     console.log("\n✅ Creating COMPLETED jobs for this month...");
-    
+
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
+
     for (let i = 1; i <= 5; i++) {
-      const completedDate = new Date(startOfMonth.getTime() + i * 24 * 60 * 60 * 1000);
-      
+      const completedDate = new Date(
+        startOfMonth.getTime() + i * 24 * 60 * 60 * 1000
+      );
+
       const completedWO = await prisma.workOrder.create({
         data: {
           woNumber: `WO-COMPLETED-${Date.now()}-${i}`,
@@ -179,8 +185,8 @@ async function seedTechnicianDashboardData() {
           serviceId,
           subserviceId,
           address: `${100 + i} Completed Street`,
-          latitude: 23.8100 + i * 0.001,
-          longitude: 90.4100 + i * 0.001,
+          latitude: 23.81 + i * 0.001,
+          longitude: 90.41 + i * 0.001,
           paymentType: i % 2 === 0 ? "CASH" : "MOBILE_MONEY",
           priority: "NORMAL",
           status: "PAID_VERIFIED",
@@ -188,7 +194,9 @@ async function seedTechnicianDashboardData() {
           acceptedAt: completedDate,
           startedAt: new Date(completedDate.getTime() + 1 * 60 * 60 * 1000),
           completedAt: new Date(completedDate.getTime() + 3 * 60 * 60 * 1000),
-          paidVerifiedAt: new Date(completedDate.getTime() + 4 * 60 * 60 * 1000),
+          paidVerifiedAt: new Date(
+            completedDate.getTime() + 4 * 60 * 60 * 1000
+          ),
         },
       });
 
@@ -213,33 +221,35 @@ async function seedTechnicianDashboardData() {
           technicianId,
           paymentId: payment.id,
           type: "COMMISSION",
-          rate: 0.40, // 40%
-          amount: amount * 0.40,
+          rate: 0.4, // 40%
+          amount: amount * 0.4,
           status: "EARNED", // THIS WEEK'S EARNINGS
         },
       });
 
-      console.log(`  ✅ WO ${i}: ${completedWO.woNumber} | $${amount} | Commission: $${commission.amount} (EARNED)`);
+      console.log(
+        `  ✅ WO ${i}: ${completedWO.woNumber} | $${amount} | Commission: $${commission.amount} (EARNED)`
+      );
     }
 
     // 5. Create additional THIS WEEK commissions
     console.log("\n💰 Creating additional THIS WEEK commissions...");
-    
+
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
 
     // Add bonuses for internal employee work
     const bonusWO = await prisma.workOrder.findFirst({
-      where: { 
+      where: {
         technicianId: 4, // Update 12-12 John (INTERNAL)
-        status: "PAID_VERIFIED" 
+        status: "PAID_VERIFIED",
       },
     });
 
     if (bonusWO) {
       const bonusPayment = await prisma.payment.findFirst({
-        where: { woId: bonusWO.id, status: "VERIFIED" }
+        where: { woId: bonusWO.id, status: "VERIFIED" },
       });
 
       if (bonusPayment) {
@@ -252,16 +262,20 @@ async function seedTechnicianDashboardData() {
             rate: 0.05, // 5%
             amount: bonusPayment.amount * 0.05,
             status: "EARNED",
-            createdAt: new Date(startOfWeek.getTime() + 2 * 24 * 60 * 60 * 1000),
+            createdAt: new Date(
+              startOfWeek.getTime() + 2 * 24 * 60 * 60 * 1000
+            ),
           },
         });
-        console.log(`  ✅ Created BONUS: $${bonus.amount} for internal employee`);
+        console.log(
+          `  ✅ Created BONUS: $${bonus.amount} for internal employee`
+        );
       }
     }
 
     // 6. Get final dashboard stats
     console.log("\n📊 DASHBOARD SUMMARY:");
-    
+
     const stats = await prisma.workOrder.groupBy({
       by: ["status"],
       where: { technicianId },
@@ -269,7 +283,7 @@ async function seedTechnicianDashboardData() {
     });
 
     console.log("\nWork Order Status:");
-    stats.forEach(stat => {
+    stats.forEach((stat) => {
       console.log(`  ${stat.status}: ${stat._count}`);
     });
 
@@ -285,7 +299,9 @@ async function seedTechnicianDashboardData() {
 
     console.log(`\n💰 This Week's Earnings:`);
     console.log(`  Commissions: ${thisWeekCommissions._count}`);
-    console.log(`  Total: $${(thisWeekCommissions._sum.amount || 0).toFixed(2)}`);
+    console.log(
+      `  Total: $${(thisWeekCommissions._sum.amount || 0).toFixed(2)}`
+    );
 
     const jobsToday = await prisma.workOrder.count({
       where: {
@@ -335,7 +351,6 @@ async function seedTechnicianDashboardData() {
 
     console.log("\n✅ Technician dashboard data seeded successfully!");
     console.log("\n🧪 Now test: GET /api/technician/dashboard");
-
   } catch (error) {
     console.error("❌ Error:", error);
   } finally {

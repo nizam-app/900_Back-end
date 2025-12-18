@@ -1,16 +1,16 @@
 /** @format */
 /**
  * FSM API - Complete Postman Collection Generator
- * 
+ *
  * This script generates a comprehensive Postman collection with ALL API endpoints
  * from the FSM backend system.
- * 
+ *
  * Usage: node generate-postman-collection.js
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,31 +54,32 @@ const collection = {
 - Global phone support: ✅
 
 Status: Production Ready | Version: 6.0 | Date: December 18, 2025`,
-    schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    schema:
+      "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
   },
   item: [],
   variable: [
     {
       key: "baseUrl",
       value: "http://147.93.107.217:8956",
-      type: "string"
+      type: "string",
     },
     {
       key: "token",
       value: "",
-      type: "string"
+      type: "string",
     },
     {
       key: "techToken",
       value: "",
-      type: "string"
+      type: "string",
     },
     {
       key: "adminToken",
       value: "",
-      type: "string"
-    }
-  ]
+      type: "string",
+    },
+  ],
 };
 
 // All endpoints organized by category
@@ -92,9 +93,9 @@ const endpoints = {
       body: {
         phone: "+8801718981009",
         name: "John Doe",
-        type: "REGISTRATION"
+        type: "REGISTRATION",
       },
-      description: "Send OTP for phone verification"
+      description: "Send OTP for phone verification",
     },
     {
       method: "POST",
@@ -104,8 +105,8 @@ const endpoints = {
       body: {
         phone: "+8801718981009",
         code: "123456",
-        type: "REGISTRATION"
-      }
+        type: "REGISTRATION",
+      },
     },
     {
       method: "POST",
@@ -115,8 +116,8 @@ const endpoints = {
       body: {
         phone: "+8801718981009",
         password: "test123",
-        tempToken: "temp_token_here"
-      }
+        tempToken: "temp_token_here",
+      },
     },
     {
       method: "POST",
@@ -125,14 +126,14 @@ const endpoints = {
       auth: "none",
       body: {
         phone: "+8801718981009",
-        password: "test123"
-      }
+        password: "test123",
+      },
     },
     {
       method: "POST",
       path: "/api/auth/logout",
       name: "Logout",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "POST",
@@ -141,14 +142,14 @@ const endpoints = {
       auth: "required",
       body: {
         oldPassword: "test123",
-        newPassword: "newpass123"
-      }
+        newPassword: "newpass123",
+      },
     },
     {
       method: "GET",
       path: "/api/auth/profile",
       name: "Get My Profile",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "PATCH",
@@ -157,17 +158,17 @@ const endpoints = {
       auth: "required",
       body: {
         name: "Updated Name",
-        email: "updated@email.com"
-      }
-    }
+        email: "updated@email.com",
+      },
+    },
   ],
-  
+
   "Categories & Services": [
     {
       method: "GET",
       path: "/api/categories",
       name: "List All Categories",
-      auth: "none"
+      auth: "none",
     },
     {
       method: "POST",
@@ -177,32 +178,32 @@ const endpoints = {
       contentType: "multipart/form-data",
       body: {
         name: "New Category",
-        description: "Category description"
-      }
+        description: "Category description",
+      },
     },
     {
       method: "PATCH",
       path: "/api/categories/:id",
       name: "Update Category",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "DELETE",
       path: "/api/categories/:id",
       name: "Delete Category",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "PATCH",
       path: "/api/categories/:id/activate",
       name: "Activate Category",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "PATCH",
       path: "/api/categories/:id/deactivate",
       name: "Deactivate Category",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "POST",
@@ -212,8 +213,8 @@ const endpoints = {
       body: {
         categoryId: 1,
         name: "New Service",
-        description: "Service description"
-      }
+        description: "Service description",
+      },
     },
     {
       method: "POST",
@@ -223,9 +224,9 @@ const endpoints = {
       body: {
         serviceId: 1,
         name: "New Subservice",
-        baseRate: 100
-      }
-    }
+        baseRate: 100,
+      },
+    },
   ],
 
   "Service Requests": [
@@ -242,39 +243,39 @@ const endpoints = {
         address: "123 Main St",
         latitude: 23.8103,
         longitude: 90.4125,
-        paymentType: "CASH"
-      }
+        paymentType: "CASH",
+      },
     },
     {
       method: "GET",
       path: "/api/sr/my",
       name: "Get My Service Requests",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "GET",
       path: "/api/sr",
       name: "List All Service Requests",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "GET",
       path: "/api/sr/:id",
       name: "Get Service Request by ID",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "PATCH",
       path: "/api/sr/:id/cancel",
       name: "Cancel Service Request",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "POST",
       path: "/api/sr/:srId/rebook",
       name: "Rebook Service",
-      auth: "required"
-    }
+      auth: "required",
+    },
   ],
 
   "Work Orders": [
@@ -282,19 +283,19 @@ const endpoints = {
       method: "GET",
       path: "/api/wos",
       name: "List All Work Orders",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "GET",
       path: "/api/wos/:woId",
       name: "Get Work Order by ID",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "POST",
       path: "/api/wos/from-sr/:srId",
       name: "Create Work Order from SR",
-      auth: "dispatcher"
+      auth: "dispatcher",
     },
     {
       method: "PATCH",
@@ -302,14 +303,14 @@ const endpoints = {
       name: "Assign Work Order to Technician",
       auth: "dispatcher",
       body: {
-        technicianId: 5
-      }
+        technicianId: 5,
+      },
     },
     {
       method: "PATCH",
       path: "/api/wos/:woId/reassign",
       name: "Reassign Work Order",
-      auth: "dispatcher"
+      auth: "dispatcher",
     },
     {
       method: "PATCH",
@@ -317,28 +318,28 @@ const endpoints = {
       name: "Technician Accept/Reject Work Order",
       auth: "technician",
       body: {
-        response: "ACCEPTED"
-      }
+        response: "ACCEPTED",
+      },
     },
     {
       method: "PATCH",
       path: "/api/wos/:woId/start",
       name: "Start Work Order",
-      auth: "technician"
+      auth: "technician",
     },
     {
       method: "PATCH",
       path: "/api/wos/:woId/complete",
       name: "Complete Work Order",
       auth: "technician",
-      contentType: "multipart/form-data"
+      contentType: "multipart/form-data",
     },
     {
       method: "PATCH",
       path: "/api/wos/:woId/cancel",
       name: "Cancel Work Order",
-      auth: "required"
-    }
+      auth: "required",
+    },
   ],
 
   "Technician Dashboard": [
@@ -346,32 +347,32 @@ const endpoints = {
       method: "GET",
       path: "/api/technician/dashboard",
       name: "Get Dashboard Statistics",
-      auth: "technician"
+      auth: "technician",
     },
     {
       method: "GET",
       path: "/api/technician/jobs",
       name: "Get My Jobs",
-      auth: "technician"
+      auth: "technician",
     },
     {
       method: "GET",
       path: "/api/technician/wallet",
       name: "Get Wallet Balance",
-      auth: "technician"
+      auth: "technician",
     },
     {
       method: "GET",
       path: "/api/technician/earnings",
       name: "Get Earnings Summary",
-      auth: "technician"
+      auth: "technician",
     },
     {
       method: "GET",
       path: "/api/technician/work-history",
       name: "Get Work History",
-      auth: "technician"
-    }
+      auth: "technician",
+    },
   ],
 
   "Technician Management": [
@@ -379,66 +380,66 @@ const endpoints = {
       method: "GET",
       path: "/api/technicians/overview",
       name: "Get Technician Overview",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/technicians/directory",
       name: "Get Technicians Directory",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/technicians/:id",
       name: "Get Technician Details",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "POST",
       path: "/api/technicians",
       name: "Create Technician",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "PATCH",
       path: "/api/technicians/:id",
       name: "Update Technician",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "PATCH",
       path: "/api/technicians/:id/block",
       name: "Block/Unblock Technician",
-      auth: "admin"
-    }
+      auth: "admin",
+    },
   ],
 
-  "Payments": [
+  Payments: [
     {
       method: "GET",
       path: "/api/payments",
       name: "List All Payments",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/payments/:id",
       name: "Get Payment by ID",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "POST",
       path: "/api/payments",
       name: "Upload Payment Proof",
       auth: "technician",
-      contentType: "multipart/form-data"
+      contentType: "multipart/form-data",
     },
     {
       method: "PATCH",
       path: "/api/payments/:id/verify",
       name: "Verify Payment",
-      auth: "dispatcher"
-    }
+      auth: "dispatcher",
+    },
   ],
 
   "Commissions & Payouts": [
@@ -446,64 +447,64 @@ const endpoints = {
       method: "GET",
       path: "/api/commissions/wallet",
       name: "Get Wallet Balance",
-      auth: "technician"
+      auth: "technician",
     },
     {
       method: "GET",
       path: "/api/commissions/my-commissions",
       name: "Get My Commissions",
-      auth: "technician"
+      auth: "technician",
     },
     {
       method: "POST",
       path: "/api/commissions/payout-request",
       name: "Request Early Payout",
-      auth: "technician"
+      auth: "technician",
     },
     {
       method: "GET",
       path: "/api/payouts/summary",
       name: "Get Payout Summary (Admin)",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/payouts/pending-commissions",
       name: "Get Pending Commissions",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "POST",
       path: "/api/payouts/batches",
       name: "Create Payout Batch",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/payouts/batches",
       name: "Get Payout Batches",
-      auth: "admin"
-    }
+      auth: "admin",
+    },
   ],
 
-  "Notifications": [
+  Notifications: [
     {
       method: "GET",
       path: "/api/notifications",
       name: "Get My Notifications",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "PATCH",
       path: "/api/notifications/:id/read",
       name: "Mark as Read",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "PATCH",
       path: "/api/notifications/read-all",
       name: "Mark All as Read",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "POST",
@@ -514,9 +515,10 @@ const endpoints = {
         fcmToken: "device_token_here",
         deviceType: "ANDROID",
         deviceName: "Samsung Galaxy S23",
-        deviceId: "device_unique_id"
+        deviceId: "device_unique_id",
       },
-      description: "Register FCM token for push notifications. Supports multiple devices per user."
+      description:
+        "Register FCM token for push notifications. Supports multiple devices per user.",
     },
     {
       method: "DELETE",
@@ -524,15 +526,15 @@ const endpoints = {
       name: "Remove FCM Token",
       auth: "required",
       body: {
-        fcmToken: "device_token_here"
-      }
+        fcmToken: "device_token_here",
+      },
     },
     {
       method: "POST",
       path: "/api/notifications/send-notification",
       name: "Send Custom Notification (Admin)",
-      auth: "admin"
-    }
+      auth: "admin",
+    },
   ],
 
   "Location & GPS": [
@@ -544,21 +546,21 @@ const endpoints = {
       body: {
         latitude: 23.8103,
         longitude: 90.4125,
-        status: "ONLINE"
-      }
+        status: "ONLINE",
+      },
     },
     {
       method: "GET",
       path: "/api/location/nearby",
       name: "Get Nearby Technicians",
-      auth: "dispatcher"
+      auth: "dispatcher",
     },
     {
       method: "GET",
       path: "/api/location/technician/:id",
       name: "Get Technician Location",
-      auth: "required"
-    }
+      auth: "required",
+    },
   ],
 
   "Admin Dashboard": [
@@ -566,32 +568,32 @@ const endpoints = {
       method: "GET",
       path: "/api/admin/dashboard",
       name: "Get Dashboard Statistics",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/admin/users",
       name: "List All Users",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/admin/customers",
       name: "List All Customers",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "POST",
       path: "/api/admin/users",
       name: "Create User",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "PATCH",
       path: "/api/admin/users/:id/block",
       name: "Block/Unblock User",
-      auth: "admin"
-    }
+      auth: "admin",
+    },
   ],
 
   "Rate Management": [
@@ -599,62 +601,62 @@ const endpoints = {
       method: "GET",
       path: "/api/rates/summary",
       name: "Get Rate Summary",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/rates",
       name: "List All Rates",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "POST",
       path: "/api/rates",
       name: "Create Rate Structure",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "PATCH",
       path: "/api/rates/:id",
       name: "Update Rate",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "DELETE",
       path: "/api/rates/:id",
       name: "Delete Rate",
-      auth: "admin"
-    }
+      auth: "admin",
+    },
   ],
 
-  "Reports": [
+  Reports: [
     {
       method: "GET",
       path: "/api/reports/work-orders",
       name: "Work Order Report",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/reports/commissions",
       name: "Commission Report",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/reports/payments",
       name: "Payment Report",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/reports/technician-performance",
       name: "Technician Performance Report",
-      auth: "admin"
-    }
+      auth: "admin",
+    },
   ],
 
-  "Reviews": [
+  Reviews: [
     {
       method: "POST",
       path: "/api/reviews",
@@ -663,21 +665,21 @@ const endpoints = {
       body: {
         woId: 1,
         rating: 5,
-        comment: "Excellent service!"
-      }
+        comment: "Excellent service!",
+      },
     },
     {
       method: "GET",
       path: "/api/reviews/technician/:technicianId",
       name: "Get Technician Reviews",
-      auth: "required"
+      auth: "required",
     },
     {
       method: "GET",
       path: "/api/reviews/wo/:woId",
       name: "Get Work Order Review",
-      auth: "required"
-    }
+      auth: "required",
+    },
   ],
 
   "Call Center": [
@@ -685,41 +687,41 @@ const endpoints = {
       method: "GET",
       path: "/api/call-center/stats",
       name: "Get Call Center Stats",
-      auth: "callcenter"
+      auth: "callcenter",
     },
     {
       method: "GET",
       path: "/api/sr/search-customer",
       name: "Search Customer by Phone",
-      auth: "callcenter"
+      auth: "callcenter",
     },
     {
       method: "POST",
       path: "/api/callcenter/customers",
       name: "Create Customer Account",
-      auth: "callcenter"
-    }
+      auth: "callcenter",
+    },
   ],
 
-  "Dispatch": [
+  Dispatch: [
     {
       method: "GET",
       path: "/api/dispatch/overview",
       name: "Get Dispatch Overview",
-      auth: "dispatcher"
+      auth: "dispatcher",
     },
     {
       method: "GET",
       path: "/api/dispatch/technician-status",
       name: "Get Technician Status",
-      auth: "dispatcher"
+      auth: "dispatcher",
     },
     {
       method: "GET",
       path: "/api/dispatch/recent-work-orders",
       name: "Get Recent Work Orders",
-      auth: "dispatcher"
-    }
+      auth: "dispatcher",
+    },
   ],
 
   "SMS Notifications": [
@@ -727,50 +729,54 @@ const endpoints = {
       method: "POST",
       path: "/api/sms/send",
       name: "Send SMS",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "POST",
       path: "/api/sms/send-bulk",
       name: "Send Bulk SMS",
-      auth: "admin"
+      auth: "admin",
     },
     {
       method: "GET",
       path: "/api/sms/status/:messageId",
       name: "Check SMS Status",
-      auth: "admin"
-    }
-  ]
+      auth: "admin",
+    },
+  ],
 };
 
 // Generate request object
 function generateRequest(endpoint) {
   const request = {
     method: endpoint.method,
-    header: []
+    header: [],
   };
 
   // Add auth header if required
   if (endpoint.auth === "required") {
     request.header.push({
       key: "Authorization",
-      value: "Bearer {{token}}"
+      value: "Bearer {{token}}",
     });
   } else if (endpoint.auth === "admin") {
     request.header.push({
       key: "Authorization",
-      value: "Bearer {{adminToken}}"
+      value: "Bearer {{adminToken}}",
     });
   } else if (endpoint.auth === "technician") {
     request.header.push({
       key: "Authorization",
-      value: "Bearer {{techToken}}"
+      value: "Bearer {{techToken}}",
     });
-  } else if (endpoint.auth === "dispatcher" || endpoint.auth === "callcenter" || endpoint.auth === "customer") {
+  } else if (
+    endpoint.auth === "dispatcher" ||
+    endpoint.auth === "callcenter" ||
+    endpoint.auth === "customer"
+  ) {
     request.header.push({
       key: "Authorization",
-      value: "Bearer {{token}}"
+      value: "Bearer {{token}}",
     });
   }
 
@@ -778,7 +784,7 @@ function generateRequest(endpoint) {
   if (endpoint.body && endpoint.contentType !== "multipart/form-data") {
     request.header.push({
       key: "Content-Type",
-      value: "application/json"
+      value: "application/json",
     });
   }
 
@@ -789,14 +795,15 @@ function generateRequest(endpoint) {
         mode: "formdata",
         formdata: Object.entries(endpoint.body).map(([key, value]) => ({
           key,
-          value: typeof value === "object" ? JSON.stringify(value) : String(value),
-          type: "text"
-        }))
+          value:
+            typeof value === "object" ? JSON.stringify(value) : String(value),
+          type: "text",
+        })),
       };
     } else {
       request.body = {
         mode: "raw",
-        raw: JSON.stringify(endpoint.body, null, 2)
+        raw: JSON.stringify(endpoint.body, null, 2),
       };
     }
   }
@@ -805,7 +812,7 @@ function generateRequest(endpoint) {
   request.url = {
     raw: `{{baseUrl}}${endpoint.path}`,
     host: ["{{baseUrl}}"],
-    path: endpoint.path.split("/").filter(p => p)
+    path: endpoint.path.split("/").filter((p) => p),
   };
 
   if (endpoint.description) {
@@ -819,17 +826,23 @@ function generateRequest(endpoint) {
 Object.entries(endpoints).forEach(([category, categoryEndpoints]) => {
   const folder = {
     name: category,
-    item: categoryEndpoints.map(generateRequest)
+    item: categoryEndpoints.map(generateRequest),
   };
   collection.item.push(folder);
 });
 
 // Write to file
-const outputPath = path.join(__dirname, 'FSM-API-Complete.postman_collection.json');
+const outputPath = path.join(
+  __dirname,
+  "FSM-API-Complete.postman_collection.json"
+);
 fs.writeFileSync(outputPath, JSON.stringify(collection, null, 2));
 
-console.log('✅ Postman collection generated successfully!');
-console.log('📁 File:', outputPath);
-console.log('📊 Total categories:', Object.keys(endpoints).length);
-console.log('📊 Total endpoints:', Object.values(endpoints).reduce((sum, arr) => sum + arr.length, 0));
-console.log('\n📥 Import this file into Postman to get started!');
+console.log("✅ Postman collection generated successfully!");
+console.log("📁 File:", outputPath);
+console.log("📊 Total categories:", Object.keys(endpoints).length);
+console.log(
+  "📊 Total endpoints:",
+  Object.values(endpoints).reduce((sum, arr) => sum + arr.length, 0)
+);
+console.log("\n📥 Import this file into Postman to get started!");
