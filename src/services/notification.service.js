@@ -100,6 +100,86 @@ export const markAllNotificationsRead = async (userId) => {
   return { message: "All notifications marked as read" };
 };
 
+// 🔥 Helper: Send push notification to all user's devices
+export const sendPushToAllUserDevices = async (userId, notification, data) => {
+  try {
+    // Get all active FCM tokens for this user
+    const fcmTokens = await prisma.fCMToken.findMany({
+      where: {
+        userId,
+        isActive: true,
+      },
+      select: {
+        token: true,
+        deviceType: true,
+        id: true,
+      },
+    });
+
+    if (fcmTokens.length === 0) {
+      console.log(`⚠️ No active FCM tokens found for user ${userId}`);
+      return { success: false, sentCount: 0 };
+    }
+
+    console.log(
+      `📱 Sending push to ${fcmTokens.length} device(s) for user ${userId}`
+    );
+
+    let sentCount = 0;
+    const failedTokenIds = [];
+
+    // Send to all devices
+    for (const tokenRecord of fcmTokens) {
+      try {
+        await sendPushNotification(tokenRecord.token, notification, data);
+        sentCount++;
+
+        // Update last used timestamp
+        await prisma.fCMToken.update({
+          where: { id: tokenRecord.id },
+          data: { lastUsedAt: new Date() },
+        });
+
+        console.log(`✅ Push sent to ${tokenRecord.deviceType || "device"}`);
+      } catch (pushError) {
+        console.error(
+          `❌ Failed to send push to device ${tokenRecord.id}:`,
+          pushError.message
+        );
+
+        // If token is invalid, mark as inactive
+        if (
+          pushError.code === "messaging/invalid-registration-token" ||
+          pushError.code === "messaging/registration-token-not-registered"
+        ) {
+          failedTokenIds.push(tokenRecord.id);
+        }
+      }
+    }
+
+    // Deactivate failed tokens
+    if (failedTokenIds.length > 0) {
+      await prisma.fCMToken.updateMany({
+        where: {
+          id: { in: failedTokenIds },
+        },
+        data: { isActive: false },
+      });
+      console.log(`🗑️ Deactivated ${failedTokenIds.length} invalid token(s)`);
+    }
+
+    return {
+      success: sentCount > 0,
+      sentCount,
+      totalDevices: fcmTokens.length,
+      failedCount: failedTokenIds.length,
+    };
+  } catch (error) {
+    console.error("Error in sendPushToAllUserDevices:", error);
+    return { success: false, sentCount: 0, error: error.message };
+  }
+};
+
 // ✅ Send notification for WO assignment
 export const notifyWOAssignment = async (technicianId, wo) => {
   try {
@@ -122,34 +202,23 @@ export const notifyWOAssignment = async (technicianId, wo) => {
       await sendWOAssignmentSMS(technician.phone, wo.woNumber, customerName);
     }
 
-    // 🔥 Send Firebase Push Notification (with sound & priority)
-    if (technician && technician.fcmToken) {
-      try {
-        await sendPushNotification(
-          technician.fcmToken,
-          {
-            title: "🔔 New Job Assigned!",
-            body: `Work Order ${wo.woNumber} - Customer: ${customerName}`,
-          },
-          {
-            type: "WO_ASSIGNED",
-            woId: wo.id,
-            woNumber: wo.woNumber,
-            customerId: wo.customerId,
-            customerName: customerName,
-            // This will trigger sound and high priority notification
-            priority: "high",
-            sound: "default",
-          }
-        );
-        console.log(`🔔 Push notification sent to technician ${technicianId}`);
-      } catch (pushError) {
-        console.error("Error sending push notification:", pushError);
-        // Don't fail the entire operation if push fails
+    // 🔥 Send Firebase Push Notification to all user's devices
+    await sendPushToAllUserDevices(
+      technicianId,
+      {
+        title: "🔔 New Job Assigned!",
+        body: `Work Order ${wo.woNumber} - Customer: ${customerName}`,
+      },
+      {
+        type: "WO_ASSIGNED",
+        woId: String(wo.id),
+        woNumber: wo.woNumber,
+        customerId: String(wo.customerId),
+        customerName: customerName,
+        priority: "high",
+        sound: "default",
       }
-    } else {
-      console.log(`⚠️ No FCM token found for technician ${technicianId}`);
-    }
+    );
 
     // Create database notification
     return createNotification(
@@ -187,28 +256,21 @@ export const notifyWOAccepted = async (dispatcherId, wo) => {
       await sendWOAcceptedSMS(dispatcher.phone, wo.woNumber, techName);
     }
 
-    // 🔥 Send Firebase Push Notification
-    if (dispatcher && dispatcher.fcmToken) {
-      try {
-        await sendPushNotification(
-          dispatcher.fcmToken,
-          {
-            title: "✅ Work Order Accepted",
-            body: `${techName} accepted work order ${wo.woNumber}`,
-          },
-          {
-            type: "WO_ACCEPTED",
-            woId: wo.id,
-            woNumber: wo.woNumber,
-            priority: "high",
-            sound: "default",
-          }
-        );
-        console.log(`🔔 Push notification sent to dispatcher ${dispatcherId}`);
-      } catch (pushError) {
-        console.error("Error sending push notification:", pushError);
+    // 🔥 Send Firebase Push Notification to all devices
+    await sendPushToAllUserDevices(
+      dispatcherId,
+      {
+        title: "✅ Work Order Accepted",
+        body: `${techName} accepted work order ${wo.woNumber}`,
+      },
+      {
+        type: "WO_ACCEPTED",
+        woId: String(wo.id),
+        woNumber: wo.woNumber,
+        priority: "high",
+        sound: "default",
       }
-    }
+    );
 
     return createNotification(
       dispatcherId,
@@ -237,28 +299,21 @@ export const notifyWOCompleted = async (dispatcherId, wo) => {
       await sendWOCompletedSMS(dispatcher.phone, wo.woNumber);
     }
 
-    // 🔥 Send Firebase Push Notification
-    if (dispatcher && dispatcher.fcmToken) {
-      try {
-        await sendPushNotification(
-          dispatcher.fcmToken,
-          {
-            title: "✅ Work Order Completed",
-            body: `Work order ${wo.woNumber} has been completed`,
-          },
-          {
-            type: "WO_COMPLETED",
-            woId: wo.id,
-            woNumber: wo.woNumber,
-            priority: "high",
-            sound: "default",
-          }
-        );
-        console.log(`🔔 Push notification sent to dispatcher ${dispatcherId}`);
-      } catch (pushError) {
-        console.error("Error sending push notification:", pushError);
+    // 🔥 Send Firebase Push Notification to all devices
+    await sendPushToAllUserDevices(
+      dispatcherId,
+      {
+        title: "✅ Work Order Completed",
+        body: `Work order ${wo.woNumber} has been completed`,
+      },
+      {
+        type: "WO_COMPLETED",
+        woId: String(wo.id),
+        woNumber: wo.woNumber,
+        priority: "high",
+        sound: "default",
       }
-    }
+    );
 
     return createNotification(
       dispatcherId,
@@ -291,29 +346,22 @@ export const notifyPaymentVerified = async (technicianId, wo, payment) => {
       );
     }
 
-    // 🔥 Send Firebase Push Notification
-    if (technician && technician.fcmToken) {
-      try {
-        await sendPushNotification(
-          technician.fcmToken,
-          {
-            title: "💰 Payment Verified",
-            body: `Payment of ${payment.amount} verified for WO ${wo.woNumber}`,
-          },
-          {
-            type: "PAYMENT_VERIFIED",
-            woId: wo.id,
-            woNumber: wo.woNumber,
-            amount: String(payment.amount),
-            priority: "high",
-            sound: "default",
-          }
-        );
-        console.log(`🔔 Push notification sent to technician ${technicianId}`);
-      } catch (pushError) {
-        console.error("Error sending push notification:", pushError);
+    // 🔥 Send Firebase Push Notification to all devices
+    await sendPushToAllUserDevices(
+      technicianId,
+      {
+        title: "💰 Payment Verified",
+        body: `Payment of ${payment.amount} verified for WO ${wo.woNumber}`,
+      },
+      {
+        type: "PAYMENT_VERIFIED",
+        woId: String(wo.id),
+        woNumber: wo.woNumber,
+        amount: String(payment.amount),
+        priority: "high",
+        sound: "default",
       }
-    }
+    );
 
     return createNotification(
       technicianId,
@@ -342,28 +390,21 @@ export const notifyCommissionPaid = async (technicianId, payout) => {
       await sendPayoutApprovedSMS(technician.phone, payout.totalAmount);
     }
 
-    // 🔥 Send Firebase Push Notification
-    if (technician && technician.fcmToken) {
-      try {
-        await sendPushNotification(
-          technician.fcmToken,
-          {
-            title: "💵 Commission Paid",
-            body: `Your commission of ${payout.totalAmount} has been paid`,
-          },
-          {
-            type: "COMMISSION_PAID",
-            payoutId: String(payout.id),
-            amount: String(payout.totalAmount),
-            priority: "high",
-            sound: "default",
-          }
-        );
-        console.log(`🔔 Push notification sent to technician ${technicianId}`);
-      } catch (pushError) {
-        console.error("Error sending push notification:", pushError);
+    // 🔥 Send Firebase Push Notification to all devices
+    await sendPushToAllUserDevices(
+      technicianId,
+      {
+        title: "💵 Commission Paid",
+        body: `Your commission of ${payout.totalAmount} has been paid`,
+      },
+      {
+        type: "COMMISSION_PAID",
+        payoutId: String(payout.id),
+        amount: String(payout.totalAmount),
+        priority: "high",
+        sound: "default",
       }
-    }
+    );
 
     return createNotification(
       technicianId,
@@ -392,27 +433,20 @@ export const notifyTechnicianBlocked = async (technicianId, reason) => {
       await sendAccountBlockedSMS(technician.phone, reason);
     }
 
-    // 🔥 Send Firebase Push Notification
-    if (technician && technician.fcmToken) {
-      try {
-        await sendPushNotification(
-          technician.fcmToken,
-          {
-            title: "🚫 Account Blocked",
-            body: `Your account has been blocked. Reason: ${reason}`,
-          },
-          {
-            type: "TECHNICIAN_BLOCKED",
-            reason: String(reason),
-            priority: "high",
-            sound: "default",
-          }
-        );
-        console.log(`🔔 Push notification sent to technician ${technicianId}`);
-      } catch (pushError) {
-        console.error("Error sending push notification:", pushError);
+    // 🔥 Send Firebase Push Notification to all devices
+    await sendPushToAllUserDevices(
+      technicianId,
+      {
+        title: "🚫 Account Blocked",
+        body: `Your account has been blocked. Reason: ${reason}`,
+      },
+      {
+        type: "TECHNICIAN_BLOCKED",
+        reason: String(reason),
+        priority: "high",
+        sound: "default",
       }
-    }
+    );
 
     const notification = await createNotification(
       technicianId,
@@ -488,30 +522,23 @@ export const notifySRAssigned = async (sr, wo, technician) => {
       { srId: sr.id, woId: wo.id, srNumber: sr.srNumber, woNumber: wo.woNumber }
     );
 
-    // 🔥 Send Firebase Push Notification
-    if (customer && customer.fcmToken) {
-      try {
-        await sendPushNotification(
-          customer.fcmToken,
-          {
-            title: "👷 Technician Assigned",
-            body: `${technician.name} will handle your request ${sr.srNumber}`,
-          },
-          {
-            type: "SR_ASSIGNED",
-            srId: String(sr.id),
-            woId: String(wo.id),
-            srNumber: sr.srNumber,
-            woNumber: wo.woNumber,
-            priority: "high",
-            sound: "default",
-          }
-        );
-        console.log(`🔔 Push notification sent to customer ${sr.customerId}`);
-      } catch (pushError) {
-        console.error("Error sending push notification:", pushError);
+    // 🔥 Send Firebase Push Notification to all devices
+    await sendPushToAllUserDevices(
+      sr.customerId,
+      {
+        title: "👷 Technician Assigned",
+        body: `${technician.name} will handle your request ${sr.srNumber}`,
+      },
+      {
+        type: "SR_ASSIGNED",
+        srId: String(sr.id),
+        woId: String(wo.id),
+        srNumber: sr.srNumber,
+        woNumber: wo.woNumber,
+        priority: "high",
+        sound: "default",
       }
-    }
+    );
 
     console.log(
       `👷 SR assigned notification sent: ${sr.srNumber} -> ${wo.woNumber}`
@@ -591,28 +618,21 @@ export const notifyTechnicianOnWay = async (wo, customer) => {
       { woId: wo.id, woNumber: wo.woNumber }
     );
 
-    // 🔥 Send Firebase Push Notification
-    if (customer.fcmToken) {
-      try {
-        await sendPushNotification(
-          customer.fcmToken,
-          {
-            title: "🚗 Technician On The Way",
-            body: `Your technician is heading to your location for ${wo.woNumber}`,
-          },
-          {
-            type: "TECH_ON_WAY",
-            woId: String(wo.id),
-            woNumber: wo.woNumber,
-            priority: "high",
-            sound: "default",
-          }
-        );
-        console.log(`🔔 Push notification sent to customer ${customer.id}`);
-      } catch (pushError) {
-        console.error("Error sending push notification:", pushError);
+    // 🔥 Send Firebase Push Notification to all devices
+    await sendPushToAllUserDevices(
+      customer.id,
+      {
+        title: "🚗 Technician On The Way",
+        body: `Your technician is heading to your location for ${wo.woNumber}`,
+      },
+      {
+        type: "TECH_ON_WAY",
+        woId: String(wo.id),
+        woNumber: wo.woNumber,
+        priority: "high",
+        sound: "default",
       }
-    }
+    );
 
     console.log(
       `🚗 Technician on way notification sent for WO: ${wo.woNumber}`
@@ -633,28 +653,21 @@ export const notifyTechnicianArrived = async (wo, customer) => {
       { woId: wo.id, woNumber: wo.woNumber }
     );
 
-    // 🔥 Send Firebase Push Notification
-    if (customer.fcmToken) {
-      try {
-        await sendPushNotification(
-          customer.fcmToken,
-          {
-            title: "📍 Technician Arrived",
-            body: `Your technician is at your location for ${wo.woNumber}`,
-          },
-          {
-            type: "TECH_ARRIVED",
-            woId: String(wo.id),
-            woNumber: wo.woNumber,
-            priority: "high",
-            sound: "default",
-          }
-        );
-        console.log(`🔔 Push notification sent to customer ${customer.id}`);
-      } catch (pushError) {
-        console.error("Error sending push notification:", pushError);
+    // 🔥 Send Firebase Push Notification to all devices
+    await sendPushToAllUserDevices(
+      customer.id,
+      {
+        title: "📍 Technician Arrived",
+        body: `Your technician is at your location for ${wo.woNumber}`,
+      },
+      {
+        type: "TECH_ARRIVED",
+        woId: String(wo.id),
+        woNumber: wo.woNumber,
+        priority: "high",
+        sound: "default",
       }
-    }
+    );
 
     console.log(
       `📍 Technician arrived notification sent for WO: ${wo.woNumber}`

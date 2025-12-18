@@ -105,44 +105,111 @@ export const markAllAsRead = async (req, res, next) => {
   }
 };
 
-// Register or update FCM token for push notifications
+// Register or update FCM token for push notifications (supports multiple devices)
 export const registerFCMToken = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { fcmToken } = req.body;
+    const { fcmToken, deviceType, deviceName, deviceId } = req.body;
 
     if (!fcmToken) {
       return res.status(400).json({ message: "FCM token is required" });
     }
 
-    // Update user's FCM token
+    // Check if token already exists
+    const existingToken = await prisma.fCMToken.findUnique({
+      where: { token: fcmToken },
+    });
+
+    if (existingToken) {
+      // Update existing token
+      await prisma.fCMToken.update({
+        where: { token: fcmToken },
+        data: {
+          isActive: true,
+          lastUsedAt: new Date(),
+          deviceType,
+          deviceName,
+          deviceId,
+        },
+      });
+
+      console.log(
+        `✅ FCM token updated for user ${userId} (${
+          deviceType || "unknown device"
+        })`
+      );
+    } else {
+      // Create new token entry
+      await prisma.fCMToken.create({
+        data: {
+          userId,
+          token: fcmToken,
+          deviceType,
+          deviceName,
+          deviceId,
+        },
+      });
+
+      console.log(
+        `✅ New FCM token registered for user ${userId} (${
+          deviceType || "unknown device"
+        })`
+      );
+    }
+
+    // Also update the legacy fcmToken field for backward compatibility
     await prisma.user.update({
       where: { id: userId },
       data: { fcmToken },
     });
 
-    console.log(`✅ FCM token registered for user ${userId}`);
-
     return res.json({
       message: "FCM token registered successfully",
       userId,
+      deviceType,
     });
   } catch (err) {
     next(err);
   }
 };
 
-// Remove FCM token (on logout)
+// Remove FCM token (on logout or device removal)
 export const removeFCMToken = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const { fcmToken, deviceId } = req.body;
 
+    if (fcmToken) {
+      // Remove specific token
+      await prisma.fCMToken.deleteMany({
+        where: {
+          userId,
+          token: fcmToken,
+        },
+      });
+      console.log(`✅ FCM token removed for user ${userId}`);
+    } else if (deviceId) {
+      // Remove by device ID
+      await prisma.fCMToken.deleteMany({
+        where: {
+          userId,
+          deviceId,
+        },
+      });
+      console.log(`✅ FCM tokens removed for device ${deviceId}`);
+    } else {
+      // Remove all tokens for user (logout from all devices)
+      await prisma.fCMToken.deleteMany({
+        where: { userId },
+      });
+      console.log(`✅ All FCM tokens removed for user ${userId}`);
+    }
+
+    // Also clear legacy fcmToken field
     await prisma.user.update({
       where: { id: userId },
       data: { fcmToken: null },
     });
-
-    console.log(`✅ FCM token removed for user ${userId}`);
 
     return res.json({ message: "FCM token removed successfully" });
   } catch (err) {
