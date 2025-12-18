@@ -3,6 +3,7 @@
 // src/routes/payment.routes.js
 import { Router } from "express";
 import multer from "multer";
+import os from "os";
 import path from "path";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 import {
@@ -15,10 +16,10 @@ import {
 
 const router = Router();
 
-// Configure multer for payment proof uploads
+// Configure multer for temporary file storage (will be uploaded to external service)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/payments/");
+    cb(null, os.tmpdir()); // Use system temp directory
   },
   filename: (req, file, cb) => {
     cb(

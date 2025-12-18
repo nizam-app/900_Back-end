@@ -3,6 +3,7 @@
 // src/controllers/payment.controller.js
 import { prisma } from "../prisma.js";
 import { notifyPaymentVerified } from "../services/notification.service.js";
+import { uploadImageToService } from "../utils/imageUpload.js";
 
 export const getAllPayments = async (req, res, next) => {
   try {
@@ -185,7 +186,8 @@ export const uploadPaymentProof = async (req, res, next) => {
         .json({ message: "Payment proof image is required" });
     }
 
-    const proofUrl = `/uploads/payments/${req.file.filename}`;
+    // Upload image to external service
+    const proofUrl = await uploadImageToService(req.file);
 
     const payment = await prisma.payment.create({
       data: {
