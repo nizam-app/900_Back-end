@@ -244,6 +244,7 @@ export const createSR = async (req, res, next) => {
             email,
             passwordHash: "",
             role: "CUSTOMER",
+            registrationSource: "WEB_PORTAL",
           },
         });
         console.log(`👤 Created guest user: ${phone} (${name})`);

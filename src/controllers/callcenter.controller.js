@@ -82,6 +82,8 @@ export const createCustomer = async (req, res, next) => {
         homeAddress: address || null,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
+        registrationSource: "CALL_CENTER",
+        createdById: req.user.id,
       },
       select: {
         id: true,
