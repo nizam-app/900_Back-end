@@ -1,13 +1,15 @@
-import { PrismaClient } from '@prisma/client';
+/** @format */
+
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function fixCustomerSources() {
-  console.log('🔧 Fixing customer registration sources...\n');
+  console.log("🔧 Fixing customer registration sources...\n");
 
   // Get all customers without registrationSource
   const customersWithoutSource = await prisma.user.findMany({
     where: {
-      role: 'CUSTOMER',
+      role: "CUSTOMER",
       registrationSource: null,
     },
     select: {
@@ -25,14 +27,16 @@ async function fixCustomerSources() {
     },
   });
 
-  console.log(`Found ${customersWithoutSource.length} customers without source\n`);
+  console.log(
+    `Found ${customersWithoutSource.length} customers without source\n`
+  );
 
   let selfRegistered = 0;
   let callCenter = 0;
   let webPortal = 0;
 
   for (const customer of customersWithoutSource) {
-    let source = 'WEB_PORTAL'; // Default
+    let source = "WEB_PORTAL"; // Default
 
     // Logic to determine source:
     // 1. If has password hash -> SELF_REGISTERED
@@ -40,14 +44,14 @@ async function fixCustomerSources() {
     // 3. If first SR is from CALL_CENTER -> CALL_CENTER
     // 4. Otherwise -> WEB_PORTAL (guest)
 
-    if (customer.passwordHash && customer.passwordHash !== '') {
-      source = 'SELF_REGISTERED';
+    if (customer.passwordHash && customer.passwordHash !== "") {
+      source = "SELF_REGISTERED";
       selfRegistered++;
     } else if (customer.createdById) {
-      source = 'CALL_CENTER';
+      source = "CALL_CENTER";
       callCenter++;
-    } else if (customer.serviceRequests[0]?.source === 'CALL_CENTER') {
-      source = 'CALL_CENTER';
+    } else if (customer.serviceRequests[0]?.source === "CALL_CENTER") {
+      source = "CALL_CENTER";
       callCenter++;
     } else {
       webPortal++;
