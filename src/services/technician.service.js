@@ -186,6 +186,17 @@ export const getTechnicianJobs = async (technicianId, statusFilter) => {
           role: true,
         },
       },
+      payments: {
+        select: {
+          id: true,
+          amount: true,
+          method: true,
+          status: true,
+          transactionRef: true,
+          createdAt: true,
+          verifiedAt: true,
+        },
+      },
     },
     orderBy: {
       scheduledAt: "asc",
