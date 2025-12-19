@@ -50,13 +50,19 @@ export const sendPushNotification = async (
   try {
     const messaging = getFirebaseMessaging();
 
+    const notificationPayload = {
+      title: notification.title,
+      body: notification.body,
+    };
+
+    // Only add imageUrl if it exists
+    if (notification.imageUrl) {
+      notificationPayload.imageUrl = notification.imageUrl;
+    }
+
     const message = {
       token: fcmToken,
-      notification: {
-        title: notification.title,
-        body: notification.body,
-        imageUrl: notification.imageUrl,
-      },
+      notification: notificationPayload,
       data: {
         ...data,
         // Ensure all values are strings
@@ -88,9 +94,20 @@ export const sendPushNotification = async (
 
     const response = await messaging.send(message);
     console.log("✅ Push notification sent successfully:", response);
+    console.log("📱 Notification details:", {
+      title: notification.title,
+      body: notification.body,
+      dataType: data.type,
+    });
     return response;
   } catch (error) {
     console.error("❌ Error sending push notification:", error);
+    console.error("Failed message details:", {
+      token: fcmToken ? `${fcmToken.substring(0, 20)}...` : "missing",
+      title: notification.title,
+      errorCode: error.code,
+      errorMessage: error.message,
+    });
     throw error;
   }
 };
