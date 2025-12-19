@@ -94,6 +94,7 @@ export const createCustomer = async (req, res, next) => {
         latitude: true,
         longitude: true,
         role: true,
+        registrationSource: true,
         createdAt: true,
       },
     });
