@@ -30,6 +30,26 @@ export const getNotifications = async (req, res, next) => {
       where,
       orderBy: { createdAt: "desc" },
       take: 50,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            fcmTokens: {
+              where: {
+                isActive: true,
+              },
+              select: {
+                token: true,
+                deviceType: true,
+                deviceName: true,
+                lastUsedAt: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     // Format notifications with createdAtFormatted and referenceId
@@ -48,6 +68,7 @@ export const getNotifications = async (req, res, next) => {
         isRead: notification.isRead,
         readAt: notification.readAt,
         data: data,
+        user: notification.user,
       };
     });
 

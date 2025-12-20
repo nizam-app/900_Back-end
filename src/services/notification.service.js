@@ -13,7 +13,7 @@ import {
 } from "./sms.service.js";
 import { sendPushNotification } from "../utils/firebase.js";
 
-// ✅ Create and send notification (database storage + SMS)
+// ✅ Create and send notification (database storage + Push Notification)
 export const createNotification = async (
   userId,
   type,
@@ -34,6 +34,26 @@ export const createNotification = async (
     });
 
     console.log(`🔔 Notification created for user ${userId}: ${title}`);
+
+    // 🔥 Send push notification to all user's devices
+    await sendPushToAllUserDevices(
+      userId,
+      {
+        title: title,
+        body: message,
+      },
+      {
+        type: type,
+        notificationId: String(notification.id),
+        ...(data && typeof data === "object"
+          ? Object.fromEntries(
+              Object.entries(data).map(([k, v]) => [k, String(v)])
+            )
+          : {}),
+        priority: "high",
+        sound: "default",
+      }
+    );
 
     return notification;
   } catch (err) {
@@ -489,7 +509,7 @@ export const notifyTechnicianBlocked = async (technicianId, reason) => {
 // ✅ Send notification for new Service Request
 export const notifyNewServiceRequest = async (sr) => {
   try {
-    // Notify customer
+    // Notify customer with push notification
     await createNotification(
       sr.customerId,
       "SR_CREATED",
@@ -570,7 +590,7 @@ export const notifySRAssigned = async (sr, wo, technician) => {
 // ✅ Send notification when SR is completed
 export const notifySRCompleted = async (sr, wo) => {
   try {
-    // Notify customer
+    // Notify customer with push notification
     await createNotification(
       sr.customerId,
       "SR_COMPLETED",
@@ -588,7 +608,7 @@ export const notifySRCompleted = async (sr, wo) => {
 // ✅ Send notification when SR is cancelled
 export const notifySRCancelled = async (sr, cancelledBy) => {
   try {
-    // Notify customer if cancelled by admin/dispatcher
+    // Notify customer if cancelled by admin/dispatcher with push notification
     if (cancelledBy !== "CUSTOMER") {
       await createNotification(
         sr.customerId,
