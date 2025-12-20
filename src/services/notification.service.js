@@ -55,6 +55,25 @@ export const findUserNotifications = async (userId, filters) => {
     where,
     orderBy: { createdAt: "desc" },
     take: 50,
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          fcmTokens: {
+            where: {
+              isActive: true,
+            },
+            select: {
+              token: true,
+              deviceType: true,
+              deviceName: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   return notifications;
