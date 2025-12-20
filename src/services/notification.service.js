@@ -187,11 +187,27 @@ export const sendPushToAllUserDevices = async (userId, notification, data) => {
         );
 
         // If token is invalid, mark as inactive
-        if (
-          pushError.code === "messaging/invalid-registration-token" ||
-          pushError.code === "messaging/registration-token-not-registered"
-        ) {
+        // Handle all possible invalid token error codes
+        const invalidTokenCodes = [
+          "messaging/invalid-registration-token",
+          "messaging/registration-token-not-registered",
+          "messaging/invalid-argument", // This happens when token format is invalid
+          "messaging/unsupported-registration-token",
+          "messaging/mismatched-credential", // SenderId mismatch - token from different Firebase project
+        ];
+
+        // Also check error message for invalid token patterns
+        const isInvalidToken =
+          invalidTokenCodes.includes(pushError.code) ||
+          pushError.message?.includes("not a valid FCM registration token") ||
+          pushError.message?.includes("Invalid registration token") ||
+          pushError.message?.includes("registration token is not valid");
+
+        if (isInvalidToken) {
           failedTokenIds.push(tokenRecord.id);
+          console.log(
+            `🗑️ Marking token ${tokenRecord.id} as invalid (${pushError.code})`
+          );
         }
       }
     }
@@ -259,14 +275,20 @@ export const notifyWOAssignment = async (technicianId, wo) => {
       }
     );
 
-    // Create database notification
-    return createNotification(
-      technicianId,
-      "WO_ASSIGNED",
-      "New Work Order Assigned",
-      `You have been assigned work order ${wo.woNumber}`,
-      { woId: wo.id, woNumber: wo.woNumber }
-    );
+    // Create database notification (without push - already sent above)
+    // Create notification record directly to avoid duplicate push
+    const notification = await prisma.notification.create({
+      data: {
+        userId: technicianId,
+        type: "WO_ASSIGNED",
+        title: "New Work Order Assigned",
+        message: `You have been assigned work order ${wo.woNumber}`,
+        dataJson: JSON.stringify({ woId: wo.id, woNumber: wo.woNumber }),
+      },
+    });
+
+    console.log(`🔔 Notification created for user ${technicianId}: New Work Order Assigned`);
+    return notification;
   } catch (error) {
     console.error("Error in notifyWOAssignment:", error);
     throw error;

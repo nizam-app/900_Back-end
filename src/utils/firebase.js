@@ -74,7 +74,7 @@ export const sendPushNotification = async (
         priority: "high",
         notification: {
           sound: "default", // Play default notification sound
-          channelId: "job_assignments", // Custom channel for job notifications
+          channelId: "high_importance_channel", // Match Flutter app channel ID
           priority: "high",
           defaultSound: true,
           defaultVibrateTimings: true,
@@ -101,13 +101,35 @@ export const sendPushNotification = async (
     });
     return response;
   } catch (error) {
-    console.error("❌ Error sending push notification:", error);
-    console.error("Failed message details:", {
-      token: fcmToken ? `${fcmToken.substring(0, 20)}...` : "missing",
-      title: notification.title,
-      errorCode: error.code,
-      errorMessage: error.message,
-    });
+    // Check if token is invalid before logging
+    const invalidTokenCodes = [
+      "messaging/invalid-registration-token",
+      "messaging/registration-token-not-registered",
+      "messaging/invalid-argument",
+      "messaging/unsupported-registration-token",
+      "messaging/mismatched-credential", // SenderId mismatch - token from different Firebase project
+    ];
+
+    const isInvalidToken =
+      invalidTokenCodes.includes(error.code) ||
+      error.message?.includes("not a valid FCM registration token") ||
+      error.message?.includes("Invalid registration token");
+
+    if (isInvalidToken) {
+      console.error("❌ Invalid FCM token detected:", {
+        tokenPreview: fcmToken ? `${fcmToken.substring(0, 30)}...` : "missing",
+        errorCode: error.code,
+        errorMessage: error.message,
+      });
+    } else {
+      console.error("❌ Error sending push notification:", error);
+      console.error("Failed message details:", {
+        token: fcmToken ? `${fcmToken.substring(0, 20)}...` : "missing",
+        title: notification.title,
+        errorCode: error.code,
+        errorMessage: error.message,
+      });
+    }
     throw error;
   }
 };
@@ -141,7 +163,7 @@ export const sendPushNotificationToMultiple = async (
         priority: "high",
         notification: {
           sound: "default",
-          channelId: "job_assignments",
+          channelId: "high_importance_channel", // Match Flutter app channel ID
           priority: "high",
         },
       },

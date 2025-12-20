@@ -11,6 +11,8 @@ import {
   removeFCMToken,
   sendNotification,
   sendNotificationToTopic,
+  testNotificationSystem,
+  cleanupInvalidTokens,
 } from "../controllers/notification.controller.js";
 import { requireRole } from "../middleware/auth.js";
 
@@ -25,6 +27,9 @@ router.post("/fcm-token", authMiddleware, registerFCMToken);
 router.post("/save-fcm-token", authMiddleware, registerFCMToken); // Alternative endpoint
 router.delete("/fcm-token", authMiddleware, removeFCMToken);
 
+// Test endpoint: Check notification system status
+router.get("/test", authMiddleware, testNotificationSystem);
+
 // Admin: Send custom notifications
 router.post(
   "/send-notification",
@@ -38,6 +43,14 @@ router.post(
   authMiddleware,
   requireRole("ADMIN"),
   sendNotificationToTopic
+);
+
+// Admin: Cleanup invalid FCM tokens
+router.post(
+  "/cleanup-invalid-tokens",
+  authMiddleware,
+  requireRole("ADMIN"),
+  cleanupInvalidTokens
 );
 
 export default router;
