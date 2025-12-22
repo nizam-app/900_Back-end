@@ -179,15 +179,11 @@ export const uploadPaymentProof = async (req, res, next) => {
       });
     }
 
-    // Validate that payment proof is uploaded
-    if (!req.file) {
-      return res
-        .status(400)
-        .json({ message: "Payment proof image is required" });
+    // Upload image to external service (optional)
+    let proofUrl = null;
+    if (req.file) {
+      proofUrl = await uploadImageToService(req.file);
     }
-
-    // Upload image to external service
-    const proofUrl = await uploadImageToService(req.file);
 
     const payment = await prisma.payment.create({
       data: {
@@ -196,7 +192,7 @@ export const uploadPaymentProof = async (req, res, next) => {
         amount: finalAmount,
         method,
         transactionRef,
-        proofUrl,
+        ...(proofUrl && { proofUrl }),
         status: "PENDING_VERIFICATION",
       },
     });
