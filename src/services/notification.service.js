@@ -264,15 +264,17 @@ export const notifyWOAssignment = async (technicianId, wo) => {
       "WO_ASSIGNED",
       "🔔 New Job Assigned!",
       `Work Order ${wo.woNumber} - Customer: ${customerName}. You have been assigned this work order.`,
-      { 
-        woId: wo.id, 
+      {
+        woId: wo.id,
         woNumber: wo.woNumber,
         customerId: wo.customerId,
-        customerName: customerName
+        customerName: customerName,
       }
     );
 
-    console.log(`🔔 Notification created for user ${technicianId}: New Work Order Assigned`);
+    console.log(
+      `🔔 Notification created for user ${technicianId}: New Work Order Assigned`
+    );
     return notification;
   } catch (error) {
     console.error("Error in notifyWOAssignment:", error);
