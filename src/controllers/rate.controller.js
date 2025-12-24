@@ -462,8 +462,12 @@ export const getTechniciansWithRates = async (req, res, next) => {
         status: profile?.status,
         // Rate info
         commissionRate: profile?.commissionRate || 0,
-        commissionRatePercentage: Math.round((profile?.commissionRate || 0) * 100),
-        commissionRateDisplay: `${Math.round((profile?.commissionRate || 0) * 100)}%`,
+        commissionRatePercentage: Math.round(
+          (profile?.commissionRate || 0) * 100
+        ),
+        commissionRateDisplay: `${Math.round(
+          (profile?.commissionRate || 0) * 100
+        )}%`,
         bonusRate: profile?.bonusRate || 0,
         bonusRatePercentage: Math.round((profile?.bonusRate || 0) * 100),
         bonusRateDisplay: `${Math.round((profile?.bonusRate || 0) * 100)}%`,
@@ -576,12 +580,16 @@ export const setTechnicianRate = async (req, res, next) => {
     // Validate at least one rate is provided
     if (commissionRate === undefined && bonusRate === undefined) {
       return res.status(400).json({
-        message: "At least one rate (commissionRate or bonusRate) must be provided",
+        message:
+          "At least one rate (commissionRate or bonusRate) must be provided",
       });
     }
 
     // Validate rates are between 0 and 1
-    if (commissionRate !== undefined && (commissionRate < 0 || commissionRate > 1)) {
+    if (
+      commissionRate !== undefined &&
+      (commissionRate < 0 || commissionRate > 1)
+    ) {
       return res.status(400).json({
         message: "Commission rate must be between 0 and 1 (e.g., 0.10 for 10%)",
       });
@@ -772,7 +780,11 @@ export const bulkApplyRateStructure = async (req, res, next) => {
     const { rateStructureId } = req.params;
     const { technicianIds } = req.body;
 
-    if (!technicianIds || !Array.isArray(technicianIds) || technicianIds.length === 0) {
+    if (
+      !technicianIds ||
+      !Array.isArray(technicianIds) ||
+      technicianIds.length === 0
+    ) {
       return res.status(400).json({
         message: "technicianIds must be a non-empty array",
       });

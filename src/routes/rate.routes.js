@@ -57,10 +57,16 @@ router.get("/technicians/:technicianId", getTechnicianRate);
 router.patch("/technicians/:technicianId", setTechnicianRate);
 
 // Apply a rate structure to a single technician
-router.post("/technicians/:technicianId/apply/:rateStructureId", applyRateStructureToTechnician);
+router.post(
+  "/technicians/:technicianId/apply/:rateStructureId",
+  applyRateStructureToTechnician
+);
 
 // Reset technician's rate to default
-router.post("/technicians/:technicianId/reset-to-default", resetTechnicianRateToDefault);
+router.post(
+  "/technicians/:technicianId/reset-to-default",
+  resetTechnicianRateToDefault
+);
 
 // Bulk apply rate structure to multiple technicians
 router.post("/:rateStructureId/bulk-apply", bulkApplyRateStructure);
