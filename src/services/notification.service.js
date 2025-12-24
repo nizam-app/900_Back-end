@@ -257,35 +257,20 @@ export const notifyWOAssignment = async (technicianId, wo) => {
       await sendWOAssignmentSMS(technician.phone, wo.woNumber, customerName);
     }
 
-    // 🔥 Send Firebase Push Notification to all user's devices
-    await sendPushToAllUserDevices(
+    // 🔥 Send Firebase Push Notification AND create DB notification in one call
+    // Using createNotification to avoid duplicate notifications
+    const notification = await createNotification(
       technicianId,
-      {
-        title: "🔔 New Job Assigned!",
-        body: `Work Order ${wo.woNumber} - Customer: ${customerName}`,
-      },
-      {
-        type: "WO_ASSIGNED",
-        woId: String(wo.id),
+      "WO_ASSIGNED",
+      "🔔 New Job Assigned!",
+      `Work Order ${wo.woNumber} - Customer: ${customerName}. You have been assigned this work order.`,
+      { 
+        woId: wo.id, 
         woNumber: wo.woNumber,
-        customerId: String(wo.customerId),
-        customerName: customerName,
-        priority: "high",
-        sound: "default",
+        customerId: wo.customerId,
+        customerName: customerName
       }
     );
-
-    // Create database notification (without push - already sent above)
-    // Create notification record directly to avoid duplicate push
-    const notification = await prisma.notification.create({
-      data: {
-        userId: technicianId,
-        type: "WO_ASSIGNED",
-        title: "New Work Order Assigned",
-        message: `You have been assigned work order ${wo.woNumber}`,
-        dataJson: JSON.stringify({ woId: wo.id, woNumber: wo.woNumber }),
-      },
-    });
 
     console.log(`🔔 Notification created for user ${technicianId}: New Work Order Assigned`);
     return notification;
@@ -317,27 +302,12 @@ export const notifyWOAccepted = async (dispatcherId, wo) => {
       await sendWOAcceptedSMS(dispatcher.phone, wo.woNumber, techName);
     }
 
-    // 🔥 Send Firebase Push Notification to all devices
-    await sendPushToAllUserDevices(
-      dispatcherId,
-      {
-        title: "✅ Work Order Accepted",
-        body: `${techName} accepted work order ${wo.woNumber}`,
-      },
-      {
-        type: "WO_ACCEPTED",
-        woId: String(wo.id),
-        woNumber: wo.woNumber,
-        priority: "high",
-        sound: "default",
-      }
-    );
-
+    // Using createNotification to avoid duplicate notifications (handles both DB + push)
     return createNotification(
       dispatcherId,
       "WO_ACCEPTED",
-      "Work Order Accepted",
-      `Technician accepted work order ${wo.woNumber}`,
+      "✅ Work Order Accepted",
+      `${techName} accepted work order ${wo.woNumber}`,
       { woId: wo.id, woNumber: wo.woNumber }
     );
   } catch (error) {
@@ -360,26 +330,11 @@ export const notifyWOCompleted = async (dispatcherId, wo) => {
       await sendWOCompletedSMS(dispatcher.phone, wo.woNumber);
     }
 
-    // 🔥 Send Firebase Push Notification to all devices
-    await sendPushToAllUserDevices(
-      dispatcherId,
-      {
-        title: "✅ Work Order Completed",
-        body: `Work order ${wo.woNumber} has been completed`,
-      },
-      {
-        type: "WO_COMPLETED",
-        woId: String(wo.id),
-        woNumber: wo.woNumber,
-        priority: "high",
-        sound: "default",
-      }
-    );
-
+    // Using createNotification to avoid duplicate notifications (handles both DB + push)
     return createNotification(
       dispatcherId,
       "WO_COMPLETED",
-      "Work Order Completed",
+      "✅ Work Order Completed",
       `Work order ${wo.woNumber} has been completed`,
       { woId: wo.id, woNumber: wo.woNumber }
     );
@@ -407,28 +362,12 @@ export const notifyPaymentVerified = async (technicianId, wo, payment) => {
       );
     }
 
-    // 🔥 Send Firebase Push Notification to all devices
-    await sendPushToAllUserDevices(
-      technicianId,
-      {
-        title: "💰 Payment Verified",
-        body: `Payment of ${payment.amount} verified for WO ${wo.woNumber}`,
-      },
-      {
-        type: "PAYMENT_VERIFIED",
-        woId: String(wo.id),
-        woNumber: wo.woNumber,
-        amount: String(payment.amount),
-        priority: "high",
-        sound: "default",
-      }
-    );
-
+    // Using createNotification to avoid duplicate notifications (handles both DB + push)
     return createNotification(
       technicianId,
       "PAYMENT_VERIFIED",
-      "Payment Verified",
-      `Payment for work order ${wo.woNumber} has been verified`,
+      "💰 Payment Verified",
+      `Payment of ${payment.amount} verified for WO ${wo.woNumber}`,
       { woId: wo.id, woNumber: wo.woNumber, amount: payment.amount }
     );
   } catch (error) {
@@ -451,26 +390,11 @@ export const notifyCommissionPaid = async (technicianId, payout) => {
       await sendPayoutApprovedSMS(technician.phone, payout.totalAmount);
     }
 
-    // 🔥 Send Firebase Push Notification to all devices
-    await sendPushToAllUserDevices(
-      technicianId,
-      {
-        title: "💵 Commission Paid",
-        body: `Your commission of ${payout.totalAmount} has been paid`,
-      },
-      {
-        type: "COMMISSION_PAID",
-        payoutId: String(payout.id),
-        amount: String(payout.totalAmount),
-        priority: "high",
-        sound: "default",
-      }
-    );
-
+    // Using createNotification to avoid duplicate notifications (handles both DB + push)
     return createNotification(
       technicianId,
       "COMMISSION_PAID",
-      "Commission Paid",
+      "💵 Commission Paid",
       `Your commission of ${payout.totalAmount} has been paid`,
       { payoutId: payout.id, amount: payout.totalAmount }
     );
@@ -494,25 +418,11 @@ export const notifyTechnicianBlocked = async (technicianId, reason) => {
       await sendAccountBlockedSMS(technician.phone, reason);
     }
 
-    // 🔥 Send Firebase Push Notification to all devices
-    await sendPushToAllUserDevices(
-      technicianId,
-      {
-        title: "🚫 Account Blocked",
-        body: `Your account has been blocked. Reason: ${reason}`,
-      },
-      {
-        type: "TECHNICIAN_BLOCKED",
-        reason: String(reason),
-        priority: "high",
-        sound: "default",
-      }
-    );
-
+    // Using createNotification to avoid duplicate notifications (handles both DB + push)
     const notification = await createNotification(
       technicianId,
       "TECHNICIAN_BLOCKED",
-      "Account Blocked",
+      "🚫 Account Blocked",
       `Your account has been blocked. Reason: ${reason}`,
       { reason }
     );
@@ -568,37 +478,14 @@ export const notifyNewServiceRequest = async (sr) => {
 // ✅ Send notification when SR is assigned (converted to WO)
 export const notifySRAssigned = async (sr, wo, technician) => {
   try {
-    // Get customer FCM token
-    const customer = await prisma.user.findUnique({
-      where: { id: sr.customerId },
-      select: { fcmToken: true },
-    });
-
-    // Notify customer
+    // Notify customer - using createNotification which handles both DB record and push notification
+    // This prevents duplicate notifications (was previously sending both createNotification + sendPushToAllUserDevices)
     await createNotification(
       sr.customerId,
       "SR_ASSIGNED",
-      "Service Request Assigned",
-      `Your service request ${sr.srNumber} has been assigned to ${technician.name}. Work order ${wo.woNumber} created.`,
+      "👷 Technician Assigned",
+      `${technician.name} will handle your request ${sr.srNumber}. Work order ${wo.woNumber} created.`,
       { srId: sr.id, woId: wo.id, srNumber: sr.srNumber, woNumber: wo.woNumber }
-    );
-
-    // 🔥 Send Firebase Push Notification to all devices
-    await sendPushToAllUserDevices(
-      sr.customerId,
-      {
-        title: "👷 Technician Assigned",
-        body: `${technician.name} will handle your request ${sr.srNumber}`,
-      },
-      {
-        type: "SR_ASSIGNED",
-        srId: String(sr.id),
-        woId: String(wo.id),
-        srNumber: sr.srNumber,
-        woNumber: wo.woNumber,
-        priority: "high",
-        sound: "default",
-      }
     );
 
     console.log(
@@ -671,28 +558,13 @@ export const notifySRCancelled = async (sr, cancelledBy) => {
 // ✅ Send notification when technician is on the way
 export const notifyTechnicianOnWay = async (wo, customer) => {
   try {
+    // Using createNotification to avoid duplicate notifications (handles both DB + push)
     await createNotification(
       customer.id,
       "TECH_ON_WAY",
-      "Technician On The Way",
-      `Your technician is on the way to your location for work order ${wo.woNumber}.`,
+      "🚗 Technician On The Way",
+      `Your technician is heading to your location for work order ${wo.woNumber}.`,
       { woId: wo.id, woNumber: wo.woNumber }
-    );
-
-    // 🔥 Send Firebase Push Notification to all devices
-    await sendPushToAllUserDevices(
-      customer.id,
-      {
-        title: "🚗 Technician On The Way",
-        body: `Your technician is heading to your location for ${wo.woNumber}`,
-      },
-      {
-        type: "TECH_ON_WAY",
-        woId: String(wo.id),
-        woNumber: wo.woNumber,
-        priority: "high",
-        sound: "default",
-      }
     );
 
     console.log(
@@ -706,28 +578,13 @@ export const notifyTechnicianOnWay = async (wo, customer) => {
 // ✅ Send notification when technician has arrived
 export const notifyTechnicianArrived = async (wo, customer) => {
   try {
+    // Using createNotification to avoid duplicate notifications (handles both DB + push)
     await createNotification(
       customer.id,
       "TECH_ARRIVED",
-      "Technician Arrived",
+      "📍 Technician Arrived",
       `Your technician has arrived at your location for work order ${wo.woNumber}.`,
       { woId: wo.id, woNumber: wo.woNumber }
-    );
-
-    // 🔥 Send Firebase Push Notification to all devices
-    await sendPushToAllUserDevices(
-      customer.id,
-      {
-        title: "📍 Technician Arrived",
-        body: `Your technician is at your location for ${wo.woNumber}`,
-      },
-      {
-        type: "TECH_ARRIVED",
-        woId: String(wo.id),
-        woNumber: wo.woNumber,
-        priority: "high",
-        sound: "default",
-      }
     );
 
     console.log(
