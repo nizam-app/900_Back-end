@@ -152,6 +152,8 @@ export const sendPushToAllUserDevices = async (userId, notification, data) => {
         token: true,
         deviceType: true,
         id: true,
+        deviceId: true,
+        deviceName: true,
       },
     });
 
@@ -160,15 +162,30 @@ export const sendPushToAllUserDevices = async (userId, notification, data) => {
       return { success: false, sentCount: 0 };
     }
 
-    console.log(
-      `📱 Sending push to ${fcmTokens.length} device(s) for user ${userId}`
+    // Log detailed token info for debugging duplicate notifications
+    console.log(`📱 Found ${fcmTokens.length} FCM token(s) for user ${userId}:`);
+    fcmTokens.forEach((t, idx) => {
+      console.log(`   Token ${idx + 1}: ID=${t.id}, Device=${t.deviceType || 'unknown'}, Name=${t.deviceName || 'unnamed'}, DeviceID=${t.deviceId || 'none'}`);
+    });
+
+    // Check for duplicate tokens (same token registered multiple times)
+    const uniqueTokens = [...new Set(fcmTokens.map(t => t.token))];
+    if (uniqueTokens.length < fcmTokens.length) {
+      console.warn(`⚠️ WARNING: User ${userId} has duplicate FCM tokens! Unique: ${uniqueTokens.length}, Total: ${fcmTokens.length}`);
+    }
+
+    // Only send to unique tokens to avoid duplicate notifications
+    const tokensToSend = fcmTokens.filter((t, index, self) => 
+      index === self.findIndex(other => other.token === t.token)
     );
+
+    console.log(`📤 Sending push to ${tokensToSend.length} unique device(s) for user ${userId}`);
 
     let sentCount = 0;
     const failedTokenIds = [];
 
-    // Send to all devices
-    for (const tokenRecord of fcmTokens) {
+    // Send to unique devices only
+    for (const tokenRecord of tokensToSend) {
       try {
         await sendPushNotification(tokenRecord.token, notification, data);
         sentCount++;
@@ -226,7 +243,8 @@ export const sendPushToAllUserDevices = async (userId, notification, data) => {
     return {
       success: sentCount > 0,
       sentCount,
-      totalDevices: fcmTokens.length,
+      totalDevices: tokensToSend.length,
+      duplicatesRemoved: fcmTokens.length - tokensToSend.length,
       failedCount: failedTokenIds.length,
     };
   } catch (error) {

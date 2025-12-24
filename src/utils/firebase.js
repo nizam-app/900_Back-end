@@ -39,7 +39,7 @@ export const getFirebaseMessaging = () => {
 /**
  * Send push notification to a single device
  * @param {string} fcmToken - Device FCM token
- * @param {Object} notification - Notification payload
+ * @param {Object} notification - Notification payload (title, body)
  * @param {Object} data - Data payload (optional)
  */
 export const sendPushNotification = async (
@@ -64,29 +64,38 @@ export const sendPushNotification = async (
       token: fcmToken,
       notification: notificationPayload,
       data: {
-        ...data,
-        // Ensure all values are strings
-        ...(data.woId && { woId: String(data.woId) }),
-        ...(data.woNumber && { woNumber: String(data.woNumber) }),
-        ...(data.type && { type: String(data.type) }),
+        // Include all data as strings
+        ...Object.fromEntries(
+          Object.entries(data).map(([k, v]) => [k, String(v)])
+        ),
+        // Add title and body to data for app to use
+        title: notification.title || "",
+        body: notification.body || "",
+        // Flag to identify this came from push (app should not show duplicate)
+        source: "fcm_push",
+        timestamp: new Date().toISOString(),
       },
       android: {
         priority: "high",
         notification: {
-          sound: "default", // Play default notification sound
-          channelId: "high_importance_channel", // Match Flutter app channel ID
+          sound: "default",
+          channelId: "high_importance_channel",
           priority: "high",
           defaultSound: true,
           defaultVibrateTimings: true,
+          // Use notification ID to prevent duplicates
+          tag: data.notificationId ? `notif_${data.notificationId}` : undefined,
         },
       },
       apns: {
         payload: {
           aps: {
-            sound: "default", // Play sound on iOS
+            sound: "default",
             badge: 1,
             contentAvailable: true,
-            category: "JOB_ASSIGNMENT",
+            category: data.type || "DEFAULT",
+            // Thread ID to group related notifications
+            threadId: data.woNumber || data.type || "default",
           },
         },
       },
@@ -98,6 +107,7 @@ export const sendPushNotification = async (
       title: notification.title,
       body: notification.body,
       dataType: data.type,
+      notificationId: data.notificationId,
     });
     return response;
   } catch (error) {
