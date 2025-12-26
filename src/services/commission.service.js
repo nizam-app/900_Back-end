@@ -1,6 +1,8 @@
+/** @format */
+
 // src/services/commission.service.js
-import { prisma } from '../prisma.js';
-import { notifyCommissionPaid } from './notification.service.js';
+import { prisma } from "../prisma.js";
+import { notifyCommissionPaid } from "./notification.service.js";
 
 // auto commission / bonus after WO PAID_VERIFIED
 export const createCommissionForWO = async (woId, paymentId) => {
@@ -34,11 +36,11 @@ export const createCommissionForWO = async (woId, paymentId) => {
   });
 
   // Determine type and rate based on technician type
-  const isFreelancer = techProfile.type === 'FREELANCER';
-  const type = isFreelancer ? 'COMMISSION' : 'BONUS';
-  const rate = isFreelancer 
-    ? (systemConfig?.freelancerCommissionRate || 0.05)
-    : (systemConfig?.internalEmployeeBonusRate || 0.05);
+  const isFreelancer = techProfile.type === "FREELANCER";
+  const type = isFreelancer ? "COMMISSION" : "BONUS";
+  const rate = isFreelancer
+    ? systemConfig?.freelancerCommissionRate || 0.05
+    : systemConfig?.internalEmployeeBonusRate || 0.05;
 
   const commissionAmount = amount * rate;
 
@@ -49,13 +51,13 @@ export const createCommissionForWO = async (woId, paymentId) => {
       type,
       rate,
       amount: commissionAmount,
-      status: 'EARNED',
+      status: "EARNED",
       paymentId,
     },
   });
 
   // Update wallet for freelancer
-  if (techProfile.type === 'FREELANCER') {
+  if (techProfile.type === "FREELANCER") {
     let wallet = await prisma.wallet.findUnique({
       where: { technicianId: wo.technicianId },
     });
@@ -79,8 +81,8 @@ export const createCommissionForWO = async (woId, paymentId) => {
       data: {
         walletId: wallet.id,
         technicianId: wo.technicianId,
-        type: 'CREDIT',
-        sourceType: 'COMMISSION',
+        type: "CREDIT",
+        sourceType: "COMMISSION",
         sourceId: commission.id,
         amount: commissionAmount,
         description: `Commission for WO ${wo.woNumber}`,
@@ -94,7 +96,7 @@ export const createCommissionForWO = async (woId, paymentId) => {
 // very simple weekly payout example
 export const runWeeklyPayout = async () => {
   const commissions = await prisma.commission.findMany({
-    where: { status: 'EARNED' },
+    where: { status: "EARNED" },
   });
 
   const byTech = {};
@@ -112,15 +114,15 @@ export const runWeeklyPayout = async () => {
       data: {
         technicianId: Number(techId),
         totalAmount: total,
-        type: 'WEEKLY',
-        status: 'PAID',
+        type: "WEEKLY",
+        status: "PAID",
         processedAt: new Date(),
       },
     });
 
     await prisma.commission.updateMany({
       where: { id: { in: items.map((c) => c.id) } },
-      data: { status: 'PAID', payoutId: payout.id },
+      data: { status: "PAID", payoutId: payout.id },
     });
 
     const wallet = await prisma.wallet.findUnique({
@@ -138,8 +140,8 @@ export const runWeeklyPayout = async () => {
         data: {
           walletId: wallet.id,
           technicianId: Number(techId),
-          type: 'DEBIT',
-          sourceType: 'PAYOUT',
+          type: "DEBIT",
+          sourceType: "PAYOUT",
           sourceId: payout.id,
           amount: total,
           description: `Weekly payout`,
@@ -177,12 +179,16 @@ export const findTechnicianCommissions = async (technicianId, filters) => {
       },
       payout: true,
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 
   const total = commissions.reduce((sum, c) => sum + c.amount, 0);
-  const earned = commissions.filter((c) => c.status === 'EARNED').reduce((sum, c) => sum + c.amount, 0);
-  const paid = commissions.filter((c) => c.status === 'PAID').reduce((sum, c) => sum + c.amount, 0);
+  const earned = commissions
+    .filter((c) => c.status === "EARNED")
+    .reduce((sum, c) => sum + c.amount, 0);
+  const paid = commissions
+    .filter((c) => c.status === "PAID")
+    .reduce((sum, c) => sum + c.amount, 0);
 
   return {
     commissions,
@@ -197,7 +203,7 @@ export const findTechnicianCommissions = async (technicianId, filters) => {
 // ✅ Request on-demand payout
 export const createPayoutRequest = async (technicianId, amount, reason) => {
   if (!amount || amount <= 0) {
-    throw new Error('Valid amount is required');
+    throw new Error("Valid amount is required");
   }
 
   // Check wallet balance for freelancers
@@ -209,9 +215,9 @@ export const createPayoutRequest = async (technicianId, amount, reason) => {
     },
   });
 
-  if (user.technicianProfile?.type === 'FREELANCER') {
+  if (user.technicianProfile?.type === "FREELANCER") {
     if (!user.wallet || user.wallet.balance < amount) {
-      throw new Error('Insufficient wallet balance');
+      throw new Error("Insufficient wallet balance");
     }
   }
 
@@ -219,7 +225,7 @@ export const createPayoutRequest = async (technicianId, amount, reason) => {
     data: {
       technicianId,
       amount: Number(amount),
-      status: 'PENDING',
+      status: "PENDING",
       reason: reason || null,
     },
   });
@@ -227,8 +233,8 @@ export const createPayoutRequest = async (technicianId, amount, reason) => {
   await prisma.auditLog.create({
     data: {
       userId: technicianId,
-      action: 'PAYOUT_REQUESTED',
-      entityType: 'PAYOUT_REQUEST',
+      action: "PAYOUT_REQUESTED",
+      entityType: "PAYOUT_REQUEST",
       entityId: payoutRequest.id,
       metadataJson: JSON.stringify({ amount }),
     },
@@ -238,7 +244,12 @@ export const createPayoutRequest = async (technicianId, amount, reason) => {
 };
 
 // ✅ Admin: Review payout request
-export const processPayoutRequest = async (requestId, action, reason, reviewerId) => {
+export const processPayoutRequest = async (
+  requestId,
+  action,
+  reason,
+  reviewerId
+) => {
   const payoutRequest = await prisma.payoutRequest.findUnique({
     where: { id: requestId },
     include: {
@@ -252,26 +263,26 @@ export const processPayoutRequest = async (requestId, action, reason, reviewerId
   });
 
   if (!payoutRequest) {
-    throw new Error('Payout request not found');
+    throw new Error("Payout request not found");
   }
 
-  if (payoutRequest.status !== 'PENDING') {
-    throw new Error('Payout request already processed');
+  if (payoutRequest.status !== "PENDING") {
+    throw new Error("Payout request already processed");
   }
 
-  if (action === 'APPROVE') {
+  if (action === "APPROVE") {
     // Get earned commissions
     const earnedCommissions = await prisma.commission.findMany({
       where: {
         technicianId: payoutRequest.technicianId,
-        status: 'EARNED',
+        status: "EARNED",
       },
     });
 
     const earnedTotal = earnedCommissions.reduce((sum, c) => sum + c.amount, 0);
 
     if (earnedTotal < payoutRequest.amount) {
-      throw new Error('Insufficient earned commissions');
+      throw new Error("Insufficient earned commissions");
     }
 
     // Create payout
@@ -279,8 +290,8 @@ export const processPayoutRequest = async (requestId, action, reason, reviewerId
       data: {
         technicianId: payoutRequest.technicianId,
         totalAmount: payoutRequest.amount,
-        type: 'ON_DEMAND',
-        status: 'PAID',
+        type: "ON_DEMAND",
+        status: "PAID",
         requestedAt: payoutRequest.createdAt,
         processedAt: new Date(),
         createdById: reviewerId,
@@ -295,7 +306,7 @@ export const processPayoutRequest = async (requestId, action, reason, reviewerId
       await prisma.commission.update({
         where: { id: commission.id },
         data: {
-          status: 'PAID',
+          status: "PAID",
           payoutId: payout.id,
         },
       });
@@ -316,11 +327,11 @@ export const processPayoutRequest = async (requestId, action, reason, reviewerId
         data: {
           walletId: payoutRequest.technician.wallet.id,
           technicianId: payoutRequest.technicianId,
-          type: 'DEBIT',
-          sourceType: 'PAYOUT',
+          type: "DEBIT",
+          sourceType: "PAYOUT",
           sourceId: payout.id,
           amount: payoutRequest.amount,
-          description: 'On-demand payout',
+          description: "On-demand payout",
         },
       });
     }
@@ -329,7 +340,7 @@ export const processPayoutRequest = async (requestId, action, reason, reviewerId
     await prisma.payoutRequest.update({
       where: { id: requestId },
       data: {
-        status: 'APPROVED',
+        status: "APPROVED",
         reviewedById: reviewerId,
         reviewedAt: new Date(),
       },
@@ -338,21 +349,21 @@ export const processPayoutRequest = async (requestId, action, reason, reviewerId
     // Notify technician
     await notifyCommissionPaid(payoutRequest.technicianId, payout);
 
-    return { message: 'Payout approved and processed', payout };
-  } else if (action === 'REJECT') {
+    return { message: "Payout approved and processed", payout };
+  } else if (action === "REJECT") {
     await prisma.payoutRequest.update({
       where: { id: requestId },
       data: {
-        status: 'REJECTED',
-        reason: reason || 'No reason provided',
+        status: "REJECTED",
+        reason: reason || "No reason provided",
         reviewedById: reviewerId,
         reviewedAt: new Date(),
       },
     });
 
-    return { message: 'Payout request rejected' };
+    return { message: "Payout request rejected" };
   } else {
-    throw new Error('Invalid action, use APPROVE or REJECT');
+    throw new Error("Invalid action, use APPROVE or REJECT");
   }
 };
 
@@ -383,7 +394,7 @@ export const findAllPayoutRequests = async (filters) => {
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 
   return requests;
@@ -396,11 +407,17 @@ export const getTechnicianDashboard = async (req, res, next) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [openWOs, inProgressWOs, completedWOsCount, monthlyCommissions, wallet] = await Promise.all([
+    const [
+      openWOs,
+      inProgressWOs,
+      completedWOsCount,
+      monthlyCommissions,
+      wallet,
+    ] = await Promise.all([
       prisma.workOrder.findMany({
         where: {
           technicianId,
-          status: { in: ['ASSIGNED', 'ACCEPTED'] },
+          status: { in: ["ASSIGNED", "ACCEPTED"] },
         },
         include: {
           category: true,
@@ -410,17 +427,17 @@ export const getTechnicianDashboard = async (req, res, next) => {
       prisma.workOrder.findMany({
         where: {
           technicianId,
-          status: 'IN_PROGRESS',
+          status: "IN_PROGRESS",
         },
         include: {
           category: true,
           subservice: true,
         },
-      }), 
+      }),
       prisma.workOrder.count({
         where: {
           technicianId,
-          status: 'PAID_VERIFIED',
+          status: "PAID_VERIFIED",
         },
       }),
       prisma.commission.aggregate({

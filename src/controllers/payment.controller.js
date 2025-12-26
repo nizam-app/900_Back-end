@@ -277,12 +277,12 @@ export const verifyPayment = async (req, res, next) => {
 
       // Determine if technician is freelancer or internal
       const isFreelancer = techProfile?.type === "FREELANCER";
-      
+
       // Use system config rate (default 5%)
-      const rate = isFreelancer 
-        ? (systemConfig?.freelancerCommissionRate || 0.05)
-        : (systemConfig?.internalEmployeeBonusRate || 0.05);
-      
+      const rate = isFreelancer
+        ? systemConfig?.freelancerCommissionRate || 0.05
+        : systemConfig?.internalEmployeeBonusRate || 0.05;
+
       const earnedAmount = Number(payment.amount) * rate;
 
       // Validate calculated amount
@@ -341,14 +341,16 @@ export const verifyPayment = async (req, res, next) => {
             sourceType: isFreelancer ? "COMMISSION" : "BONUS",
             sourceId: wo.id,
             amount: earnedAmount,
-            description: `${isFreelancer ? "Commission" : "Bonus"} for WO ${wo.woNumber}`,
+            description: `${isFreelancer ? "Commission" : "Bonus"} for WO ${
+              wo.woNumber
+            }`,
           },
         });
 
         console.log(
-          `💰 Added ₹${earnedAmount} ${isFreelancer ? "commission" : "bonus"} to ${
-            techProfile.type
-          } technician wallet (ID: ${wo.technicianId})`
+          `💰 Added ₹${earnedAmount} ${
+            isFreelancer ? "commission" : "bonus"
+          } to ${techProfile.type} technician wallet (ID: ${wo.technicianId})`
         );
       }
 
