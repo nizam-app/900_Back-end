@@ -513,7 +513,9 @@ export const getTechnicianEarnings = async (technicianId) => {
     availableBonus: {
       amount: availableAmount,
       jobsCount: availableJobsCount,
-      jobsText: `${availableJobsCount} job${availableJobsCount !== 1 ? "s" : ""}`,
+      jobsText: `${availableJobsCount} job${
+        availableJobsCount !== 1 ? "s" : ""
+      }`,
       bonusText: `${
         isFreelancer ? profile.commissionRate * 100 : profile.bonusRate * 100
       }% bonus`,

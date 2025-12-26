@@ -51,8 +51,8 @@ export const sendPushNotification = async (
     const messaging = getFirebaseMessaging();
 
     // Generate a unique notification tag to prevent duplicates
-    const notificationTag = data.notificationId 
-      ? `notif_${data.notificationId}` 
+    const notificationTag = data.notificationId
+      ? `notif_${data.notificationId}`
       : `notif_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
     const notificationPayload = {
@@ -94,7 +94,9 @@ export const sendPushNotification = async (
           tag: notificationTag,
         },
         // Collapse key for message deduplication (groups messages with same key)
-        collapseKey: data.notificationId ? `collapse_${data.notificationId}` : undefined,
+        collapseKey: data.notificationId
+          ? `collapse_${data.notificationId}`
+          : undefined,
       },
       apns: {
         payload: {
@@ -109,7 +111,9 @@ export const sendPushNotification = async (
         },
         headers: {
           // iOS collapse ID header for deduplication
-          ...(data.notificationId && { "apns-collapse-id": `collapse_${data.notificationId}` }),
+          ...(data.notificationId && {
+            "apns-collapse-id": `collapse_${data.notificationId}`,
+          }),
         },
       },
     };
