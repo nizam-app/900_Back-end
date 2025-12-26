@@ -266,48 +266,44 @@ export const verifyPayment = async (req, res, next) => {
         });
       }
 
-      // Initialize commission variables outside the if block
-      let commissionAmount = 0;
-      let bonusAmount = 0;
-
       const techProfile = await prisma.technicianProfile.findUnique({
         where: { userId: wo.technicianId },
       });
 
-      if (techProfile) {
-        commissionAmount =
-          Number(payment.amount) * Number(techProfile.commissionRate);
-        bonusAmount = Number(payment.amount) * Number(techProfile.bonusRate);
+      // Get system config for global rates (5% fixed, admin configurable)
+      const systemConfig = await prisma.systemConfig.findFirst({
+        where: { id: 1 },
+      });
 
-        // Validate calculated amounts
-        if (isNaN(commissionAmount) || isNaN(bonusAmount)) {
-          return res.status(400).json({
-            message: "Error calculating commission amounts",
-            paymentAmount: payment.amount,
-            commissionRate: techProfile.commissionRate,
-            bonusRate: techProfile.bonusRate,
-          });
-        }
+      // Determine if technician is freelancer or internal
+      const isFreelancer = techProfile?.type === "FREELANCER";
+      
+      // Use system config rate (default 5%)
+      const rate = isFreelancer 
+        ? (systemConfig?.freelancerCommissionRate || 0.05)
+        : (systemConfig?.internalEmployeeBonusRate || 0.05);
+      
+      const earnedAmount = Number(payment.amount) * rate;
 
-        await prisma.commission.create({
-          data: {
-            woId: wo.id,
-            technicianId: wo.technicianId,
-            type: "COMMISSION",
-            rate: techProfile.commissionRate,
-            amount: commissionAmount,
-            status: "EARNED",
-            paymentId: payment.id,
-          },
+      // Validate calculated amount
+      if (isNaN(earnedAmount)) {
+        return res.status(400).json({
+          message: "Error calculating commission/bonus amount",
+          paymentAmount: payment.amount,
+          rate: rate,
         });
+      }
 
+      if (techProfile) {
+        // Create only ONE commission record based on technician type
+        // Freelancers get COMMISSION, Internal employees get BONUS
         await prisma.commission.create({
           data: {
             woId: wo.id,
             technicianId: wo.technicianId,
-            type: "BONUS",
-            rate: techProfile.bonusRate,
-            amount: bonusAmount,
+            type: isFreelancer ? "COMMISSION" : "BONUS",
+            rate: rate,
+            amount: earnedAmount,
             status: "EARNED",
             paymentId: payment.id,
           },
@@ -332,36 +328,25 @@ export const verifyPayment = async (req, res, next) => {
         await prisma.wallet.update({
           where: { id: wallet.id },
           data: {
-            balance: { increment: commissionAmount + bonusAmount },
+            balance: { increment: earnedAmount },
           },
         });
 
-        // Create wallet transactions
-        await prisma.walletTransaction.createMany({
-          data: [
-            {
-              walletId: wallet.id,
-              technicianId: wo.technicianId,
-              type: "CREDIT",
-              sourceType: "COMMISSION",
-              sourceId: wo.id,
-              amount: commissionAmount,
-              description: `Commission for WO ${wo.woNumber}`,
-            },
-            {
-              walletId: wallet.id,
-              technicianId: wo.technicianId,
-              type: "CREDIT",
-              sourceType: "BONUS",
-              sourceId: wo.id,
-              amount: bonusAmount,
-              description: `Bonus for WO ${wo.woNumber}`,
-            },
-          ],
+        // Create single wallet transaction
+        await prisma.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            technicianId: wo.technicianId,
+            type: "CREDIT",
+            sourceType: isFreelancer ? "COMMISSION" : "BONUS",
+            sourceId: wo.id,
+            amount: earnedAmount,
+            description: `${isFreelancer ? "Commission" : "Bonus"} for WO ${wo.woNumber}`,
+          },
         });
 
         console.log(
-          `💰 Added ₹${commissionAmount + bonusAmount} to ${
+          `💰 Added ₹${earnedAmount} ${isFreelancer ? "commission" : "bonus"} to ${
             techProfile.type
           } technician wallet (ID: ${wo.technicianId})`
         );
@@ -390,10 +375,11 @@ export const verifyPayment = async (req, res, next) => {
         success: true,
         message: "Payment verified successfully",
         payment: updatedPayment,
-        commissions: {
-          commissionAmount,
-          bonusAmount,
-          total: commissionAmount + bonusAmount,
+        earnings: {
+          type: isFreelancer ? "COMMISSION" : "BONUS",
+          rate: rate,
+          ratePercentage: rate * 100,
+          amount: earnedAmount,
         },
       });
     } else {

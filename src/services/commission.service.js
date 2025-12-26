@@ -28,12 +28,17 @@ export const createCommissionForWO = async (woId, paymentId) => {
   const techProfile = wo.technician.technicianProfile;
   if (!techProfile) return;
 
-  let type = 'COMMISSION';
-  let rate = techProfile.commissionRate;
-  if (techProfile.type === 'INTERNAL') {
-    type = 'BONUS';
-    rate = techProfile.bonusRate;
-  }
+  // Get system config for global rates (5% fixed, admin configurable)
+  const systemConfig = await prisma.systemConfig.findFirst({
+    where: { id: 1 },
+  });
+
+  // Determine type and rate based on technician type
+  const isFreelancer = techProfile.type === 'FREELANCER';
+  const type = isFreelancer ? 'COMMISSION' : 'BONUS';
+  const rate = isFreelancer 
+    ? (systemConfig?.freelancerCommissionRate || 0.05)
+    : (systemConfig?.internalEmployeeBonusRate || 0.05);
 
   const commissionAmount = amount * rate;
 
