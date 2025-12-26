@@ -379,14 +379,45 @@ export const loginUser = async (credentials) => {
   // Normalize phone number
   const normalizedPhone = normalizePhoneForDB(phone);
 
-  // Find user by phone
-  const user = await prisma.user.findUnique({
+  console.log(`🔐 Login attempt - Original: ${phone}, Normalized: ${normalizedPhone}`);
+
+  // Find user by normalized phone first
+  let user = await prisma.user.findUnique({
     where: { phone: normalizedPhone },
   });
 
+  // If not found, try with original phone (without normalization)
   if (!user) {
+    console.log(`🔍 User not found with normalized phone, trying original...`);
+    user = await prisma.user.findUnique({
+      where: { phone: phone },
+    });
+  }
+
+  // If still not found, try with leading zero removed
+  if (!user && phone.startsWith("0")) {
+    const withoutLeadingZero = phone.substring(1);
+    console.log(`🔍 Trying without leading zero: ${withoutLeadingZero}`);
+    user = await prisma.user.findUnique({
+      where: { phone: withoutLeadingZero },
+    });
+  }
+
+  // If still not found, try with leading zero added
+  if (!user && !phone.startsWith("0")) {
+    const withLeadingZero = "0" + phone;
+    console.log(`🔍 Trying with leading zero: ${withLeadingZero}`);
+    user = await prisma.user.findUnique({
+      where: { phone: withLeadingZero },
+    });
+  }
+
+  if (!user) {
+    console.log(`❌ User not found for any phone format`);
     throw new Error("User not found");
   }
+
+  console.log(`✅ User found: ${user.name} (ID: ${user.id}, Phone in DB: ${user.phone})`);
 
   if (user.isBlocked) {
     throw new Error(
