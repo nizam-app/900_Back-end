@@ -514,9 +514,7 @@ export const getTechnicianEarnings = async (technicianId) => {
     breakdown: {
       today: today,
       thisWeek: thisWeek,
-      thisWeekPercentage: isFreelancer
-        ? commissionRate * 100
-        : bonusRate * 100,
+      thisWeekPercentage: isFreelancer ? commissionRate * 100 : bonusRate * 100,
       thisMonth: thisMonth,
     },
     availableBonus: {
@@ -525,9 +523,9 @@ export const getTechnicianEarnings = async (technicianId) => {
       jobsText: `${availableJobsCount} job${
         availableJobsCount !== 1 ? "s" : ""
       }`,
-      bonusText: `${
-        isFreelancer ? commissionRate * 100 : bonusRate * 100
-      }% ${isFreelancer ? "commission" : "bonus"}`,
+      bonusText: `${isFreelancer ? commissionRate * 100 : bonusRate * 100}% ${
+        isFreelancer ? "commission" : "bonus"
+      }`,
       payoutInfo: "Regular payout: Every Monday",
     },
     // Role-specific rate display: Freelancers see "commissionRate", Internal see "bonusRate"

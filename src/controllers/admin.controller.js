@@ -1081,7 +1081,8 @@ export const updateSystemConfig = async (req, res, next) => {
       const rate = parseFloat(freelancerCommissionRate);
       if (isNaN(rate) || rate < 0 || rate > 1) {
         return res.status(400).json({
-          message: "Freelancer commission rate must be between 0 and 1 (0-100%)",
+          message:
+            "Freelancer commission rate must be between 0 and 1 (0-100%)",
         });
       }
       updateData.freelancerCommissionRate = rate;
@@ -1092,7 +1093,8 @@ export const updateSystemConfig = async (req, res, next) => {
       const rate = parseFloat(internalEmployeeBonusRate);
       if (isNaN(rate) || rate < 0 || rate > 1) {
         return res.status(400).json({
-          message: "Internal employee bonus rate must be between 0 and 1 (0-100%)",
+          message:
+            "Internal employee bonus rate must be between 0 and 1 (0-100%)",
         });
       }
       updateData.internalEmployeeBonusRate = rate;
@@ -1100,7 +1102,9 @@ export const updateSystemConfig = async (req, res, next) => {
 
     // Set base salary
     if (internalEmployeeBaseSalary !== undefined) {
-      updateData.internalEmployeeBaseSalary = parseFloat(internalEmployeeBaseSalary);
+      updateData.internalEmployeeBaseSalary = parseFloat(
+        internalEmployeeBaseSalary
+      );
     }
 
     // Set payout date
