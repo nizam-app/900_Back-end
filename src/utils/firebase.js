@@ -50,6 +50,11 @@ export const sendPushNotification = async (
   try {
     const messaging = getFirebaseMessaging();
 
+    // Generate a unique notification tag to prevent duplicates
+    const notificationTag = data.notificationId 
+      ? `notif_${data.notificationId}` 
+      : `notif_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
     const notificationPayload = {
       title: notification.title,
       body: notification.body,
@@ -71,9 +76,11 @@ export const sendPushNotification = async (
         // Add title and body to data for app to use
         title: notification.title || "",
         body: notification.body || "",
-        // Flag to identify this came from push (app should not show duplicate)
+        // Flag to identify this came from push (app should not show duplicate from data)
         source: "fcm_push",
         timestamp: new Date().toISOString(),
+        // Include tag in data so app can use it for deduplication
+        notificationTag: notificationTag,
       },
       android: {
         priority: "high",
@@ -83,9 +90,11 @@ export const sendPushNotification = async (
           priority: "high",
           defaultSound: true,
           defaultVibrateTimings: true,
-          // Use notification ID to prevent duplicates
-          tag: data.notificationId ? `notif_${data.notificationId}` : undefined,
+          // Use notification tag to prevent duplicates - same tag = replace previous notification
+          tag: notificationTag,
         },
+        // Collapse key for message deduplication (groups messages with same key)
+        collapseKey: data.notificationId ? `collapse_${data.notificationId}` : undefined,
       },
       apns: {
         payload: {
@@ -98,6 +107,10 @@ export const sendPushNotification = async (
             threadId: data.woNumber || data.type || "default",
           },
         },
+        headers: {
+          // iOS collapse ID header for deduplication
+          ...(data.notificationId && { "apns-collapse-id": `collapse_${data.notificationId}` }),
+        },
       },
     };
 
@@ -108,6 +121,7 @@ export const sendPushNotification = async (
       body: notification.body,
       dataType: data.type,
       notificationId: data.notificationId,
+      notificationTag: notificationTag,
     });
     return response;
   } catch (error) {

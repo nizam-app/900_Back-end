@@ -356,6 +356,8 @@ export const getTechnicianEarnings = async (technicianId) => {
     totalEarnings,
     weekJobsCount,
     recentBonuses,
+    availableEarnings,
+    availableJobsCount,
   ] = await Promise.all([
     // Today
     prisma.commission.aggregate({
@@ -441,6 +443,23 @@ export const getTechnicianEarnings = async (technicianId) => {
       },
       take: 10,
     }),
+
+    // Available bonus (only EARNED, not yet paid out)
+    prisma.commission.aggregate({
+      where: {
+        technicianId,
+        status: "EARNED",
+      },
+      _sum: { amount: true },
+    }),
+
+    // Available jobs count (only EARNED, not yet paid out)
+    prisma.commission.count({
+      where: {
+        technicianId,
+        status: "EARNED",
+      },
+    }),
   ]);
 
   const today = todayEarnings._sum.amount || 0;
@@ -448,6 +467,7 @@ export const getTechnicianEarnings = async (technicianId) => {
   const thisMonth = monthEarnings._sum.amount || 0;
   const lastMonth = lastMonthEarnings._sum.amount || 0;
   const totalAllTime = totalEarnings._sum.amount || 0;
+  const availableAmount = availableEarnings._sum.amount || 0;
 
   // Calculate increase rate from last month
   let increaseRate = 0;
@@ -491,9 +511,9 @@ export const getTechnicianEarnings = async (technicianId) => {
       thisMonth: thisMonth,
     },
     availableBonus: {
-      amount: thisWeek,
-      jobsCount: weekJobsCount,
-      jobsText: `${weekJobsCount} job${weekJobsCount !== 1 ? "s" : ""}`,
+      amount: availableAmount,
+      jobsCount: availableJobsCount,
+      jobsText: `${availableJobsCount} job${availableJobsCount !== 1 ? "s" : ""}`,
       bonusText: `${
         isFreelancer ? profile.commissionRate * 100 : profile.bonusRate * 100
       }% bonus`,
