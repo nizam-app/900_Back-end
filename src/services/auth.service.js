@@ -379,7 +379,9 @@ export const loginUser = async (credentials) => {
   // Normalize phone number
   const normalizedPhone = normalizePhoneForDB(phone);
 
-  console.log(`🔐 Login attempt - Original: ${phone}, Normalized: ${normalizedPhone}`);
+  console.log(
+    `🔐 Login attempt - Original: ${phone}, Normalized: ${normalizedPhone}`
+  );
 
   // Find user by normalized phone first
   let user = await prisma.user.findUnique({
@@ -417,7 +419,9 @@ export const loginUser = async (credentials) => {
     throw new Error("User not found");
   }
 
-  console.log(`✅ User found: ${user.name} (ID: ${user.id}, Phone in DB: ${user.phone})`);
+  console.log(
+    `✅ User found: ${user.name} (ID: ${user.id}, Phone in DB: ${user.phone})`
+  );
 
   if (user.isBlocked) {
     throw new Error(
