@@ -27,42 +27,48 @@ async function fixDatabase() {
 
     // 2. Find and remove duplicate BONUS records for FREELANCER technicians
     console.log("2️⃣ Finding duplicate records...");
-    
+
     // Get all commissions grouped by woId
     const allCommissions = await prisma.commission.findMany({
       include: {
         technician: {
-          include: { technicianProfile: true }
+          include: { technicianProfile: true },
         },
-        workOrder: { select: { woNumber: true } }
+        workOrder: { select: { woNumber: true } },
       },
-      orderBy: { createdAt: "asc" }
+      orderBy: { createdAt: "asc" },
     });
 
     // Group by woId
     const byWoId = {};
-    allCommissions.forEach(c => {
+    allCommissions.forEach((c) => {
       if (!byWoId[c.woId]) byWoId[c.woId] = [];
       byWoId[c.woId].push(c);
     });
 
     const toDelete = [];
-    
+
     for (const [woId, records] of Object.entries(byWoId)) {
       if (records.length > 1) {
-        console.log(`   WO ID ${woId} (${records[0].workOrder?.woNumber}): ${records.length} records`);
-        
+        console.log(
+          `   WO ID ${woId} (${records[0].workOrder?.woNumber}): ${records.length} records`
+        );
+
         // For FREELANCER - keep only COMMISSION, delete BONUS
         // For INTERNAL - keep only BONUS, delete COMMISSION
         const techType = records[0].technician?.technicianProfile?.type;
-        
-        records.forEach(r => {
+
+        records.forEach((r) => {
           if (techType === "FREELANCER" && r.type === "BONUS") {
             toDelete.push(r.id);
-            console.log(`      ❌ Will delete BONUS record (ID: ${r.id}) - Freelancer should not have BONUS`);
+            console.log(
+              `      ❌ Will delete BONUS record (ID: ${r.id}) - Freelancer should not have BONUS`
+            );
           } else if (techType === "INTERNAL" && r.type === "COMMISSION") {
             toDelete.push(r.id);
-            console.log(`      ❌ Will delete COMMISSION record (ID: ${r.id}) - Internal should not have COMMISSION`);
+            console.log(
+              `      ❌ Will delete COMMISSION record (ID: ${r.id}) - Internal should not have COMMISSION`
+            );
           }
         });
       }
@@ -72,7 +78,7 @@ async function fixDatabase() {
     if (toDelete.length > 0) {
       console.log(`\n3️⃣ Deleting ${toDelete.length} incorrect records...`);
       await prisma.commission.deleteMany({
-        where: { id: { in: toDelete } }
+        where: { id: { in: toDelete } },
       });
       console.log(`   ✅ Deleted ${toDelete.length} records\n`);
     } else {
@@ -82,14 +88,17 @@ async function fixDatabase() {
     // 4. Verify final state
     console.log("4️⃣ Final verification:");
     const config = await prisma.systemConfig.findFirst({ where: { id: 1 } });
-    console.log(`   Freelancer Commission Rate: ${config.freelancerCommissionRate * 100}%`);
-    console.log(`   Internal Bonus Rate: ${config.internalEmployeeBonusRate * 100}%`);
-    
+    console.log(
+      `   Freelancer Commission Rate: ${config.freelancerCommissionRate * 100}%`
+    );
+    console.log(
+      `   Internal Bonus Rate: ${config.internalEmployeeBonusRate * 100}%`
+    );
+
     const remaining = await prisma.commission.count();
     console.log(`   Total commission records: ${remaining}\n`);
 
     console.log("✅ DATABASE FIXED!\n");
-
   } catch (error) {
     console.error("Error:", error);
   } finally {
