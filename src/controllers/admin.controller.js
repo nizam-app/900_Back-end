@@ -1027,3 +1027,129 @@ export const getTechnicianStats = async (req, res, next) => {
     next(err);
   }
 };
+
+// Get system configuration (commission/bonus rates)
+export const getSystemConfig = async (req, res, next) => {
+  try {
+    let config = await prisma.systemConfig.findFirst({
+      where: { id: 1 },
+    });
+
+    // Create default config if not exists
+    if (!config) {
+      config = await prisma.systemConfig.create({
+        data: {
+          freelancerCommissionRate: 0.05,
+          internalEmployeeBonusRate: 0.05,
+          internalEmployeeBaseSalary: 0,
+          payoutFrequency: "WEEKLY",
+        },
+      });
+    }
+
+    return res.json({
+      freelancerCommissionRate: config.freelancerCommissionRate,
+      freelancerCommissionPercentage: config.freelancerCommissionRate * 100,
+      internalEmployeeBonusRate: config.internalEmployeeBonusRate,
+      internalEmployeeBonusPercentage: config.internalEmployeeBonusRate * 100,
+      internalEmployeeBaseSalary: config.internalEmployeeBaseSalary,
+      nextPayoutDate: config.nextPayoutDate,
+      payoutFrequency: config.payoutFrequency,
+      updatedAt: config.updatedAt,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Update system configuration (admin only)
+export const updateSystemConfig = async (req, res, next) => {
+  try {
+    const adminId = req.user.id;
+    const {
+      freelancerCommissionRate,
+      internalEmployeeBonusRate,
+      internalEmployeeBaseSalary,
+      nextPayoutDate,
+      payoutFrequency,
+    } = req.body;
+
+    const updateData = { updatedById: adminId };
+
+    // Validate and set freelancer commission rate (0-100%)
+    if (freelancerCommissionRate !== undefined) {
+      const rate = parseFloat(freelancerCommissionRate);
+      if (isNaN(rate) || rate < 0 || rate > 1) {
+        return res.status(400).json({
+          message: "Freelancer commission rate must be between 0 and 1 (0-100%)",
+        });
+      }
+      updateData.freelancerCommissionRate = rate;
+    }
+
+    // Validate and set internal employee bonus rate (0-100%)
+    if (internalEmployeeBonusRate !== undefined) {
+      const rate = parseFloat(internalEmployeeBonusRate);
+      if (isNaN(rate) || rate < 0 || rate > 1) {
+        return res.status(400).json({
+          message: "Internal employee bonus rate must be between 0 and 1 (0-100%)",
+        });
+      }
+      updateData.internalEmployeeBonusRate = rate;
+    }
+
+    // Set base salary
+    if (internalEmployeeBaseSalary !== undefined) {
+      updateData.internalEmployeeBaseSalary = parseFloat(internalEmployeeBaseSalary);
+    }
+
+    // Set payout date
+    if (nextPayoutDate) {
+      updateData.nextPayoutDate = new Date(nextPayoutDate);
+    }
+
+    // Set payout frequency
+    if (payoutFrequency && ["WEEKLY", "MONTHLY"].includes(payoutFrequency)) {
+      updateData.payoutFrequency = payoutFrequency;
+    }
+
+    const config = await prisma.systemConfig.upsert({
+      where: { id: 1 },
+      update: updateData,
+      create: {
+        ...updateData,
+        freelancerCommissionRate: updateData.freelancerCommissionRate || 0.05,
+        internalEmployeeBonusRate: updateData.internalEmployeeBonusRate || 0.05,
+        internalEmployeeBaseSalary: updateData.internalEmployeeBaseSalary || 0,
+        payoutFrequency: updateData.payoutFrequency || "WEEKLY",
+      },
+    });
+
+    // Create audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: "SYSTEM_CONFIG_UPDATED",
+        entityType: "SYSTEM_CONFIG",
+        entityId: config.id,
+        metadataJson: JSON.stringify(updateData),
+      },
+    });
+
+    return res.json({
+      message: "System configuration updated successfully",
+      config: {
+        freelancerCommissionRate: config.freelancerCommissionRate,
+        freelancerCommissionPercentage: config.freelancerCommissionRate * 100,
+        internalEmployeeBonusRate: config.internalEmployeeBonusRate,
+        internalEmployeeBonusPercentage: config.internalEmployeeBonusRate * 100,
+        internalEmployeeBaseSalary: config.internalEmployeeBaseSalary,
+        nextPayoutDate: config.nextPayoutDate,
+        payoutFrequency: config.payoutFrequency,
+        updatedAt: config.updatedAt,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};

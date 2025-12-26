@@ -347,6 +347,15 @@ export const getTechnicianEarnings = async (technicianId) => {
   const profile = technician.technicianProfile;
   const isFreelancer = technician.role === "TECH_FREELANCER";
 
+  // Get system config for global rates (admin configurable)
+  const systemConfig = await prisma.systemConfig.findFirst({
+    where: { id: 1 },
+  });
+
+  // Use system config rates (fixed 5% default, admin can change)
+  const commissionRate = systemConfig?.freelancerCommissionRate || 0.05;
+  const bonusRate = systemConfig?.internalEmployeeBonusRate || 0.05;
+
   // Get all earnings aggregations in parallel
   const [
     todayEarnings,
@@ -506,8 +515,8 @@ export const getTechnicianEarnings = async (technicianId) => {
       today: today,
       thisWeek: thisWeek,
       thisWeekPercentage: isFreelancer
-        ? profile.commissionRate * 100
-        : profile.bonusRate * 100,
+        ? commissionRate * 100
+        : bonusRate * 100,
       thisMonth: thisMonth,
     },
     availableBonus: {
@@ -517,23 +526,32 @@ export const getTechnicianEarnings = async (technicianId) => {
         availableJobsCount !== 1 ? "s" : ""
       }`,
       bonusText: `${
-        isFreelancer ? profile.commissionRate * 100 : profile.bonusRate * 100
-      }% bonus`,
+        isFreelancer ? commissionRate * 100 : bonusRate * 100
+      }% ${isFreelancer ? "commission" : "bonus"}`,
       payoutInfo: "Regular payout: Every Monday",
     },
-    bonusRate: {
-      rate: isFreelancer ? profile.commissionRate : profile.bonusRate,
-      ratePercentage:
-        (isFreelancer ? profile.commissionRate : profile.bonusRate) * 100,
-      type: isFreelancer ? "Commission" : "Bonus",
-      description: isFreelancer
-        ? `Earn ${(profile.commissionRate * 100).toFixed(
-            0
-          )}% commission on every verified job completion. Commissions are paid every Monday, with early payout available during the week for urgent needs.`
-        : `Earn ${(profile.bonusRate * 100).toFixed(
-            0
-          )}% bonus on every verified job completion. Bonuses are paid every Monday, with early payout available during the week for urgent needs.`,
-    },
+    // Role-specific rate display: Freelancers see "commissionRate", Internal see "bonusRate"
+    ...(isFreelancer
+      ? {
+          commissionRate: {
+            rate: commissionRate,
+            ratePercentage: commissionRate * 100,
+            type: "Commission",
+            description: `Earn ${(commissionRate * 100).toFixed(
+              0
+            )}% commission on every verified job completion. Commissions are paid every Monday, with early payout available during the week for urgent needs.`,
+          },
+        }
+      : {
+          bonusRate: {
+            rate: bonusRate,
+            ratePercentage: bonusRate * 100,
+            type: "Bonus",
+            description: `Earn ${(bonusRate * 100).toFixed(
+              0
+            )}% bonus on every verified job completion. Bonuses are paid every Monday, with early payout available during the week for urgent needs.`,
+          },
+        }),
     monthlySalary: {
       baseSalary: profile.baseSalary || 0,
       thisMonthBonus: thisMonth,

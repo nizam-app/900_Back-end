@@ -429,8 +429,8 @@ async function main() {
     where: { id: 1 },
     update: {},
     create: {
-      freelancerCommissionRate: 0.2,
-      internalEmployeeBonusRate: 0.05,
+      freelancerCommissionRate: 0.05, // Fixed 5% commission for freelancers
+      internalEmployeeBonusRate: 0.05, // Fixed 5% bonus for internal employees
       internalEmployeeBaseSalary: 30000,
       nextPayoutDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
       payoutFrequency: "WEEKLY",

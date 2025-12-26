@@ -20,6 +20,8 @@ import {
   getTechnicianStatusSummary,
   getWorkOrderAuditTrail,
   getTechnicianStats,
+  getSystemConfig,
+  updateSystemConfig,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -145,6 +147,20 @@ router.get(
   authMiddleware,
   requireRole("ADMIN"),
   getTechnicianStats
+);
+
+// System configuration routes (commission/bonus rates)
+router.get(
+  "/system-config",
+  authMiddleware,
+  requireRole("ADMIN"),
+  getSystemConfig
+);
+router.patch(
+  "/system-config",
+  authMiddleware,
+  requireRole("ADMIN"),
+  updateSystemConfig
 );
 
 export default router;
